@@ -3,6 +3,7 @@ import { practiceAttemptSchema, practiceCommandSchema, practiceResponseSchema } 
 import { z } from "zod";
 import { personalPrepResponseSchema } from "@/contracts/personal-prep";
 import { studyProgressSchema } from "@/contracts/study";
+import { sceneWeatherSchema } from "@/contracts/scene-weather";
 import { codeReviewInput } from "@/lib/code-review";
 import { matchInput } from "@/lib/question-match";
 import {
@@ -58,6 +59,7 @@ export const apiSchemas: Record<string, z.ZodType> = {
   StudyProgress: studyProgressSchema.describe("Versioned lesson review saved as a JSON string with action setting and key study:lesson:<lessonId>. Server validation also checks course membership, exact check IDs and correct or explicitly revealed answers."),
   ApiError: errorSchema,
   HealthResponse: healthSchema,
+  SceneWeather: sceneWeatherSchema,
   WorkspaceResponse: workspaceStateSchema,
   WorkspaceApplication: workspaceApplicationSchema,
   WorkspaceReview: workspaceReviewSchema,
@@ -117,6 +119,7 @@ const queryParameters = (schema: z.ZodObject) => Object.entries(schema.shape).ma
 });
 
 const paths = {
+  "/api/scene-weather": { get: { operationId: "getSceneWeather", summary: "Read cached San Francisco weather for login artwork", description: "Public fixed-location weather model data and sunrise/sunset times. No account or user location data. Returns time-only when the provider is unavailable or stale. Cached for 15 minutes; login never depends on this request.", responses: { "200": jsonResponse("Weather model data or an explicit time-only fallback.", "SceneWeather") } } },
   "/api/auth/register": {post:{operationId:"registerAccount",summary:"Register, verify email, resend a code, or recover an account",description:"Email verification is required before private workspace access. Registration and recovery responses do not disclose whether an email already has an account.",requestBody:{required:true,content:{"application/json":{schema:ref("AuthRegistration")}}},responses:{"200":jsonResponse("Account request accepted.","AuthRegistrationResponse"),"400":errorResponse("Invalid fields or verification code."),"403":errorResponse("Origin rejected or registration disabled."),"429":errorResponse("Try again later."),"502":errorResponse("Account provider unavailable."),"503":errorResponse("Account setup incomplete.")}}},
   "/api/auth/login": {post:{operationId:"signIn",summary:"Sign in with the configured Cognito client",requestBody:{required:true,content:{"application/json":{schema:ref("AuthLogin")}}},responses:{"200":jsonResponse("Signed in with a host-only HttpOnly session cookie.","AuthResponse"),"202":jsonResponse("Additional verification required.","AuthResponse"),"400":errorResponse("Invalid sign-in fields or unsupported challenge."),"401":errorResponse("Credentials not accepted."),"403":errorResponse("Origin or account not allowed."),"429":errorResponse("Try again later."),"502":errorResponse("Provider unavailable."),"503":errorResponse("Sign-in setup incomplete.")}}},
   "/api/auth/challenge": {post:{operationId:"completeSignIn",summary:"Complete an encrypted Cognito sign-in challenge",requestBody:{required:true,content:{"application/json":{schema:ref("AuthChallenge")}}},responses:{"200":jsonResponse("Signed in.","AuthResponse"),"202":jsonResponse("Further verification needed.","AuthResponse"),"400":errorResponse("Invalid or expired challenge."),"401":errorResponse("Verification rejected."),"403":errorResponse("Origin or account not allowed."),"429":errorResponse("Try again later."),"502":errorResponse("Provider unavailable."),"503":errorResponse("Sign-in setup incomplete.")}}},
@@ -160,7 +163,7 @@ export function createOpenApiDocument() {
     info: {
       title: "Deems API",
       version: "1.0.0",
-      description: "Deems API. Hosted app and data routes require an allowed Cognito session plus deployment protection. Loopback local mode is unauthenticated unless explicitly enabled.",
+      description: "Deems API. Hosted workspace and data routes require a verified Cognito session. Authentication and fixed-location login weather routes are public. Loopback local mode is unauthenticated unless explicitly enabled.",
     },
     servers: [{ url: "/", description: "Same origin as the local Deems app." }],
     paths,
