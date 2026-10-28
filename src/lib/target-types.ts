@@ -1,0 +1,17 @@
+import type { z } from "zod";
+import type * as contracts from "@/contracts/targets";
+import type { CommandMeta } from "@/domains/career/contracts";
+export type TargetResource = z.infer<typeof contracts.targetResourceSchema>;
+export type TargetRequirement = z.infer<typeof contracts.targetRequirementSchema>;
+export type TargetStep = z.infer<typeof contracts.targetStepSchema>;
+export type TargetRole = z.infer<typeof contracts.targetRoleSchema>;
+export type TargetCompany = z.infer<typeof contracts.targetCompanySchema>;
+export type TargetSource = z.infer<typeof contracts.targetSourceSchema>;
+export type TargetProgress = z.infer<typeof contracts.targetProgressSchema>;
+export type TargetRoleState = z.infer<typeof contracts.targetRoleStateSchema>;
+export type TargetAssessment = z.infer<typeof contracts.targetAssessmentSchema>;
+export type TargetInterview = z.infer<typeof contracts.targetInterviewSchema>;
+export type TargetDebrief = z.infer<typeof contracts.targetDebriefSchema>;
+export type TargetsState = contracts.TargetResponse;
+type OptionalMeta<T> = T extends unknown ? Omit<T, "meta"> & {meta?:CommandMeta} : never;
+export type TargetMutation = OptionalMeta<contracts.TargetRequest>;

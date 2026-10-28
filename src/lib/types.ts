@@ -1,0 +1,14 @@
+import type { z } from "zod";
+import type * as contracts from "@/contracts/workspace";
+export type Source = { title: string; url: string };
+export type Role = { id: string; title: string; team: string; summary: string; priorities: string[]; fit: string[]; gaps: string[]; source: Source };
+export type CheatSheet = { id: string; title: string; subtitle: string; category: string; sections: { title: string; body: string; bullets?: string[]; code?: string }[]; sources?: Source[] };
+export type Flashcard = { id: string; category: string; question: string; answer: string; example?: string; difficulty: "Foundation" | "Applied" };
+export type Exercise = { id: string; title: string; kind: "System design" | "Live coding" | "Algorithms"; duration: number; description: string; requirements: string[]; phases: { minutes: number; label: string }[]; hints: string[]; rubric: string[]; starter?: string; solution?: string; languages?: Record<"python" | "javascript", {starter:string;solution:string}> };
+export type Story = { id: string; title: string; company: string; summary: string; talkingPoints: string[]; followUps: string[]; source: string };
+export type Application = z.infer<typeof contracts.workspaceApplicationSchema>;
+export type Review = z.infer<typeof contracts.workspaceReviewSchema>;
+export type Session = z.infer<typeof contracts.workspaceSessionSchema>;
+export type Activity = z.infer<typeof contracts.workspaceActivitySchema>;
+export type SavedDocument = z.infer<typeof contracts.workspaceSavedDocumentSchema>;
+export type WorkspaceState = contracts.WorkspaceResponse;

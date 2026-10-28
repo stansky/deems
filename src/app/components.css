@@ -1,0 +1,42 @@
+/* Shadcn utilities are limited to the shared components. No global reset. */
+@layer theme, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities) source(none) important;
+@source "../components/ui";
+
+@theme inline {
+  --color-background: var(--desk-background);
+  --color-foreground: var(--desk-foreground);
+  --color-primary: var(--desk-primary);
+  --color-primary-foreground: #17200c;
+  --color-secondary: #252c32;
+  --color-secondary-foreground: #eef1f3;
+  --color-muted-foreground: #aab4bf;
+  --color-accent: #303a2b;
+  --color-accent-foreground: #dcf6b5;
+  --color-popover: #20262b;
+  --color-popover-foreground: #eef1f3;
+  --color-input: #414b55;
+  --color-border: #414b55;
+  --color-ring: #c7ff69;
+  --color-destructive: #f87171;
+}
+
+.shadcn-theme {
+  --desk-background: #141618;
+  --desk-foreground: #eef1f3;
+  --desk-primary: #c7ff69;
+  color: var(--desk-foreground);
+}
+[data-slot="select-content"] { border: 1px solid #414b55; }
+[data-slot="select-trigger"], [data-slot="button"] { min-height: 40px; }
+[data-slot="select-trigger"] { border-style: solid; }
+[data-slot="select-item"] { min-height: 36px; }
+
+.page-actions { display: flex; justify-content: flex-end; align-items: center; gap: 8px; flex-wrap: wrap; }
+.page-actions [data-slot="select-trigger"] { min-width: 164px; }
+@media(max-width:600px) {
+  .page-actions { gap: 8px; }
+  .page-actions [data-slot="select-trigger"] { min-width: 0; flex: 1; }
+  .page-actions [data-slot="select-trigger"], .page-actions [data-slot="button"] { min-height: 44px; }
+}

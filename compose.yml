@@ -1,0 +1,73 @@
+name: deems
+services:
+  db:
+    image: postgres:18.4-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: interview
+      POSTGRES_PASSWORD: interview_local
+      POSTGRES_DB: interview
+    volumes:
+      - database:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U interview -d interview"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+  app:
+    build:
+      context: .
+      target: runtime
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://interview:interview_local@db:5432/interview
+      DATA_DIR: /app/private
+      DEEMS_OPENAI_MODEL: ${DEEMS_OPENAI_MODEL:-gpt-6-luna}
+    secrets:
+      - deems_openai_key
+      - deems_typesafe_key
+    volumes:
+      - ./private:/app/private
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+  research:
+    build:
+      context: .
+      target: research
+    restart: unless-stopped
+    init: true
+    shm_size: 512mb
+    environment:
+      DATABASE_URL: postgres://interview:interview_local@db:5432/interview
+    depends_on:
+      app:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+  proxy:
+    image: caddy:2-alpine@sha256:eb4d35b7452d1ab6171fbdbe8d9275b2301dad6dad92115d91e19fb9b24d510f
+    restart: unless-stopped
+    ports:
+      - "[::1]:80:80"
+      - "127.101.13.236:80:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      app:
+        condition: service_healthy
+volumes:
+  database:
+    external: true
+    name: interview_database
+secrets:
+  deems_openai_key:
+    file: ./private/runtime/openai-key
+  deems_typesafe_key:
+    file: ./private/runtime/typesafe-key

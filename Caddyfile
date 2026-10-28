@@ -1,0 +1,8 @@
+{
+	admin off
+	auto_https off
+}
+
+http://deems.local, http://interview.local, http://localhost, http://[::1] {
+	reverse_proxy app:3000
+}

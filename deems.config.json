@@ -1,0 +1,9 @@
+{
+  "name": "Deems",
+  "identifier": "deems",
+  "appleBundleIdentifier": "app.deems",
+  "productionUrl": "https://deems.app",
+  "stagingUrl": "https://deems.dev",
+  "localUrl": "http://deems.local",
+  "repository": "https://github.com/stansky/deems"
+}

@@ -1,0 +1,15 @@
+.career-history{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.career-history-entry{border-bottom:1px solid var(--line)}
+.career-history-entry details>summary{display:flex;align-items:center;gap:12px;min-height:50px;cursor:pointer;color:#344155;list-style:none}
+.career-history-entry details>summary::-webkit-details-marker{display:none}
+.career-history-entry details>summary>svg{flex:none;color:#667085;transition:transform .15s}
+.career-history-entry details[open]>summary>svg{transform:rotate(90deg)}
+.career-history-revision{font-size:12px;font-weight:600}
+.career-history-kind{font-size:12px;color:#667085}
+.career-history-entry time{margin-left:auto;font-size:12px;color:#667085;text-align:right}
+.career-history-entry dl{margin:0 0 15px 19px;border-top:1px solid #edf0f4}
+.career-history-entry dl>div{display:grid;grid-template-columns:minmax(120px,190px) minmax(0,1fr);gap:16px;padding:9px 0;border-bottom:1px solid #edf0f4}
+.career-history-entry dt{font-size:12px;color:#667085}
+.career-history-entry dd{margin:0;font-size:12px;line-height:1.7;color:#344155;white-space:pre-wrap;overflow-wrap:anywhere}
+.career-history-baseline,.career-history-empty{margin:10px 0 12px 19px;font-size:12px;line-height:1.7;color:#667085}
+@media(max-width:700px){.career-history-entry details>summary{flex-wrap:wrap;gap:5px 10px;padding:10px 0}.career-history-entry time{width:100%;margin-left:19px;text-align:left}.career-history-entry dl{margin-left:19px}.career-history-entry dl>div{grid-template-columns:1fr;gap:4px}}

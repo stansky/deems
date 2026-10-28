@@ -1,0 +1,121 @@
+/* Learning uses its own palette so the career workspace keeps its reading theme. */
+@media screen {
+  .learning-shell {
+    --learn-canvas: #141618;
+    --learn-panel: #1d2125;
+    --learn-raised: #282e34;
+    --learn-line: #404951;
+    --learn-ink: #f5f7f8;
+    --learn-muted: #aeb9c3;
+    --learn-action: #c7ff69;
+    --learn-selection: #b8a5ff;
+    background: var(--learn-canvas);
+    color: var(--learn-ink);
+    color-scheme: dark;
+  }
+  .learning-shell .main-shell,
+  .learning-shell .main-content { background: var(--learn-canvas); }
+  .learning-shell .learning-header { background: var(--learn-canvas); border-color: #30373d; }
+  .learning-shell .learning-brand { color: var(--learn-ink); }
+  .learning-shell .learning-brand>svg { color: var(--learn-action); }
+  .learning-shell .learning-brand>span { color: var(--learn-muted); border-color: var(--learn-line); }
+  .learning-shell .learning-exit { background: var(--learn-panel); color: var(--learn-ink); border-color: var(--learn-line); }
+  .learning-shell .learning-exit:hover { border-color: var(--learn-action); }
+  .learning-shell .learning-loading { color: var(--learn-muted); }
+  .learning-shell .save-status { background: #273421; color: var(--learn-action); border: 1px solid #557443; }
+  .learning-shell ::selection { background: #b8a5ff; color: #171322; }
+  .learning-shell :is(button,a,input,textarea,select):focus-visible { outline: 3px solid var(--learn-action); outline-offset: 4px; }
+  .learning-shell .study-workspace {
+    --sw-ink: var(--learn-ink);
+    --sw-muted: var(--learn-muted);
+    --sw-line: var(--learn-line);
+    --sw-soft: var(--learn-panel);
+    --sw-green: #a6efb9;
+    --sw-green-soft: #203b2a;
+  }
+  .learning-shell .sw-tabs { border-color: #30373d; }
+  .learning-shell .sw-tabs>button { color: var(--learn-muted); }
+  .learning-shell .sw-tabs>button:hover { color: var(--learn-ink); }
+  .learning-shell .sw-tabs>button.is-selected { color: var(--learn-action); }
+  .learning-shell .sw-tabs>button.is-selected:after { background: var(--learn-action); }
+  .learning-shell .sw-tabs>button>span { background: #2f3a24; color: var(--learn-action); }
+  .learning-shell :is(.sw-eyebrow,.sw-tile-count,.sw-tile-footer,.sw-lesson-description,.sw-check-source,.sw-answer-options legend,.sw-completion-copy,.sw-check-summary>span small,.sw-reset-selection,.sw-map-label small,.sw-guide-subtitle,.sw-guide-list>button>span,.sw-guide-sections h2>span,.sw-guide-sources h2,.sw-card-toolbar>label,.sw-flashcard-meta,.sw-recall-field small,.sw-flashcard-actions>span,.sw-caught-up p) { color: var(--learn-muted); }
+  .learning-shell :is(.sw-catalog-heading>div>p:last-child,.sw-course-copy>p:not(.sw-eyebrow):not(.sw-progress-copy),.sw-quiz-heading>div>p:last-child,.sw-quiz-preview p:last-child,.sw-quiz-preview>span,.sw-tile-description) { color: #bdc6ce; }
+  .learning-shell :is(.sw-tile-copy h3,.sw-quiz-preview h3,.sw-guide-list>button>strong,.sw-map-label strong,.sw-check-source strong,.sw-flashcard-meta>span:first-child) { color: var(--learn-ink); }
+  .learning-shell :is(.sw-review-nudge,.sw-progress-overview,.sw-course-tile,.sw-course-overview,.sw-lesson-path,.sw-quiz-picker,.sw-lesson-content,.sw-flashcard,.sw-caught-up) { background: var(--learn-panel); border-color: #363f47; }
+  .learning-shell .sw-review-nudge:hover { background: var(--learn-raised); border-color: var(--learn-line); }
+  .learning-shell .sw-review-icon { background: #39304d; color: #d4c6ff; }
+  .learning-shell .sw-review-nudge>svg { color: var(--learn-muted); }
+  .learning-shell :is(.sw-overall-progress,.sw-tile-progress,.sw-lesson-progress) { background: #3a434c; }
+  .learning-shell :is(.sw-overall-progress,.sw-tile-progress,.sw-lesson-progress)>span { background: var(--learn-action); }
+  .learning-shell .sw-course-tile { border-radius: 20px; border-top: 3px solid var(--course-accent); box-shadow: none; }
+  .learning-shell .sw-course-tile:hover { border-color: var(--course-accent); box-shadow: none; }
+  .learning-shell .sw-theme-blue { --course-accent: #70ddf3; }
+  .learning-shell .sw-theme-purple { --course-accent: #ff9a7c; }
+  .learning-shell .sw-theme-green { --course-accent: #c7ff69; }
+  .learning-shell .sw-theme-gold { --course-accent: #ffda71; }
+  .learning-shell :is(.sw-tile-art,.sw-course-art) {
+    background-image: url('/study/course-emblems-night.png');
+    background-color: transparent;
+    border-radius: 0;
+  }
+  .learning-shell .sw-tile-art { width: 170px; height: 170px; margin-top: 22px; }
+  .learning-shell .sw-tile-topic { color: var(--course-accent); }
+  .learning-shell :is(.sw-course-continue,.sw-primary-button,.sw-check-button,.sw-continue-button,.sw-path-continue) {
+    background: var(--learn-action);
+    color: #17220a;
+    border-color: transparent;
+    font-weight: 700;
+    box-shadow: none;
+  }
+  .learning-shell :is(.sw-course-continue,.sw-primary-button,.sw-check-button,.sw-continue-button,.sw-path-continue):hover:not(:disabled) { background: #d8ff97; }
+  .learning-shell :is(.sw-primary-button,.sw-check-button):disabled { opacity: 1; background: #3a444a; color: #b2bec7; }
+  .learning-shell :is(.sw-back-link,.sw-close-lesson) { color: #d0d8df; }
+  .learning-shell :is(.sw-back-link,.sw-close-lesson):hover { color: var(--learn-action); }
+  .learning-shell :is(.sw-progress-copy,.sw-quiz-path-link,.sw-inline-sources>a,.sw-guide-sources>a) { color: var(--learn-action); }
+  .learning-shell .sw-map-label { background: var(--learn-panel); }
+  .learning-shell .sw-map-item.is-current .sw-map-diamond { background: var(--learn-action); color: #17220a; border-color: var(--learn-action); box-shadow: 0 5px 0 #729d35,0 0 0 5px #2e3d22; }
+  .learning-shell .sw-map-item.is-current .sw-map-label strong { color: var(--learn-action); }
+  .learning-shell .sw-map-item.is-complete .sw-map-diamond { background: #b8a5ff; color: #211338; border-color: #b8a5ff; box-shadow: 0 5px 0 #6e5ca7; }
+  .learning-shell .sw-map-item.is-upcoming .sw-map-diamond { background: #30383f; color: #d4dce3; border-color: #596570; box-shadow: 0 4px 0 #111518; }
+  .learning-shell .sw-map-connector { background: #64717c; }
+  .learning-shell .sw-map-item.is-current .sw-map-connector { background: #8cb04f; }
+  .learning-shell .sw-map-item.is-complete .sw-map-connector { background: #b8a5ff; }
+  .learning-shell .sw-quiz-selects label { color: #d0d8df; }
+  .learning-shell .sw-select-blue { background: #303642; border-color: #697384; color: var(--learn-ink); }
+  .learning-shell .sw-select-blue:focus { outline: 3px solid var(--learn-action); border-color: var(--learn-action); }
+  .learning-shell .sw-quiz-preview { border-color: var(--learn-line); }
+  .learning-shell .sw-answer-option { background: #293037; border: 1.5px solid #687582; color: #edf2f6; }
+  .learning-shell .sw-answer-option:hover { background: #333c45; border-color: #a7b6c3; }
+  .learning-shell .sw-answer-option input { accent-color: #b8a5ff; }
+  .learning-shell .sw-answer-option.is-selected { background: var(--learn-selection); color: #211338; border-color: #d9ccff; }
+  .learning-shell .sw-answer-option.is-selected input { accent-color: #38255f; }
+  .learning-shell .sw-answer-option.is-correct { background: #c2f3cc; color: #153322; border-color: #c2f3cc; }
+  .learning-shell .sw-answer-option.is-correct input { accent-color: #1d5530; }
+  .learning-shell .sw-reset-selection:disabled { color: #8c9aa6; }
+  .learning-shell :is(.sw-feedback-incorrect,.sw-feedback-revealed) { background: #3b2d1e; color: #ffdfa0; border-color: #b8873e; }
+  .learning-shell .sw-feedback-incorrect button { color: #ffe6b6; }
+  .learning-shell .sw-feedback-correct { background: #203b2a; color: #c2f3cc; border-color: #579c6d; }
+  .learning-shell .sw-completion-icon { background: #2f4222; color: var(--learn-action); }
+  .learning-shell .sw-check-summary>span { background: #282f36; border-color: var(--learn-line); }
+  .learning-shell .sw-save-error { color: #ffb797; }
+  .learning-shell :is(.sw-reading-copy,.sw-guide-sections p,.sw-guide-sections li,.sw-recall-field,.sw-flashcard-answer) { color: #dbe3e9; }
+  .learning-shell :is(.sw-reading-copy pre,.sw-guide-sections pre,.sw-flashcard-answer>div) { background: #111719; color: #dbe3e9; }
+  .learning-shell :is(.sw-inline-sources>span,.sw-flashcard-answer>div>p) { color: var(--learn-muted); }
+  .learning-shell :is(.sw-search,.sw-print-button,.sw-card-toolbar select,.sw-recall-field textarea,.sw-secondary-button) { background: #282f36; color: var(--learn-ink); border-color: #687582; }
+  .learning-shell :is(.sw-print-button,.sw-secondary-button):hover:not(:disabled) { background: #343d45; border-color: #a7b6c3; }
+  .learning-shell .sw-guide-list>button { background: var(--learn-panel); }
+  .learning-shell .sw-guide-list>button:hover { background: #262d33; }
+  .learning-shell .sw-guide-list>button.is-selected { background: #2a3523; border-color: #7b9b4f; }
+  .learning-shell .sw-guide-list>button.is-selected>strong { color: var(--learn-action); }
+  .learning-shell .sw-filter-toggle { background: #22292f; border-color: var(--learn-line); }
+  .learning-shell .sw-filter-toggle button { color: var(--learn-muted); }
+  .learning-shell .sw-filter-toggle button.is-selected { background: var(--learn-action); color: #17220a; box-shadow: none; }
+  .learning-shell input::placeholder,.learning-shell textarea::placeholder { color: #a5b0ba; opacity: 1; }
+}
+@media screen and (max-width:620px) {
+  .learning-shell .sw-tile-art { width: 100px; height: 100px; margin: 18px 0 0 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .learning-shell * { transition: none !important; }
+}

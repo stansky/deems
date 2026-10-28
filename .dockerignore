@@ -1,0 +1,17 @@
+node_modules
+.next
+.git
+.env*
+private
+backups
+test-results
+playwright-report
+*.tsbuildinfo
+
+.research
+
+.vercel
+.codex
+handoff
+*.zip
+docs

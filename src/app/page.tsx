@@ -1,0 +1,275 @@
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Activity as ActivityIcon, ArrowDown, ArrowLeft, ArrowRight, BookOpen, Brain, BriefcaseBusiness, Check, CheckCircle2, ChevronRight, Circle, Clock3, Code2, ExternalLink, FileText, Flag, Layers3, Lightbulb, Loader2, Menu, MessageSquare, MoreHorizontal, Pause, Play, Plus, Printer, RotateCcw, Search, Sparkles, Target, Timer, UserRound, X } from "lucide-react";
+import { roles, cheatSheets, flashcards, exercises, stories } from "@/data/prep";
+import type { Application, Exercise, WorkspaceState } from "@/lib/types";
+import { Badge, Button, Empty } from "@/components/ui";
+import CodeEditor from "@/components/code-editor";
+import DesignBoard from "@/components/design-board";
+import { ApplicationDocuments, RoleLibrary } from "@/components/documents";
+import AlgorithmLab from "@/components/algorithm-lab";
+import KnowledgeLibrary from "@/components/knowledge-library";
+import StudyWorkspace from "@/components/features/study/study-workspace";
+import "./learning-shell.css";
+import "./desk-navigation.css";
+import PrepLibrary, { type PrepCategory } from "@/components/features/prep/prep-library";
+import type { StudyTab } from "@/contracts/study";
+import { workspaceStateSchema, workspaceMutationSchema } from "@/contracts/workspace";
+import { targetStateSchema } from "@/contracts/targets";
+import TargetWorkspace from "@/components/target-workspace";
+import { careerStages, type CommandMeta } from "@/domains/career/contracts";
+import type { TargetsState } from "@/lib/target-types";
+import { useLocalDraft } from "@/components/use-local-draft";
+import { useCommandDraft } from "@/components/use-command-draft";
+import { CareerHistory } from "@/components/features/career/history";
+import { RevisionNote } from "@/components/revision-note";
+import { personalPrepResponseSchema, type PersonalStory } from "@/contracts/personal-prep";
+
+type View = "Preparation" | "Interviews" | "Today" | "Study" | "Practice" | "Algorithms" | "Reference" | "Applications" | "Experience";
+
+const navigation = [{ name: "Interviews", icon: Target }, { name: "Today", icon: Clock3 }, { name: "Study", icon: BookOpen }, { name: "Practice", icon: Code2 }, { name: "Algorithms", icon: Layers3 }, { name: "Reference", icon: FileText }, { name: "Applications", icon: BriefcaseBusiness }, { name: "Experience", icon: UserRound }] as const;
+const blank: WorkspaceState = { applications: [], reviews: [], sessions: [], activities: [], notes: {}, settings: {} };
+function newId() { const bytes = new Uint8Array(16); crypto.getRandomValues(bytes); return Array.from(bytes, b => b.toString(16).padStart(2, "0")).join(""); }
+const stages = careerStages;
+
+export default function InterviewDesk() {
+  const [view, setView] = useState<View>("Interviews");
+  const [prepCategory, setPrepCategory] = useState<PrepCategory>("Coding");
+  const [state, setState] = useState<WorkspaceState>(blank);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState("");
+  const [mobileMenu, setMobileMenu] = useState(false);
+  const [headerDate, setHeaderDate] = useState("");
+  useEffect(() => {
+    const refreshDate = () => setHeaderDate(new Date().toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }));
+    refreshDate();
+    window.addEventListener("focus", refreshDate);
+    return () => window.removeEventListener("focus", refreshDate);
+  }, []);
+  const [studyTab, updateStudyTab] = useState<StudyTab>("Courses");
+  function setStudyTab(tab: StudyTab) {
+    updateStudyTab(tab);
+    const url = new URL(window.location.href);
+    url.searchParams.set("format", tab.toLowerCase());
+    window.history.replaceState(null, "", url);
+  }
+  useEffect(() => {
+    const restoreView = () => {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("view") === "study") {
+        setView("Study");
+        const format = params.get("format");
+        updateStudyTab(format === "quizzes" ? "Quizzes" : format === "guides" ? "Guides" : format === "flashcards" ? "Flashcards" : "Courses");
+      } else if (params.get("view") === "preparation") {
+        setView("Preparation");
+        const category = params.get("category");
+        setPrepCategory(category === "System design" || category === "Behavioral" || category === "Management" ? category : "Coding");
+      } else {
+        const found = navigation.find(item => item.name.toLowerCase() === params.get("view"));
+        setView(found?.name ?? "Interviews");
+      }
+    };
+    restoreView();
+    window.addEventListener("popstate", restoreView);
+    return () => window.removeEventListener("popstate", restoreView);
+  }, []);
+  const [selectedGuide, setSelectedGuide] = useState(cheatSheets[0]?.id ?? "");
+  const [selectedExercise, setSelectedExercise] = useState(exercises[0]?.id ?? "");
+  const [selectedAlgorithm, setSelectedAlgorithm] = useState<string | undefined>();
+  const [selectedReference, setSelectedReference] = useState<string | undefined>();
+  const [selectedApplication, setSelectedApplication] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true); setError("");
+    try { const response = await fetch("/api/workspace", { cache: "no-store" }); if (!response.ok) throw new Error("The local database could not be reached. Your saved data has not been changed."); setState(workspaceStateSchema.parse(await response.json())); return true; }
+    catch (e) { setError(e instanceof Error ? e.message : "Could not load your workspace."); return false; }
+    finally { setLoading(false); }
+  }, []);
+  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { window.scrollTo({ top: 0, behavior: "instant" }); }, [view]);
+
+  async function mutate(action: string, data: unknown, meta?: CommandMeta) {
+    setSaving(true); setError(""); setSaved("");
+    try {
+      const response = await fetch("/api/workspace", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(workspaceMutationSchema.parse({ action, data, meta })) });
+      if (!response.ok) { const problem = await response.json().catch(() => ({})); if(response.status===409 || response.status===428) { const fresh=await fetch("/api/workspace",{cache:"no-store"}); if(fresh.ok)setState(workspaceStateSchema.parse(await fresh.json())); } throw new Error(problem.error || "Could not save to the local database. Please try again."); }
+      const next = workspaceStateSchema.parse(await response.json());
+      if (next.applications && next.sessions) setState(next); else { const refresh = await fetch("/api/workspace", { cache: "no-store" }); if (!refresh.ok) throw new Error("Saved, but could not refresh the workspace. Reload to verify."); setState(workspaceStateSchema.parse(await refresh.json())); }
+      setSaved("Saved locally"); return true;
+    } catch (e) { setError(e instanceof Error ? e.message : "Save failed."); return false; }
+    finally { setSaving(false); }
+  }
+
+  function navigate(next: View) {
+    const show=()=>{
+      setView(next);setMobileMenu(false);setSaved("");
+      const url = new URL(window.location.href);
+      if (next === "Study") url.searchParams.set("view", "study");
+      else { url.searchParams.set("view", next.toLowerCase()); url.searchParams.delete("format"); }
+      if (next !== "Preparation") url.searchParams.delete("category");
+      window.history.replaceState(null, "", url);
+    };
+    if(next==="Study"||next==="Applications"||next==="Experience"||next==="Algorithms") {
+      void load().then(loaded=>{if(loaded)show();});
+    } else show();
+  }
+  function openPractice(kind?: string) { if (kind) setSelectedExercise(exercises.find(e => e.kind === kind)?.id ?? selectedExercise); navigate("Practice"); }
+  function openStudy(id?: string) { if (id) setSelectedGuide(id); setStudyTab("Guides"); navigate("Study"); }
+  const activeApplication = state.applications.find(a => a.id === selectedApplication);
+  function openCategory(category: PrepCategory) {
+    setPrepCategory(category); navigate("Preparation");
+    const url = new URL(window.location.href); url.searchParams.set("category", category); window.history.replaceState(null, "", url);
+  }
+  function closeNavigation(event: React.MouseEvent<HTMLElement>) { event.currentTarget.closest("details")?.removeAttribute("open"); }
+  function library(tab: StudyTab) { setStudyTab(tab); navigate("Study"); }
+  const focused = view === "Study" || view === "Interviews" || view === "Preparation";
+
+  return <div className={`app-shell desk-shell ${focused ? "learning-shell" : ""}`}>
+    <aside className={`sidebar ${mobileMenu ? "sidebar-open" : ""}`}>
+      <a className="brand" href="#" onClick={e => { e.preventDefault(); navigate("Interviews"); }}><span className="brand-icon"><Brain size={22} strokeWidth={1.65} /></span><span>Deems</span></a>
+      <nav aria-label="Main navigation">{navigation.map(({ name, icon: Icon }) => <button key={name} className={`nav-item ${view === name ? "active" : ""}`} onClick={() => navigate(name)} aria-current={view === name ? "page" : undefined}><Icon size={18} /><span>{name}</span>{name === "Applications" && <span className="nav-count">{state.applications.length || roles.length}</span>}</button>)}</nav>
+      <div className="sidebar-bottom"><a className="export-link" href="/api/export" download><ArrowDown size={14} />Export workspace</a><div className="profile"><span className="profile-avatar">D</span><div><strong>Your workspace</strong><span>Personal workspace</span></div></div></div>
+    </aside>
+    {mobileMenu && <button aria-label="Close navigation" className="sidebar-scrim" onClick={() => setMobileMenu(false)} />}
+    <div className="main-shell">
+      <header className="learning-header desk-header">
+        <button className="learning-brand" onClick={() => navigate("Interviews")}><Brain size={27} strokeWidth={1.8} /><strong>Deems</strong></button>
+        <nav className="desk-navigation" aria-label="Workspace sections">
+          <button className={view === "Interviews" ? "desk-primary is-active" : "desk-primary"} aria-current={view === "Interviews" ? "page" : undefined} onClick={() => navigate("Interviews")}>Interview Prep</button>
+          <details><summary className={view === "Preparation" || view === "Practice" || view === "Algorithms" ? "is-active" : ""}>Prepare<ChevronRight size={13}/></summary><div className="desk-menu">{(["Coding", "System design", "Behavioral", "Management"] as PrepCategory[]).map(category => <button key={category} onClick={event => {closeNavigation(event);openCategory(category);}}>{category === "Management" ? "Management & communication" : category}</button>)}</div></details>
+          <details><summary className={view === "Study" || view === "Reference" ? "is-active" : ""}>Library<ChevronRight size={13}/></summary><div className="desk-menu">{(["Courses","Quizzes","Guides","Flashcards"] as StudyTab[]).map(tab => <button key={tab} onClick={event => {closeNavigation(event);library(tab);}}>{tab === "Flashcards" ? "Review" : tab}</button>)}<button onClick={event=>{closeNavigation(event);navigate("Reference");}}>Reference</button></div></details>
+          <details><summary>Records<ChevronRight size={13}/></summary><div className="desk-menu"><button onClick={event=>{closeNavigation(event);navigate("Applications");}}>Applications</button><button onClick={event=>{closeNavigation(event);navigate("Experience");}}>Experience & stories</button><button onClick={event=>{closeNavigation(event);navigate("Today");}}>Schedule</button><a href="/api/export" download>Export workspace</a></div></details>
+        </nav>
+      </header>
+      <main className={`main-content ${view === "Study" ? "study-main" : focused ? "prep-main" : ""}`}>
+        {error && <div className="notice notice-error" role="alert"><span>{error}</span><Button variant="ghost" onClick={load}>Retry connection</Button></div>}
+        <div className={`save-status ${saving || saved ? "is-visible" : ""}`} role="status">{saving ? <><Loader2 size={13} className="spin" />Saving...</> : saved ? <><Check size={13} />{saved}</> : null}</div>
+        {view === "Preparation" && <PrepLibrary category={prepCategory} onGuide={openStudy} onPractice={openPractice} onAlgorithms={()=>navigate("Algorithms")} onStories={()=>navigate("Experience")} onStudy={()=>library("Courses")} onReference={()=>navigate("Reference")}/>}
+        {view === "Interviews" && <TargetWorkspace workspace={state} onApplication={id => { setSelectedApplication(id); navigate("Applications"); }} onResource={resource => { if (resource.kind === "guide") openStudy(resource.id); else if (resource.kind === "exercise") { setSelectedExercise(resource.id); navigate("Practice"); } else if (resource.kind === "algorithm") { setSelectedAlgorithm(resource.id); navigate("Algorithms"); } else if (resource.kind === "reference") { setSelectedReference(resource.id); navigate("Reference"); } }} />}
+        {view === "Today" && <Today state={state} onPractice={openPractice} onStudy={openStudy} onNavigate={navigate} onApplication={id => { setSelectedApplication(id); navigate("Applications"); }} onReview={() => { setStudyTab("Flashcards"); navigate("Study"); }} />}
+        {view === "Study" && (state === blank ? <p className="learning-loading" role="status">{loading ? "Loading your learning progress…" : "Connect to your workspace to load saved progress."}</p> : <StudyWorkspace state={state} tab={studyTab} setTab={setStudyTab} selected={selectedGuide} setSelected={setSelectedGuide} mutate={mutate} saving={saving} />)}
+        {view === "Practice" && <Practice key={selectedExercise} exerciseId={selectedExercise} select={setSelectedExercise} state={state} mutate={mutate} saving={saving} />}
+        {view === "Algorithms" && <AlgorithmLab initialSelectedId={selectedAlgorithm} state={state} mutate={mutate} saving={saving} />}
+        {view === "Reference" && <KnowledgeLibrary initialSelectedId={selectedReference} />}
+        {view === "Applications" && <Applications state={state} selected={activeApplication} select={setSelectedApplication} mutate={mutate} saving={saving} loading={loading} />}
+        {view === "Experience" && <Background state={state} mutate={mutate} saving={saving} />}
+      </main>
+    </div>
+  </div>;
+}
+
+function PageHeading({ eyebrow, title, description, action }: { eyebrow?: string; title: string; description?: string; action?: React.ReactNode }) { return <div className="page-heading"><div>{eyebrow && <p className="eyebrow">{eyebrow}</p>}<h1>{title}</h1>{description && <p className="page-description">{description}</p>}</div>{action}</div>; }
+
+function Today({ state, onPractice, onStudy, onNavigate, onApplication, onReview }: { state: WorkspaceState; onPractice: (kind?: string) => void; onStudy: (id?: string) => void; onNavigate: (v: View) => void; onApplication: (id: string) => void; onReview: () => void }) {
+  const [schedule,setSchedule]=useState<TargetsState|null>(null);
+  const [scheduleError,setScheduleError]=useState("");
+  const [now,setNow]=useState(()=>Date.now());
+  useEffect(()=>{ let cancelled=false;
+    async function refresh(){ try {const response=await fetch("/api/targets",{cache:"no-store"});if(!response.ok)throw new Error("Schedule unavailable. Retry by reopening Today.");const data=targetStateSchema.parse(await response.json());if(!cancelled){setSchedule(data);setScheduleError("");setNow(Date.now());}}catch(error){if(!cancelled)setScheduleError(error instanceof Error?error.message:"Schedule unavailable.");}}
+    void refresh();window.addEventListener("focus",refresh);const timer=window.setInterval(()=>setNow(Date.now()),60000);
+    return()=>{cancelled=true;window.removeEventListener("focus",refresh);window.clearInterval(timer);};
+  },[]);
+  const upcoming=schedule?.interviews.filter(round=>round.status==="scheduled"&&round.scheduledAt&&Date.parse(round.scheduledAt)>=now).sort((a,b)=>Date.parse(a.scheduledAt!)-Date.parse(b.scheduledAt!)||a.id.localeCompare(b.id))[0];
+  const nextCompany=schedule?.companies.find(company=>company.id===upcoming?.companyId);
+  const nextRole=schedule?.roles.find(role=>role.id===upcoming?.roleId);
+
+  const due = flashcards.filter(card => { const review = state.reviews.find(item => item.cardId === card.id); return !review || new Date(review.dueAt).getTime() <= Date.now(); }).length;
+  const activeRoles = state.applications.slice().sort((a, b) => Number(b.roleId === "fde") - Number(a.roleId === "fde") || Number(b.company === "Ollama") - Number(a.company === "Ollama")).slice(0, 3);
+  const sourceRoles = [state.applications.find(a => a.roleId === "fde"), state.applications.find(a => a.company === "Ollama")].filter((a): a is Application => Boolean(a));
+  const prep = ["coding-collab", "agent-design", "math-patterns"].map(id => cheatSheets.find(guide => guide.id === id)).filter((guide): guide is typeof cheatSheets[number] => Boolean(guide));
+  return <div className="today-workbench">
+    <PageHeading title="Today" action={<Button variant="secondary" onClick={() => window.print()}><Printer size={15} />Print</Button>} />
+    <section className="interview-workbench">
+      <div className="interview-workbench-heading"><div><span className="section-kicker">{upcoming?"NEXT INTERVIEW":"PREPARATION"}</span><h2>{upcoming?nextCompany?.name??"Upcoming interview":"Keep preparing"}</h2><p>{upcoming?`${nextRole?.title??""} · ${upcoming.title}`:scheduleError||(!schedule?"Loading saved schedule...":"No upcoming interview is scheduled.")}</p></div>{upcoming?.scheduledAt&&<div className="interview-time"><strong>{new Date(upcoming.scheduledAt).toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit",timeZoneName:"short"})}</strong><span>{new Date(upcoming.scheduledAt).toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"})}</span></div>}</div>
+      <div className="interview-practice-options"><div><span className="workbench-icon"><Code2 size={21} /></span><div><h3>Live coding</h3><p>60 min · Python / JavaScript</p></div><Button onClick={() => onPractice("Live coding")}>Practice<ArrowRight size={15} /></Button></div><div><span className="workbench-icon"><Layers3 size={21} /></span><div><h3>System design</h3><p>60 min · Architecture & tradeoffs</p></div><Button variant="secondary" onClick={() => onPractice("System design")}>Practice<ArrowRight size={15} /></Button></div></div>
+      <div className="interview-open-questions"><Flag size={13} /><span>Confirm the role, session format, and tool permissions before a scheduled round.</span></div>
+    </section>
+    <div className="workbench-columns"><div><section className="workbench-section"><div className="section-heading"><h2>Review</h2><button className="text-button" onClick={() => onStudy()}>All guides<ArrowRight size={14} /></button></div><div className="workbench-list">{prep.map(guide => <button key={guide.id} onClick={() => onStudy(guide.id)}><BookOpen size={17} /><span><strong>{guide.title}</strong>{guide.category !== guide.title && <small>{guide.category}</small>}</span><ChevronRight size={15} /></button>)}<button onClick={onReview}><Layers3 size={17} /><span><strong>Flashcards</strong><small>{due} due</small></span><ChevronRight size={15} /></button><button onClick={() => onNavigate("Experience")}><MessageSquare size={17} /><span><strong>Project stories</strong><small>{stories.length} from your resume</small></span><ChevronRight size={15} /></button></div></section><section className="workbench-section practice-history"><div className="section-heading"><h2>Recent practice</h2><span className="small muted">{state.sessions.length} saved</span></div>{state.sessions.length ? <div className="workbench-list">{state.sessions.slice(0, 2).map(session => { const exercise = exercises.find(item => item.id === session.exerciseId); return <button key={session.id} onClick={() => onPractice(exercise?.kind)}><CheckCircle2 size={17} /><span><strong>{exercise?.title ?? "Practice session"}</strong><small>{session.mode} · {Math.floor(session.elapsed / 60)} min</small></span><span className="session-date">{new Date(session.completedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span></button>; })}</div> : <p className="workbench-empty">No saved sessions yet.</p>}</section></div>
+    <div><section className="workbench-section"><div className="section-heading"><h2>Applications</h2><button className="text-button" onClick={() => onNavigate("Applications")}>View all {state.applications.length}<ArrowRight size={14} /></button></div><div className="workbench-list application-shortlist">{activeRoles.map(application => <button key={application.id} onClick={() => onApplication(application.id)}><span className="company-avatar">{application.company[0]}</span><span><strong>{application.company}</strong><small>{application.title}</small></span><ChevronRight size={15} /></button>)}</div></section><section className="workbench-section"><div className="section-heading"><h2>Role sources</h2><span className="small muted">{state.documents?.length ?? 0} saved</span></div><div className="workbench-list">{sourceRoles.map(application => { const count = (state.documents ?? []).filter(document => document.applicationId === application.id).length; return <button key={application.id} onClick={() => onApplication(application.id)}><FileText size={17} /><span><strong>{application.company}</strong><small>{count} {count === 1 ? "source" : "sources"} · {state.activities.filter(activity => activity.applicationId === application.id).length} updates</small></span><ChevronRight size={15} /></button>; })}</div></section></div></div>
+  </div>;
+}
+
+function Practice({ exerciseId, select, state, mutate, saving }: { exerciseId: string; select: (s: string) => void; state: WorkspaceState; mutate: (a: string, d: unknown, meta?: CommandMeta) => Promise<boolean>; saving: boolean }) {
+  const exercise = exercises.find(e => e.id === exerciseId) ?? exercises[0];
+  const [mode, setMode] = useState("Coach");
+  const [running, setRunning] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const [hints, setHints] = useState(0);
+  const [solution, setSolution] = useState(false);
+  const [solutionSeen, setSolutionSeen] = useState(false);
+  const [notes, setNotes] = useState("");
+  const [language, setLanguage] = useState<"python" | "javascript">("python");
+  const [code, setCode] = useState("");
+  const [draftReady, setDraftReady] = useState(false);
+  const [coachUsed, setCoachUsed] = useState(false);
+  const starter = exercise?.kind === "System design" ? "" : exercise?.languages?.[language]?.starter ?? exercise?.starter ?? "";
+  const referenceSolution = exercise?.languages?.[language]?.solution ?? exercise?.solution;
+  const draftKey = `interview-draft-${exerciseId}-${exercise?.kind === "System design" ? "design" : language}`;
+  const [selfReview, setSelfReview] = useState("");
+  const [savedSession, setSavedSession] = useState(false);
+  const [checks, setChecks] = useState<string[]>([]);
+  const startRef = useRef<number | null>(null);
+  useEffect(() => { setDraftReady(false); setRunning(false); const raw = localStorage.getItem(draftKey); let d: Record<string, string | number | boolean> = {}; if (raw) { try { d = JSON.parse(raw); } catch { /* Start fresh when a draft cannot be read. */ } } setNotes(String(d.notes ?? "")); setCode(String(d.code ?? starter)); setSelfReview(String(d.selfReview ?? "")); setElapsed(Number(d.elapsed ?? 0)); setSavedSession(false); setSolution(false); setHints(Number(d.hints ?? 0)); setSolutionSeen(Boolean(d.solutionSeen)); setCoachUsed(Boolean(d.coachUsed)); setMode(String(d.mode ?? "Coach")); setDraftReady(true); }, [draftKey, starter]);
+  useEffect(() => { if (!running) return; startRef.current = Date.now() - elapsed * 1000; const timer = window.setInterval(() => { const next = Math.floor((Date.now() - (startRef.current ?? Date.now())) / 1000); setElapsed(next); if (next >= (exercise?.duration ?? 60) * 60) setRunning(false); }, 500); return () => window.clearInterval(timer); }, [running, exercise?.duration]); // elapsed is anchored when the timer starts.
+  useEffect(() => { if (!draftReady) return; const persist = () => localStorage.setItem(draftKey, JSON.stringify({ notes, code, selfReview, elapsed, hints, solutionSeen, coachUsed, mode })); const timeout = window.setTimeout(persist, 250); return () => { window.clearTimeout(timeout); persist(); }; }, [draftReady, draftKey, notes, code, selfReview, elapsed, hints, solutionSeen, coachUsed, mode]);
+  if (!exercise) return <Empty title="No exercises yet">Practice exercises will appear here.</Empty>;
+  const remaining = Math.max(0, exercise.duration * 60 - elapsed);
+  async function finish() { setRunning(false); const ok = await mutate("session", { id: newId(), exerciseId: exercise.id, mode, notes, code, elapsed, completedAt: new Date().toISOString(), selfReview: `Language: ${exercise.kind === "System design" ? "System design" : language}. Hints revealed: ${hints}. Reference solution revealed: ${solutionSeen ? "yes" : "no"}. Coach assistance used: ${coachUsed ? "yes" : "no"}.\n${checks.length ? `Checked: ${checks.join("; ")}\n` : ""}${selfReview}` }); if (ok) setSavedSession(true); }
+  return <><PageHeading title="Practice" /><div className="practice-layout"><aside className="exercise-index"><p className="nav-section-label">CHOOSE A SESSION</p>{exercises.map(e => <button key={e.id} className={e.id === exercise.id ? "selected" : ""} onClick={() => { if (running) setRunning(false); select(e.id); }}><span className="exercise-kind">{e.kind === "System design" ? <Layers3 size={16} /> : <Code2 size={16} />}{e.kind}</span><strong>{e.title}</strong><span className="muted small">{e.duration} min<ChevronRight size={14} /></span></button>)}</aside><div className="practice-content"><div className="session-toolbar"><div className="mode-toggle" aria-label="Practice mode">{["Coach", "Mock"].map(m => <button key={m} className={m === mode ? "selected" : ""} disabled={running} onClick={() => setMode(m)}>{m === "Coach" ? <Lightbulb size={14} /> : <Target size={14} />}{m}</button>)}</div>{exercise.kind !== "System design" && <select className="language-select" aria-label="Coding language" value={language} disabled={running} onChange={e => { setDraftReady(false); setLanguage(e.target.value as "python" | "javascript"); }}><option value="python">Python</option><option value="javascript">JavaScript</option></select>}<div className={`timer ${remaining === 0 ? "timer-ended" : ""}`}><Clock3 size={17} /><span>{String(Math.floor(remaining / 60)).padStart(2, "0")}:{String(remaining % 60).padStart(2, "0")}</span><button className="icon-button" aria-label={running ? "Pause timer" : "Start timer"} onClick={() => setRunning(!running)} disabled={remaining === 0}>{running ? <Pause size={16} /> : <Play size={16} />}</button><button className="icon-button" aria-label="Reset timer" onClick={() => { setRunning(false); setElapsed(0); }}><RotateCcw size={15} /></button></div></div><article className="exercise-card"><div className="exercise-title"><Badge tone="blue">{exercise.kind}</Badge><span className="muted small">Suggested practice prompt</span><h2>{exercise.title}</h2><p>{exercise.description}</p></div><div className="exercise-section"><h3>Requirements</h3><ul className="requirements">{exercise.requirements.map(r => <li key={r}><Circle size={12} />{r}</li>)}</ul></div><div className="phase-strip">{exercise.phases.map((p, i) => <div key={p.label}><span>{String(i + 1).padStart(2, "0")}</span><strong>{p.label}</strong><small>{p.minutes} min</small></div>)}</div><div className="exercise-section"><label className="field-label" htmlFor="practice-notes">{exercise.kind === "System design" ? "Your design and tradeoffs" : "Clarifications and approach"}</label><textarea id="practice-notes" className="notes-textarea" placeholder={exercise.kind === "System design" ? "Users and requirements\nCore data flow\nData model\nTradeoffs and failure cases" : "What would you clarify? What is the simplest useful solution?"} value={notes} onChange={e => { setNotes(e.target.value); setSavedSession(false); }} /><p className="field-help">Draft saved in this browser. Finish the session to save to your database.</p></div>{exercise.kind !== "System design" && <div className="exercise-section"><div className="code-heading"><label className="field-label" htmlFor="practice-code">Your implementation</label><span>Scratchpad · code is not executed</span></div>{draftReady && <CodeEditor value={code} onChange={value => { setCode(value); setSavedSession(false); }} language={language} />}</div>}{exercise.kind === "System design" && <div className="exercise-section"><h3>Sketch the system</h3><p className="field-help">Use the board for components, data flow, and failure boundaries. The scene is saved with your session.</p>{draftReady && <DesignBoard value={code} onChange={value => { setCode(value); setSavedSession(false); }} />}</div>}{mode === "Coach" && <div className="exercise-section hint-section"><div className="inline-section-heading"><h3><Lightbulb size={17} />Hints</h3><Button variant="secondary" onClick={() => { setCoachUsed(true); setHints(h => Math.min(h + 1, exercise.hints.length)); }} disabled={hints >= exercise.hints.length}>Reveal hint{hints < exercise.hints.length && <span>{hints + 1}/{exercise.hints.length}</span>}</Button></div>{exercise.hints.slice(0, hints).map((h, i) => <div className="hint" key={h}><span>{i + 1}</span><p>{h}</p></div>)}</div>}<div className="exercise-section"><h3>Self assessment</h3><div className="rubric-list">{exercise.rubric.map(r => <label key={r}><input type="checkbox" checked={checks.includes(r)} onChange={e => setChecks(c => e.target.checked ? [...c, r] : c.filter(x => x !== r))} /><span>{r}</span></label>)}</div><textarea aria-label="Self assessment" className="notes-textarea short-textarea" value={selfReview} onChange={e => { setSelfReview(e.target.value); setSavedSession(false); }} placeholder="What went well? Where did you get stuck? What is one thing to try next time?" /></div>{referenceSolution && (mode === "Coach" || savedSession) && <div className="exercise-section solution-section"><button className="disclosure-button" onClick={() => { setSolution(!solution); setSolutionSeen(true); setCoachUsed(true); }}><BookOpen size={17} /><span>{solution ? "Hide" : "Reveal"} a reference solution</span><ChevronRight size={16} className={solution ? "rotate" : ""} /></button>{solution && <div className="reference-solution"><p className="field-help">One possible approach, not the only correct answer.</p><pre>{referenceSolution}</pre></div>}</div>}<div className="exercise-footer"><span className="muted small">{state.sessions.filter(s => s.exerciseId === exercise.id).length} previous attempts saved</span><Button onClick={finish} disabled={saving || savedSession}>{saving ? <Loader2 size={16} className="spin" /> : <CheckCircle2 size={16} />}{savedSession ? "Session saved" : "Finish & save session"}</Button></div></article><section className="saved-sessions"><h3>Previous attempts</h3>{state.sessions.filter(s => s.exerciseId === exercise.id).slice().sort((a, b) => b.completedAt.localeCompare(a.completedAt)).map(s => <details key={s.id}><summary><span>{new Date(s.completedAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</span><span>{s.mode} · {Math.floor(s.elapsed / 60)} min</span></summary><h4>Approach and notes</h4><p>{s.notes || "No notes saved."}</p><h4>Self assessment</h4><p>{s.selfReview || "No reflection saved."}</p>{s.code && exercise.kind !== "System design" && <pre>{s.code}</pre>}{s.code && exercise.kind === "System design" && <Button variant="secondary" onClick={() => { setCode(s.code); setNotes(s.notes); setSavedSession(false); }}>Load this diagram into the board</Button>}</details>)}{!state.sessions.some(s => s.exerciseId === exercise.id) && <p className="small muted">Finish a session to keep your work and reflection here.</p>}</section></div></div></>;
+}
+
+function Applications({ state, selected, select, mutate, saving, loading }: { state: WorkspaceState; selected?: Application; select: (s: string | null) => void; mutate: (a: string, d: unknown, meta?: CommandMeta) => Promise<boolean>; saving: boolean; loading: boolean }) {
+  const [newApplicationId,setNewApplicationId]=useState(newId);
+  const createCommand=useCommandDraft(`new-application:${newApplicationId}`,0);
+
+  const [applicationTab, setApplicationTab] = useState<"Roles" | "Role library">("Roles");
+  const [filter, setFilter] = useState("All stages");
+  const [adding, setAdding] = useState(false);
+  const [company, setCompany] = useState("");
+  const [title, setTitle] = useState("");
+  async function addApplication(e: React.FormEvent) { e.preventDefault(); if (!company.trim() || !title.trim()) return; const id = newApplicationId; const data={ id, roleId: id, company: company.trim(), title: title.trim(), stage: "Interested", nextAction: "Review the role and decide next steps", notes: "" }; if (await mutate("application", data, createCommand.meta("application",data))) { createCommand.commit(1);setNewApplicationId(newId());setAdding(false); setCompany(""); setTitle(""); select(id); } }
+  const [search, setSearch] = useState("");
+  const filtered = state.applications.filter(a => (filter === "All stages" || a.stage === filter) && `${a.title} ${a.company}`.toLowerCase().includes(search.toLowerCase()));
+  return <><PageHeading title="Applications" action={<Button onClick={() => setAdding(!adding)}><Plus size={15} />Add a role</Button>} />{adding && <form className="add-application-form" onSubmit={addApplication}><label className="field-label">Company<input required autoFocus value={company} onChange={e => setCompany(e.target.value)} placeholder="Company name" /></label><label className="field-label">Role<input required value={title} onChange={e => setTitle(e.target.value)} placeholder="Role title" /></label><Button disabled={saving} type="submit">Save role<Check size={15} /></Button><Button variant="ghost" type="button" onClick={() => setAdding(false)}>Cancel</Button></form>}<div className="tab-bar" role="tablist" aria-label="Application views">{(["Roles", "Role library"] as const).map(tab => <button key={tab} role="tab" aria-selected={applicationTab === tab} className={applicationTab === tab ? "selected" : ""} onClick={() => setApplicationTab(tab)}>{tab === "Roles" ? <BriefcaseBusiness size={16} /> : <BookOpen size={16} />}{tab}<span>{tab === "Roles" ? state.applications.length : state.documents?.length ?? 0}</span></button>)}</div>{applicationTab === "Role library" ? <RoleLibrary state={state} mutate={mutate} saving={saving} /> : <><div className="list-toolbar"><label className="search-input"><Search size={16} /><input aria-label="Search applications" value={search} onChange={e => setSearch(e.target.value)} placeholder="Find a company or role..." /></label><select aria-label="Filter by application stage" value={filter} onChange={e => setFilter(e.target.value)}><option>All stages</option>{stages.map(s => <option key={s}>{s}</option>)}</select></div><div className="application-table"><div className="table-heading"><span>ROLE / COMPANY</span><span>STAGE</span><span>NEXT ACTION</span><span /></div>{filtered.map(a => <button key={a.id} className="application-row" onClick={() => select(a.id)}><span className="application-role"><span className="company-avatar">{a.company.slice(0, 1)}</span><span><strong>{a.title}</strong><span>{a.company}</span></span></span><span><Badge tone={a.stage === "Interviewing" ? "blue" : a.stage === "Offer" ? "green" : "neutral"}>{a.stage}</Badge></span><span className="next-action">{a.nextAction || "Choose your next action"}</span><ChevronRight size={16} /></button>)}{!filtered.length && <Empty title={loading ? "Loading your workspace" : "No roles match"}>{loading ? "Connecting to your local database." : "Try another search or stage."}</Empty>}</div></>}{selected && <ApplicationDetail key={selected.id} application={selected} state={state} close={() => select(null)} mutate={mutate} saving={saving} />}</>;
+}
+
+function ApplicationDetail({ application, state, close, mutate, saving }: { application: Application; state: WorkspaceState; close: () => void; mutate: (a: string, d: unknown, meta?: CommandMeta) => Promise<boolean>; saving: boolean }) {
+  const {draft,setDraft,clearDraft}=useLocalDraft(`application:${application.id}`,{stage:application.stage,next:application.nextAction,notes:application.notes});
+  const {stage,next,notes}=draft;
+  const setStage=(stage:string)=>{setDraft(d=>({...d,stage}));setApplicationSaved(false);};
+  const setNext=(next:string)=>{setDraft(d=>({...d,next}));setApplicationSaved(false);};
+  const setNotes=(notes:string)=>{setDraft(d=>({...d,notes}));setApplicationSaved(false);};
+  const command=useCommandDraft(`application:${application.id}`,application.revision??0);
+  const [commandError,setCommandError]=useState("");
+  const [applicationSaved,setApplicationSaved]=useState(false);
+  async function saveApplication(){setCommandError("");setApplicationSaved(false);try{const data={id:application.id,roleId:application.roleId,company:application.company,title:application.title,stage,nextAction:next,notes};const meta=command.meta("application",data);if(await mutate("application",data,meta)){command.commit(meta.expectedRevision+1);clearDraft();setApplicationSaved(true);}else{setCommandError("Save not confirmed. Your draft is still here.");}}catch(e){setCommandError(e instanceof Error?e.message:"Could not save your draft.");}}
+  const [message, setMessage] = useState("");
+  const role = roles.find(r => r.id === application.roleId);
+  const dialogRef = useRef<HTMLElement>(null);
+  const timeline = state.activities.filter(a => a.applicationId === application.id).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  useEffect(() => { const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") close(); if (e.key === "Tab") { const nodes = dialogRef.current?.querySelectorAll<HTMLElement>('a[href],button:not([disabled]),input,select,textarea'); if (!nodes?.length) return; const first = nodes[0]; const last = nodes[nodes.length - 1]; if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); } else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); } } }; document.addEventListener("keydown", onKey); return () => document.removeEventListener("keydown", onKey); }, [close]);
+  async function addNote() { if (!message.trim()) return; if (await mutate("activity", { id: newId(), applicationId: application.id, kind: "Note", body: message.trim(), createdAt: new Date().toISOString() })) setMessage(""); }
+  return <div className="drawer-overlay" onClick={close}><section ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="role-title" className="application-drawer" onClick={e => e.stopPropagation()}><div className="drawer-top"><span className="small muted">APPLICATION DETAILS</span><button autoFocus className="icon-button" aria-label="Close application details" onClick={close}><X size={20} /></button></div><Badge>{application.company}</Badge><h2 id="role-title">{application.title}</h2>{role && <p className="drawer-summary">{role.summary}</p>}<div className="form-grid"><label className="field-label">Stage<select value={stage} onChange={e => setStage(e.target.value)}>{stages.map(s => <option key={s}>{s}</option>)}</select></label><label className="field-label">Next action<input value={next} onChange={e => setNext(e.target.value)} placeholder="What happens next?" /></label></div><label className="field-label">Application notes<textarea className="notes-textarea short-textarea" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Links, context, or questions to remember..." /></label>{commandError&&<p role="alert">{commandError}</p>}{(command.reviewRequired||command.baseRevision!==(application.revision??0))&&<div className="notice"><p>Review the saved version before applying your draft.</p><p>Saved stage: {application.stage}</p><p>Saved next action: {application.nextAction||"None"}</p><p style={{whiteSpace:"pre-wrap"}}>Saved notes: {application.notes||"None"}</p><Button variant="secondary" onClick={()=>command.acceptRevision(application.revision??0)}>Use current revision for my draft</Button></div>}<Button disabled={saving} onClick={saveApplication}>Save application<Check size={15} /></Button>{applicationSaved&&<p role="status">Saved locally</p>}<details className="target-history-section"><summary>Saved application history</summary><CareerHistory revisions={state.careerRevisions??[]} entityType="candidacy" entityId={`application:${application.id}`}/></details>{role && <div className="role-context"><h3>What this role emphasizes</h3><ul>{role.priorities.map(p => <li key={p}>{p}</li>)}</ul><h3>Experience to connect</h3><ul>{role.fit.map(f => <li key={f}>{f}</li>)}</ul><h3>Areas to prepare</h3><ul>{role.gaps.map(g => <li key={g}>{g}</li>)}</ul><a className="source-link" href={role.source.url} target="_blank" rel="noreferrer">{role.source.title}<ExternalLink size={13} /></a></div>}<ApplicationDocuments application={application} state={state} mutate={mutate} saving={saving} /><div className="conversation-section"><h3><MessageSquare size={17} />Conversations & updates</h3><textarea aria-label="New conversation note" className="notes-textarea short-textarea" placeholder="Paste a message or add a dated conversation note..." value={message} onChange={e => setMessage(e.target.value)} /><Button variant="secondary" disabled={saving || !message.trim()} onClick={addNote}><Plus size={15} />Add update</Button><div className="timeline">{timeline.map(a => <div className="timeline-entry" key={a.id}><span className="timeline-dot" /><div><span className="small muted">{new Date(a.createdAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} · {a.kind}</span><p>{a.body}</p></div></div>)}{!timeline.length && <p className="small muted">Your conversation history will appear here.</p>}</div></div></section></div>;
+}
+
+function Background({ state, mutate, saving }: { state: WorkspaceState; mutate: (a: string, d: unknown, meta?: CommandMeta) => Promise<boolean>; saving: boolean }) {
+  const [personalStories, setPersonalStories] = useState<PersonalStory[]>(stories);
+  const [selected, setSelected] = useState(stories[0]?.id ?? "");
+  useEffect(() => {
+    let active = true;
+    void fetch("/api/personal-prep")
+      .then(response => response.ok ? response.json() : null)
+      .then(payload => {
+        if (!active || payload === null) return;
+        const parsed = personalPrepResponseSchema.safeParse(payload);
+        if (parsed.success) setPersonalStories(parsed.data.stories);
+      })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, []);
+  const story = personalStories.find(s => s.id === selected) ?? personalStories[0];
+  return <><PageHeading title="Experience" action={<div className="background-links"><a className="button button-secondary" href="/api/resume" target="_blank" rel="noreferrer"><FileText size={15} />Original resume</a></div>} /><div className="background-layout"><aside className="story-index">{personalStories.map(s => <button key={s.id} className={selected === s.id ? "selected" : ""} onClick={() => setSelected(s.id)}><span>{s.company}</span><strong>{s.title}</strong><ChevronRight size={15} /></button>)}</aside>{story && <article className="story-article"><Badge tone="blue">{story.company}</Badge><h2>{story.title}</h2><p className="story-summary">{story.summary}</p><h3>Talking points</h3><ul className="story-points">{story.talkingPoints.map((p, i) => <li key={p}><span>{i + 1}</span>{p}</li>)}</ul><div className="followup-block"><h3>Follow-up questions</h3>{story.followUps.map(f => <p key={f}><ChevronRight size={14} />{f}</p>)}</div><RevisionNote key={story.id} noteKey={`story:${story.id}`} value={state.notes[`story:${story.id}`]??""} revision={state.noteRevisions?.[`story:${story.id}`]??0} revisions={state.careerRevisions??[]} saving={saving} mutate={mutate}/><p className="story-source"><FileText size={13} />Source: {story.source}</p></article>}</div></>;
+}
