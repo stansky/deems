@@ -129,7 +129,7 @@
 .deems-login-password-wrap > input {
   width: 100%;
   min-width: 0;
-  height: 41px;
+  height: 44px;
   padding: 0 12px;
   border: 1px solid var(--login-line);
   border-radius: 5px;
@@ -163,10 +163,10 @@
 .deems-login-reveal {
   position: absolute;
   top: 50%;
-  right: 7px;
+  right: 0;
   display: grid;
-  width: 30px;
-  height: 30px;
+  width: 44px;
+  height: 44px;
   place-items: center;
   transform: translateY(-50%);
   border: 0;
@@ -190,7 +190,7 @@
 
 .deems-login-submit {
   display: flex;
-  min-height: 42px;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
   gap: 8px;
@@ -229,6 +229,7 @@
 
 .deems-login-back {
   justify-self: center;
+  min-height: 44px;
   margin-top: 1px;
   padding: 2px 7px 0;
   border: 0;
@@ -237,6 +238,9 @@
   cursor: pointer;
   font-size: 11px;
 }
+
+.deems-login-card-registration { padding-bottom: 24px; }
+.deems-login-field small { font-size: 12px; }
 
 .deems-login-back:hover:not(:disabled) {
   color: var(--login-lime);
@@ -259,6 +263,13 @@
   .deems-login-card {
     padding: 25px 21px 0;
   }
+
+  .deems-login-card-registration { padding-bottom: 20px; }
+  .deems-login-field { font-size: 13px; }
+  .deems-login-field > input,
+  .deems-login-password-wrap > input { font-size: 16px; }
+  .deems-login-submit,
+  .deems-login-back { font-size: 14px; }
 
   .deems-login-footer {
     margin-right: -21px;

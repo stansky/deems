@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { Brain, Eye, EyeOff, LoaderCircle, ShieldCheck } from "lucide-react";
+import { Brain, Eye, EyeOff, LoaderCircle } from "lucide-react";
 import "./login.css";
 import { Registration } from "./registration";
 import { notifyAccountChange } from "@/components/workspace-client";
@@ -163,8 +163,9 @@ export default function LoginPage() {
         ? "Choose a new password"
         : "Sign in to Deems";
 
+  const accountForm = screen === "signup" || screen === "confirm" || screen === "recover";
   return <main className="deems-login-page">
-    <section className="deems-login-card" aria-labelledby="login-title">
+    <section className={`deems-login-card${accountForm ? " deems-login-card-registration" : ""}`} aria-labelledby="login-title">
       <header className="deems-login-brand">
         <span className="deems-login-mark"><Brain size={25} strokeWidth={1.8} aria-hidden="true" /></span>
         <span className="deems-login-wordmark">Deems</span>
@@ -172,13 +173,10 @@ export default function LoginPage() {
 
       {screen === "signup" || screen === "confirm" || screen === "recover" ? <Registration key={screen} initialMode={screen} initialEmail={email} onBack={returnToSignIn} onComplete={(address, message) => { setEmail(address); returnToSignIn(); setNotice(message); }} /> : <>
       <div className="deems-login-heading">
-        <span className="deems-login-kicker"><ShieldCheck size={13} aria-hidden="true" /> PRIVATE WORKSPACE</span>
         <h1 id="login-title">{title}</h1>
-        <p>{screen === "signin"
-          ? "Sign in to continue to your career preparation workspace."
-          : challenge === "NEW_PASSWORD_REQUIRED"
+        {screen !== "signin" && <p>{challenge === "NEW_PASSWORD_REQUIRED"
             ? "Your account needs a new password before you can continue."
-            : `Enter the verification code for ${email}.`}</p>
+            : `Enter the verification code for ${email}.`}</p>}
       </div>
 
       {notice && <p className="deems-login-notice" role="status">{notice}</p>}
@@ -236,9 +234,9 @@ export default function LoginPage() {
       </form>}
       </>}
 
-      <footer className="deems-login-footer">
+      {!accountForm && <footer className="deems-login-footer">
         <span>{sessionChecked ? "Your workspace is private to your account" : "Checking sign-in session"}</span>
-      </footer>
+      </footer>}
     </section>
   </main>;
 }
