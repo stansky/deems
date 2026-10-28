@@ -236,8 +236,8 @@ export default function LoginPage() {
         <span>{sessionChecked ? "Your workspace is private to your account" : "Checking sign-in session"}</span>
       </footer>}
     </section>
-    <aside className="deems-login-art-panel" aria-label="An illustrated learning studio">
-      <img className="deems-login-scene" src="/brand/learning-studio.webp" alt="" aria-hidden="true" width="1024" height="1536" fetchPriority="high" />
+    <aside className="deems-login-art-panel" aria-label="An illustrated San Francisco apartment study space">
+      <img className="deems-login-scene" src="/brand/presidio-study.webp" alt="" aria-hidden="true" width="1024" height="1536" fetchPriority="high" />
       <div className="deems-login-scene-copy"><p>Your personal learning space</p><h2>Make room for<br />what’s next.</h2></div>
     </aside>
   </main>;
