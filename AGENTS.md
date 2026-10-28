@@ -18,3 +18,5 @@ Career preparation and learning workspace. Production: https://deems.app. Hosted
 See docs/deployment.md for operations. Historical local instructions remain in private/legacy-source/AGENTS.md.
 
 Brand direction: use the owner-supplied Deems archive assets and the reference lock in docs/deems-brand-integration.md. Provided mascot/wordmark SVGs are allowed; use Lucide for functional icons and do not draw replacement SVG art. Motion must honor reduced-motion preferences.
+
+Current product direction: personal LMS with a light default. Home is the welcome learning dashboard; coding, AI, frameworks, team management and interview skills are peer areas. Career pipelines are secondary tools. This supersedes earlier dark-theme and interview-first requirements.

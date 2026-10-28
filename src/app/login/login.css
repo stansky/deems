@@ -1,13 +1,13 @@
 .deems-login-page {
-  --login-bg: #101c2b;
-  --login-surface: #182638;
-  --login-surface-raised: #25364a;
-  --login-line: #3c5067;
-  --login-ink: #fff9f2;
-  --login-muted: #b8c4d1;
-  --login-dim: #a0b0c1;
+  --login-bg: #f5f6f8;
+  --login-surface: #ffffff;
+  --login-surface-raised: #edf1f5;
+  --login-line: #d8dee6;
+  --login-ink: #101c2b;
+  --login-muted: #536174;
+  --login-dim: #68758a;
   --login-lime: #ff7a3d;
-  --login-error: #ff817a;
+  --login-error: #a52e26;
   display: grid;
   width: 100%;
   min-height: 100svh;
@@ -147,13 +147,14 @@
 
 .deems-login-notice {
   color: var(--login-muted);
-  background: #203047;
+  border-color: #c8d9ed;
+  background: #edf5ff;
 }
 
 .deems-login-error {
-  border-color: #653d3a;
-  color: #ffaaa3;
-  background: #2a1d1b;
+  border-color: #e7b8b3;
+  color: #8f241e;
+  background: #fff1ef;
 }
 
 .deems-login-form {
@@ -165,7 +166,7 @@
   display: grid;
   min-width: 0;
   gap: 7px;
-  color: #d6deea;
+  color: #29384b;
   font-size: 11px;
   font-weight: 550;
 }
@@ -179,7 +180,7 @@
   border: 1px solid var(--login-line);
   border-radius: 5px;
   outline: none;
-  background: #101c2b;
+  background: #ffffff;
   color: var(--login-ink);
   font-family: inherit;
   font-size: 13px;
@@ -294,7 +295,7 @@
 .deems-login-footer {
   margin: 26px -36px -24px;
   padding: 15px 36px;
-  border-top: 1px solid #3c5067;
+  border-top: 1px solid var(--login-line);
   color: var(--login-dim);
   font-size: 10px;
   text-align: center;
@@ -356,3 +357,13 @@
 @media (max-width: 760px) {
   .deems-login-brand .deems-brand { justify-content: flex-start; }
 }
+
+/* The auth surface is intentionally light even when the learning workspace is dark. */
+.deems-login-page .deems-brand-wordmark-ink { display: block !important; }
+.deems-login-page .deems-brand-wordmark-light { display: none !important; }
+.deems-login-page .deems-brand { color: #101c2b; }
+.deems-login-card { background: #ffffff; }
+.deems-login-art-panel { background: #fff9f2; }
+.deems-login-art-well { background: #f8ede2; }
+
+@media(min-width:761px){.deems-login-card{width:100%;max-width:none;padding-left:max(36px,calc((50vw - 408px)/2));padding-right:max(36px,calc((50vw - 408px)/2));background:#fff}.deems-login-footer{margin-left:0;margin-right:0;padding-left:0;padding-right:0}}
