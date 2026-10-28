@@ -11,7 +11,7 @@ import {
 import { cheatSheets, flashcards } from "@/data/prep";
 import { studyCourses } from "@/data/study-courses";
 import {
-  readStudyProgress, studyProgressKey, studyProgressSchema,
+  readStudyProgress, studyProgressKey, studyProgressSchema, studyRouteKey, type StudyLaunch,
   studyCheckResultSchema, type StudyCheckResult, type StudyCourse, type StudyLesson, type StudyProgress, type StudyTab,
 } from "@/contracts/study";
 import type { WorkspaceState } from "@/lib/types";
@@ -22,6 +22,7 @@ import "./study-combined.css";
 import { BrandState } from "@/components/brand";
 
 type Props = {
+  initialRoute?: StudyLaunch | null;
   state: WorkspaceState;
   tab: StudyTab;
   setTab: (tab: StudyTab) => void;
@@ -46,7 +47,7 @@ type LessonDraft = {
 
 const blankDraft = (courseId = "", lessonId = ""): LessonDraft => ({ version: 1, courseId, lessonId, quizOnly: false, sectionIndex: 0, checkIndex: 0, inChecks: false, results: [], selectedOptionId: null, feedback: "idle" });
 const draftStorageKey = (lessonId: string, mode: "course" | "quiz" = "course") => `interview-study-course-draft-v1:${lessonId}${mode === "quiz" ? ":quiz" : ""}`;
-const routeStorageKey = "interview-study-course-route-v1";
+const routeStorageKey = studyRouteKey;
 const themeLabels: Record<StudyCourse["theme"], string> = {
   blue: "Systems",
   purple: "Security",
@@ -54,7 +55,7 @@ const themeLabels: Record<StudyCourse["theme"], string> = {
   gold: "Coding",
 };
 
-export default function StudyWorkspace({ state, tab, setTab, selected, setSelected, mutate, saving }: Props) {
+export default function StudyWorkspace({ initialRoute, state, tab, setTab, selected, setSelected, mutate, saving }: Props) {
   const [openCourseId, setOpenCourseId] = useState("");
   const [activeLessonId, setActiveLessonId] = useState("");
   const [lessonLaunchMode, setLessonLaunchMode] = useState<"course" | "quiz">("course");
@@ -89,8 +90,11 @@ export default function StudyWorkspace({ state, tab, setTab, selected, setSelect
 
   useEffect(() => {
     try {
-      const saved = workspaceSessionStorage.getItem(routeStorageKey);
-      const route: unknown = saved ? JSON.parse(saved) : null;
+      let route: unknown = initialRoute;
+      if (initialRoute === undefined) {
+        const saved = workspaceSessionStorage.getItem(routeStorageKey);
+        route = saved ? JSON.parse(saved) : null;
+      }
       if (route && typeof route === "object") {
         const { courseId, lessonId } = route as { courseId?: unknown; lessonId?: unknown };
         const course = studyCourses.find(item => item.id === courseId);

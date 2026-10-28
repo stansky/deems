@@ -1,7 +1,7 @@
 /* Deems personal LMS surfaces. Imported last by the LMS shell and page. */
 .desk-shell.light-lms,
 .desk-shell.light-lms.learning-shell {
-  --lms-canvas: #f6f7f9;
+  --lms-canvas: #faf9f6;
   --lms-surface: #ffffff;
   --lms-soft: #f0f3f6;
   --lms-line: #e0e5eb;
@@ -37,6 +37,7 @@
 .desk-shell.light-lms .desk-menu :is(a,button) { color: var(--lms-ink) !important; }
 .desk-shell.light-lms .desk-menu :is(a,button):hover { background: var(--lms-orange-soft) !important; color: #8d3c18 !important; }
 .desk-shell.light-lms :is(a,.text-button,.sw-progress-copy,.sw-quiz-path-link,.sw-inline-sources>a,.sw-guide-sources>a) { color: var(--lms-link); }
+.desk-shell.light-lms .scene-art-meta a { color: #d8e9e4; }
 .desk-shell.light-lms :is(button,input,textarea,select,a):focus-visible { outline: 3px solid #6ca8ff !important; outline-offset: 3px; }
 .desk-shell.light-lms :is(input,textarea,select,.sw-search,.sw-card-toolbar select,.sw-recall-field textarea,.sw-select-blue) { border-color: #c7d0da !important; background: #fff !important; color: var(--lms-ink) !important; color-scheme: light; }
 .desk-shell.light-lms :is(input,textarea)::placeholder { color: #687587 !important; opacity: 1; }

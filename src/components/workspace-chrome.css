@@ -1,0 +1,44 @@
+.desk-shell > .main-shell { display: flex; flex-direction: column; min-height: 100svh; }
+.desk-shell > .main-shell > .main-content { flex: 1; }
+.desk-shell .workspace-header { position: sticky; top: 0; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; height: 76px; padding: 0 max(24px, calc((100vw - 1200px) / 2)); gap: 32px; }
+.workspace-header .learning-brand { justify-self: start; }
+.workspace-header .deems-brand-wordmark { width: 112px; }
+.workspace-header .desk-navigation { justify-content: center; gap: 12px; }
+.workspace-header .desk-navigation > button, .workspace-header .desk-navigation summary { position: relative; border-radius: 0; padding: 0 12px; }
+.desk-shell.light-lms .workspace-header .desk-navigation .is-active { background: transparent !important; color: #17232c !important; }
+.workspace-header .desk-navigation .is-active::after { position: absolute; content: ""; height: 3px; border-radius: 4px; background: #dc8250; bottom: -15px; inset-inline: 12px; }
+.workspace-header .desk-navigation summary > svg { transform: none; }
+.workspace-header .desk-navigation details[open] > summary > svg { transform: rotate(180deg); }
+.workspace-header .desk-menu { top: calc(100% + 16px); width: 250px; border-radius: 14px; }
+.workspace-header .desk-menu button, .workspace-header .desk-menu a { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.workspace-header .desk-menu-label { letter-spacing: .03em; text-transform: uppercase; font-size: 10px; }
+.workspace-account { position: relative; justify-self: end; }
+.workspace-account > summary { display: flex; align-items: center; justify-content: center; gap: 7px; min-width: 52px; min-height: 44px; padding: 0 10px; border: 1px solid #dddcd6; border-radius: 24px; background: #faf9f6; cursor: pointer; list-style: none; }
+.workspace-account > summary::-webkit-details-marker { display: none; }
+.workspace-account > summary:hover { background: #f0eee7; }
+.workspace-account-label { display: grid; gap: 4px; padding: 12px; margin-bottom: 4px; border-bottom: 1px solid #e5e2db; }
+.workspace-account-label strong { font-size: 13px; }
+.workspace-account-label span { font-size: 11px; color: #68716c; }
+.workspace-footer { margin-top: auto; border-top: 1px solid #e3e1da; background: #faf9f6; }
+.workspace-footer-inner { max-width: 1248px; padding: 24px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 24px; }
+.workspace-footer-brand { display: flex; align-items: baseline; gap: 12px; }
+.workspace-footer-brand strong { font-size: 14px; color: #273d43; }
+.workspace-footer-brand span { font-size: 12px; color: #717a78; }
+.workspace-footer nav { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.workspace-footer nav button, .workspace-footer nav a { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 6px; background: transparent; color: #52605f !important; font-size: 12px; }
+.workspace-footer nav button:hover, .workspace-footer nav a:hover { color: #8d3c18 !important; }
+.desk-shell:has(.sw-lesson-screen) .workspace-footer { display: none; }
+@media(max-width:700px) {
+  .desk-shell .workspace-header { height: auto; min-height: 112px; grid-template-columns: 1fr auto; padding: 10px 18px 0; gap: 2px 16px; }
+  .workspace-header .deems-brand-wordmark { width: 100px; }
+  .workspace-header .desk-navigation { grid-column: 1 / -1; grid-row: 2; justify-content: space-between; gap: 0; }
+  .workspace-header .desk-navigation > button, .workspace-header .desk-navigation summary { padding: 0 12px; font-size: 13px; }
+  .workspace-header .desk-navigation .is-active::after { bottom: -1px; }
+  .workspace-header .desk-menu { top: calc(100% + 8px); }
+  .workspace-header .desk-navigation details:first-of-type .desk-menu { left: auto; right: -70px; }
+  .workspace-account { grid-column: 2; grid-row: 1; }
+  .workspace-footer-inner { flex-direction: column; align-items: flex-start; gap: 10px; padding: 20px 18px; }
+  .workspace-footer-brand { flex-wrap: wrap; gap: 6px 12px; }
+  .workspace-footer nav { gap: 6px 12px; }
+}
+@media print { .workspace-footer { display: none; } }

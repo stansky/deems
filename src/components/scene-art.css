@@ -1,0 +1,9 @@
+.scene-art { position: relative; overflow: hidden; isolation: isolate; background: #1b454b; }
+.scene-art-image { position: absolute; inset: 0; z-index: -2; display: block; width: 100%; height: 100%; object-fit: cover; object-position: var(--scene-position, 50% 58%); }
+.scene-art::after { position: absolute; inset: 0; z-index: -1; background: var(--scene-scrim, linear-gradient(180deg, #0b272fcc, #0b272fa6 24%, transparent 48%)); content: ""; }
+.scene-art-image-enter { animation: deems-scene-arrive .7s ease-out both; }
+@keyframes deems-scene-arrive { from { opacity: 0; } to { opacity: 1; } }
+.scene-art-meta { position: absolute; inset: auto 20px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px; width: fit-content; max-width: calc(100% - 40px); padding: 8px 12px; border-radius: 8px; background: #0b272fd9; color: #fff9f2; font-size: 11px; line-height: 1.5; }
+.scene-art .scene-art-meta a { color: #d8e9e4; text-decoration: underline; text-underline-offset: 3px; }
+@media(max-width:780px) { .scene-art-meta { inset: auto 10px 10px; max-width: calc(100% - 20px); padding: 6px 9px; font-size: 9px; gap: 2px 8px; } }
+@media(prefers-reduced-motion:reduce) { .scene-art-image-enter { animation: none; } }

@@ -46,15 +46,9 @@
 .deems-login-error { background: #fff0ec; border-color: #e6b2a1; color: #89341d; }
 .deems-login-footer { color: var(--login-muted); font-size: 12px; line-height: 1.6; text-align: center; }
 .deems-login-art-panel { position: relative; min-width: 0; min-height: 620px; margin: 20px 20px 20px 0; overflow: hidden; border-radius: 24px; background: #1b454b; isolation: isolate; }
-.deems-login-scene { position: absolute; inset: 0; z-index: -2; display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 58%; }
-.deems-login-art-panel::after { position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, #0b272fcc, #0b272fa6 24%, transparent 48%); content: ""; }
 .deems-login-scene-copy { position: relative; padding: clamp(30px, 4vw, 64px); color: #fff9f2; }
 .deems-login-scene-copy p { margin: 0 0 14px; color: #d3e7e1; font-size: 13px; font-weight: 500; letter-spacing: .025em; }
 .deems-login-scene-copy h2 { margin: 0; font-size: clamp(34px, 3.5vw, 52px); font-weight: 550; letter-spacing: -.035em; line-height: 1.12; }
-.deems-login-scene-enter { animation: deems-scene-arrive .7s ease-out both; }
-@keyframes deems-scene-arrive { from { opacity: 0; } to { opacity: 1; } }
-.deems-login-scene-meta { position: absolute; inset: auto 20px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px; width: fit-content; max-width: calc(100% - 40px); padding: 8px 12px; border-radius: 8px; background: #0b272fd9; color: #fff9f2; font-size: 11px; line-height: 1.5; }
-.deems-login-scene-meta a { color: #d8e9e4; text-decoration: underline; text-underline-offset: 3px; }
 .deems-login-spinner { animation: deems-login-spin .8s linear infinite; }
 @keyframes deems-login-spin { to { transform: rotate(360deg); } }
 @media (min-width: 1700px) {
@@ -78,14 +72,11 @@
   .deems-login-content { width: min(100%, 400px); margin: 24px auto 28px; flex: none; }
   .deems-login-heading h1 { font-size: 38px; }
   .deems-login-heading p { font-size: 14px; }
-  .deems-login-art-panel { position: absolute; inset: 14px 14px auto; height: 250px; min-height: 250px; margin: 0; border-radius: 20px; }
-  .deems-login-scene { object-position: 50% 65%; }
+  .deems-login-page .deems-login-art-panel { --scene-position: 50% 65%; position: absolute; inset: 14px 14px auto; height: 250px; min-height: 250px; margin: 0; border-radius: 20px; }
   .deems-login-scene-copy { display: none; }
-  .deems-login-scene-meta { inset: auto 10px 10px; max-width: calc(100% - 20px); padding: 6px 9px; font-size: 9px; gap: 2px 8px; }
   .deems-login-footer { margin-top: 32px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .deems-login-spinner { animation: none; }
-  .deems-login-scene-enter { animation: none; }
   .deems-login-field input, .deems-login-submit { transition: none; }
 }

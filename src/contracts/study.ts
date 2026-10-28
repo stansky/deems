@@ -30,6 +30,8 @@ export type StudyCheck = z.infer<typeof studyCheckSchema>;
 export type StudyCheckResult = z.infer<typeof studyCheckResultSchema>;
 export type StudyProgress = z.infer<typeof studyProgressSchema>;
 export type StudyTab = "Courses" | "Quizzes" | "Guides" | "Flashcards";
+export const studyRouteKey = "interview-study-course-route-v1";
+export type StudyLaunch = { courseId: string; lessonId?: string; mode?: "course" | "quiz" };
 export const studyProgressKey = (lessonId: string) => `study:lesson:${lessonId}`;
 export function readStudyProgress(settings: Record<string, string>, lessonId: string): StudyProgress | null {
   try {

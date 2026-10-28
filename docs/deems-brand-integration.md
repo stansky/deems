@@ -18,11 +18,25 @@ The latest owner-supplied Base44 screenshot locks the login composition: a wordm
 
 `public/brand/presidio-study-illustrated.webp` is an original generated scene based on the supplied Deems character. At the owner's request, it replaces the elaborate studio with a modest San Francisco apartment: a simple desk, ordinary rectangular window, books and a radiator, with an illustrated Presidio and Golden Gate Bridge view. It contains no logo, baked-in text, or sample UI. The image is 1024 by 1536. The owner requested an animated illustration style: outlined shapes, flat color blocks, simplified furniture and graphic foliage replace realistic textures and lighting. Live copy stays in HTML. Mobile uses a compact scene above the form, with the wordmark over the image. Authentication, signup flags, account separation, and crawler exclusions are unchanged.
 
+## Dashboard and workspace chrome
+
+The dashboard extends the approved login art direction rather than introducing another mascot or logo. The shared `SceneArt` component supplies the same saved weather/time artwork to the login and a compact welcome panel. The header keeps the wordmark only. No new image generation is needed for the dashboard.
+
+| Decision | Reference | Application |
+| --- | --- | --- |
+| Clear route back into learning | [Brilliant dashboard](https://refero.design/pages/cf3d5290-97eb-4584-b4c5-3fbba946e16d) | Real course cards, saved lesson resume, completion bars only for actual saved progress. No invented streaks or readiness. |
+| Topic cards and compact supporting panels | Owner Clearful library screenshot and [Clearful welcome](https://refero.design/screens/5f9d0b52-17bb-410d-a6a8-9948be9ded38) | Five peer learning areas, quiet activity and practice panels. Preserve Deems colors rather than the reference blue or dark canvas. |
+| Warm work surface and illustration role | Refero PostHog style 13bc10c0-3cf9-4feb-8bf8-bfdd123931fc and approved Deems login | Warm light canvas, teal text and actions, original illustration in one welcome panel; functional Lucide icons elsewhere. |
+
+The header separates learning navigation from account actions. Account and library menus close on outside click and Escape. The footer links to existing courses, practice, reference and export actions. It adds no placeholder support, legal, status or social destinations. Focused lessons hide the workspace header/footer.
+
+Course buttons open the exact selected course, and the welcome action resumes a valid saved lesson. Explicit catalog navigation clears only the current course route, preserving lesson and quiz drafts and saved progress. An in-memory launch also works when browser storage is unavailable. Activity shows saved lessons and practice only. Loading and unavailable states never appear as a new empty learning history.
+
 ## Weather and time scenes
 
 The login artwork has 12 saved variants in `public/brand/scenes/`: dawn, day, dusk and night, each with clear, cloudy/foggy and rainy conditions. The approved daytime illustration is the clear-day anchor; 11 matching variants preserve the room, character and camera. All are 1024 by 1536 WebP images, roughly 115 to 155 KB each. The complete set is about 1.66 MB, but a visit loads only the initial and selected scene.
 
-`LoginScene` selects assets with deterministic rules, with no model calls. It uses San Francisco weather and Pacific time, regardless of the visitor's location. It never requests browser geolocation. Current weather model data, sunrise and sunset come from [Open-Meteo](https://open-meteo.com/en/docs), via the public, fixed-location, read-only `/api/scene-weather` endpoint. Other account and workspace routes remain gated. The response has shared Zod/TypeScript and OpenAPI contracts.
+`SceneArt` selects assets with deterministic rules, with no LLM calls. It uses San Francisco weather and Pacific time, regardless of the visitor's location. It never requests browser geolocation. Current weather model data, sunrise and sunset come from [Open-Meteo](https://open-meteo.com/en/docs), via the public, fixed-location, read-only `/api/scene-weather` endpoint. Other account and workspace routes remain gated. The response has shared Zod/TypeScript and OpenAPI contracts.
 
 The upstream fetch is cached for 15 minutes and has a 3.5-second timeout. The client refreshes weather every 15 minutes while visible and checks the clock each minute. Dawn spans 45 minutes before sunrise to 75 minutes after; dusk spans 75 minutes before sunset to 45 minutes after. Cloudy and fog codes share the cloudy scene, and precipitation codes use the rain scene. The visible condition label retains the provider's actual condition, including uncommon snow or thunderstorms. Weather data older than 90 minutes or for a different local day is not used. Without weather, Pacific clock hours select a clear time-of-day illustration and no weather condition is claimed.
 
@@ -51,7 +65,7 @@ Run typecheck, contracts, meaningful existing tests and production build. Inspec
 
 ## Combined workspace and learning implementation
 
-Clearful supplies the calm card and activity hierarchy, Brilliant supplies course progression and quiz interaction, and the owner-supplied Base44 reference supplies the desktop split-auth composition. Deems keeps its dark navy canvas, orange action and supplied mascot. Course tiles use topic colors and Lucide icons. Company cards retain original brand fills and single-click navigation.
+Clearful supplies the calm card and activity hierarchy, Brilliant supplies course progression and quiz interaction, and the owner-supplied Base44 reference supplies the desktop split-auth composition. The current light canvas and illustrated scene replace the earlier dark workspace direction. Course tiles use topic colors and Lucide icons. Company cards retain original brand fills and single-click navigation.
 
 The catalog removes stacked introductory panels, course details use short lesson rows, and quiz answer states remain deterministic. Completion requires an explicit successful save; a failed save retains its draft. Successful completion clears both course and quiz drafts for that lesson so an old mode cannot override the saved result. Workspace loading uses an idle mascot with a short reveal delay and a bounded session request.
 
