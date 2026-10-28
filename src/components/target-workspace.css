@@ -95,11 +95,15 @@
 .company-board-actions{margin-bottom:24px}
 .company-board .target-pipeline-section{margin-bottom:28px}
 .company-board .target-pipeline-section-heading{margin-bottom:12px}
+.company-board .target-pipeline-section.is-empty{margin-bottom:8px}
+.company-board .target-pipeline-section.is-empty .target-pipeline-section-heading{margin-bottom:3px}
+.company-board .target-pipeline-section.is-empty .target-section-empty{padding:0;border:0;color:#8190a2;font-size:12px;line-height:1.45}
 .company-board .target-company-groups{grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px}
 .company-board .company-tile{padding:18px}
 .company-board .company-tile-logo{width:80px;height:80px;margin-bottom:8px}
 @media(max-width:600px){
   .company-board-actions{margin-bottom:20px}
+  .company-board .target-pipeline-section.is-empty{margin-bottom:6px}
   .company-board .target-company-groups{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
   .company-board .company-tile{padding:14px}
   .company-board .company-tile-logo{width:64px;height:64px;margin-bottom:6px}

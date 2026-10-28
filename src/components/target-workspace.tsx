@@ -20,11 +20,12 @@ import { researchStateSchema } from "@/contracts/company-research";
 import type { WorkspaceState } from "@/lib/types";
 import type { TargetAssessment, TargetDebrief, TargetInterview, TargetMutation, TargetProgress, TargetRequirement, TargetResource, TargetRole, TargetRoleState, TargetStep, TargetsState } from "@/lib/target-types";
 import "./target-workspace.css";
+import "./target-detail-theme.css";
 import type { PracticeOrigin, PracticeAttempt } from "@/contracts/practice";
 import { RequirementEvidenceEntry } from "@/components/features/practice/evidence";
 import { BrandState } from "@/components/brand";
 
-type Props = { workspace: WorkspaceState; onResource: (resource: TargetResource, origin?:PracticeOrigin) => void; onViewAttempt:(attempt:PracticeAttempt)=>void; onApplication: (id: string) => void };
+type Props = { workspace: WorkspaceState; onResource: (resource: TargetResource, origin?:PracticeOrigin) => void; onViewAttempt:(attempt:PracticeAttempt)=>void; onApplication: (id: string) => void; onGeneralPreparation: () => void };
 type Save = (mutation: TargetMutation, command?: UseCommandDraftResult) => Promise<boolean>;
 type Tab = "Company" | "Plan" | "Requirements" | "Research" | "Interviews" | "Sources";
 type ConflictRecord = { entityType: string; entityId: string };
@@ -55,7 +56,7 @@ function LinkedSourceText({body}:{body:string}) {
   return <>{parts.map((part,index)=>{if(!/^https?:\/\//.test(part))return part;const url=part.replace(/[.,;:!?)\]]+$/g,"");const suffix=part.slice(url.length);try{const parsed=new URL(url);if(parsed.protocol!=="http:"&&parsed.protocol!=="https:")return part;return <span key={index}><a href={url} target="_blank" rel="noreferrer">{url}</a>{suffix}</span>;}catch{return part;}})}</>;
 }
 
-export default function TargetWorkspace({ workspace, onResource, onApplication, onViewAttempt }: Props) {
+export default function TargetWorkspace({ workspace, onResource, onApplication, onViewAttempt, onGeneralPreparation }: Props) {
   const [overview, setOverview] = useState(true);
   const [selectionReady, setSelectionReady] = useState(false);
   const [data, setData] = useState<TargetsState | null>(null);
@@ -76,8 +77,9 @@ export default function TargetWorkspace({ workspace, onResource, onApplication, 
   useEffect(() => { void load().then(next => {
     const params=new URLSearchParams(window.location.search);
     const requested=next?.roles.find(item=>item.id===params.get("role"));
+    if (requested?.companyId === "general") { onGeneralPreparation(); return; }
     if(requested) {setRoleId(requested.id);setCompanyId(requested.companyId);setOverview(false);setTab("Plan");setReturnStep(params.get("step")??"");}
-  }); try { const stored = JSON.parse(workspaceSessionStorage.getItem("interview-target-selection") || "null"); if (stored) { setCompanyId(stored.companyId || "sycamore"); setRoleId(stored.roleId || "sycamore-fde"); setOverview(stored.overview !== false); if (["Company","Plan","Requirements","Research","Interviews","Sources"].includes(stored.tab)) setTab(stored.tab); } } catch {} setSelectionReady(true); }, []);
+  }); try { const stored = JSON.parse(workspaceSessionStorage.getItem("interview-target-selection") || "null"); if (stored?.companyId === "general" && stored.overview === false) { workspaceSessionStorage.setItem("interview-target-selection", JSON.stringify({ ...stored, overview: true })); onGeneralPreparation(); } else if (stored) { setCompanyId(stored.companyId || "sycamore"); setRoleId(stored.roleId || "sycamore-fde"); setOverview(stored.overview !== false); if (["Company","Plan","Requirements","Research","Interviews","Sources"].includes(stored.tab)) setTab(stored.tab); } } catch {} setSelectionReady(true); }, []);
   useEffect(() => { if (selectionReady) try { workspaceSessionStorage.setItem("interview-target-selection",JSON.stringify({companyId,roleId,overview,tab})); } catch {} }, [companyId,roleId,overview,tab,selectionReady]);
   async function save(mutation: TargetMutation, command?: UseCommandDraftResult) {
     setSaving(true); setSaved(false); setError("");
@@ -125,7 +127,7 @@ export default function TargetWorkspace({ workspace, onResource, onApplication, 
   const done = role?.steps.filter(step => progress.some(item => item.itemId === step.id && item.status === "done")).length ?? 0;
   const scheduled = data.interviews.filter(item => item.companyId === company?.id && item.status === "scheduled" && item.scheduledAt && new Date(item.scheduledAt).getTime() >= Date.now()).sort((a,b) => a.scheduledAt!.localeCompare(b.scheduledAt!));
   function resourceOpen(resource: TargetResource) { if (resource.kind === "source") { setSourceId(resource.id); setTab(resource.id.startsWith("research-") ? "Research" : "Sources"); } else onResource(resource); }
-  function openRole(id: string) { const target=data!.roles.find(item=>item.id===id); if(target){setCompanyId(target.companyId);setRoleId(target.id);setOverview(false);setTab("Plan");window.scrollTo({top:0,behavior:"instant"});} }
+  function openRole(id: string) { const target=data!.roles.find(item=>item.id===id); if (target?.companyId === "general") { onGeneralPreparation(); return; } if(target){setCompanyId(target.companyId);setRoleId(target.id);setOverview(false);setTab("Plan");window.scrollTo({top:0,behavior:"instant"});} }
   if(overview) return <section className="targets-workspace company-board" aria-label="Interview preparation">{error&&<div className="notice notice-error" role="alert">{error}</div>}<Pipeline data={data} onOpen={openRole} onOpenCompany={id => { setCompanyId(id); setRoleId(data.roles.find(item => item.companyId === id)?.id ?? ""); setOverview(false); setTab("Company");window.scrollTo({top:0,behavior:"instant"}); }} onCompanyCreated={async id => { const refreshed = await load(); if (refreshed) { const firstRole = refreshed.roles.find(item => item.companyId === id); setCompanyId(id); setRoleId(firstRole?.id ?? ""); setOverview(false); setTab(firstRole ? "Plan" : "Research"); } }}/></section>;
   if (tab === "Company" && company) return <section className="targets-workspace company-home">
     <button className="text-button target-back" onClick={()=>setOverview(true)}>All companies<ChevronRight size={13}/>{company.name}</button>
@@ -134,8 +136,8 @@ export default function TargetWorkspace({ workspace, onResource, onApplication, 
   return <section className={`targets-workspace target-detail-workspace ${!role || tab === "Research" ? "target-research-workspace" : ""}`}>
     <button className="text-button target-back" onClick={()=>setOverview(true)}>All interviews<ChevronRight size={13}/>{company?.name}</button>
     {error && <div className="notice notice-error" role="alert">{error}</div>}
-    <nav className="target-company-nav" aria-label="Target company">{data.companies.map(item => <button key={item.id} className={company?.id === item.id ? "selected" : ""} aria-current={company?.id === item.id ? "true" : undefined} onClick={() => { setCompanyId(item.id); setRoleId(data.roles.find(r => r.companyId === item.id)?.id ?? ""); setSourceId(""); setSaved(false); }}><span className="target-company-mark">{item.id === "general" ? <BookOpen size={14} /> : item.name.slice(0,1)}</span>{item.name}</button>)}</nav>
-    {company && <><div className="target-company-heading"><CompanyIdentity companyId={company.id} name={company.name} level="h1" /><span className="target-save-status" role="status">{saving ? <><Loader2 size={13} className="spin" />Saving...</> : saved ? <><Check size={13} />Saved locally</> : null}</span>{external(company.careersUrl) && <a href={company.careersUrl} target="_blank" rel="noreferrer">Careers<ExternalLink size={13}/></a>}</div>
+    <nav className="target-company-nav" aria-label="Target company">{data.companies.map(item => <button key={item.id} className={company?.id === item.id ? "selected" : ""} aria-current={company?.id === item.id ? "true" : undefined} onClick={() => { if(item.id === "general") { onGeneralPreparation(); return; } setCompanyId(item.id); setRoleId(data.roles.find(r => r.companyId === item.id)?.id ?? ""); setSourceId(""); setSaved(false); }}><span className="target-company-mark">{item.id === "general" ? <BookOpen size={14} /> : item.name.slice(0,1)}</span>{item.name}</button>)}</nav>
+    {company && <><div className="target-company-heading"><CompanyIdentity companyId={company.id} name={company.name} level="h1" /><span className="target-save-status" role="status">{saving ? <><Loader2 size={13} className="spin" />Saving...</> : saved ? <><Check size={13} />Saved</> : null}</span>{external(company.careersUrl) && <a href={company.careersUrl} target="_blank" rel="noreferrer">Careers<ExternalLink size={13}/></a>}</div>
     <CompanySummary companyId={company.id} summary={company.summary} focus={company.focus}/>
     {scheduled.length > 0 && <div className="target-upcoming"><CalendarDays size={16}/><div><strong>Next scheduled</strong><span>{scheduled[0].title} · {new Date(scheduled[0].scheduledAt!).toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit",timeZoneName:"short"})}</span></div><button className="text-button" onClick={() => { setRoleId(scheduled[0].roleId); setTab("Interviews"); }}>Open<ArrowRight size={14}/></button></div>}
     {companyRoles.length > 0 && <div className="target-role-selector"><label htmlFor="target-role">Target role</label><select id="target-role" value={role?.id ?? ""} onChange={e => { setRoleId(e.target.value); setSaved(false); }}>{companyRoles.map(item => <option key={item.id} value={item.id}>{item.title} · {item.priority}</option>)}</select>{role && <Badge tone={role.priority === "Primary" ? "blue" : "neutral"}>{role.priority}</Badge>}{application && <button className="text-button" onClick={() => onApplication(application.id)}>Application<ArrowRight size={13}/></button>}</div>}
@@ -145,7 +147,8 @@ export default function TargetWorkspace({ workspace, onResource, onApplication, 
     {tab === "Plan" && <div className="target-plan-layout"><div>
       {nextActions.length > 0 && <section className="target-next-actions"><div className="target-section-heading"><h3>From your last interviews</h3><span>{nextActions.length} open</span></div>{nextActions.map(item => <div key={item.id} className="target-action-row"><RotateCcw size={16}/><div><strong>{item.nextAction}</strong><p>{item.struggled || item.feedback}</p><small>{item.occurredOn} · {item.outcome === "rejected" ? "Not selected" : item.outcome}</small>{item.requirementIds.length>0&&<button className="target-linked-requirements" onClick={()=>setTab("Requirements")}>{item.requirementIds.map(id=>role.requirements.find(r=>r.id===id)?.title??id).join(" · ")}<ArrowRight size={12}/></button>}</div><ResolveControl key={`resolve-${item.id}-${item.revision??0}`} item={item} revisions={data.revisions??[]} conflict={conflict} clearConflict={()=>setConflict(null)} saving={saving} save={save}/></div>)}</section>}
       {assessments.some(item=>item.level==="gap"||item.level==="developing")&&<section className="target-gap-focus"><h3>Focus areas</h3>{assessments.filter(item=>item.level==="gap"||item.level==="developing").map(item=>{const requirement=role.requirements.find(r=>r.id===item.requirementId);return requirement?<div key={item.requirementId}><button className="text-button" onClick={()=>setTab("Requirements")}>{requirement.title}<ArrowRight size={12}/></button><p>{requirement.gap}</p></div>:null;})}</section>}
-      <div className="target-section-heading target-plan-title"><h3>Study plan</h3><span>Suggested practice</span></div>
+      <div className="target-section-heading target-plan-title"><h3>Study plan</h3>{role.steps.length > 0 && <span>Suggested practice</span>}</div>
+      {!role.steps.length && <div className="target-plan-empty"><p>No preparation plan is saved for this role.</p><Button variant="secondary" onClick={onGeneralPreparation}>Browse preparation<ArrowRight size={14}/></Button></div>}
       {phases.map(phase => { const steps=role.steps.filter(item => item.phase===phase); return steps.length ? <section className="target-phase" key={phase}><h4>{phase}</h4>{steps.map(step => <StepRow key={step.id} roleId={role.id} step={step} progress={progress.find(item => item.itemId===step.id)} save={save} saving={saving} autoOpen={returnStep===step.id} onResource={resource=>{if(resource.kind==="exercise")onResource(resource,{roleId:role.id,planStepId:step.id});else resourceOpen(resource);}}/>)}</section> : null; })}
     </div><aside className="target-plan-aside"><section><h3>Interview process</h3>{role.publishedProcess.length ? <ol>{role.publishedProcess.map((item,index) => <li key={index}>{item}</li>)}</ol> : <p>Confirm format, timing, and tool permissions with the recruiter.</p>}<small>Source details are in the role record. Your actual invitation takes precedence.</small></section><section><h3>Your evidence</h3><dl><div><dt>Strengths recorded</dt><dd>{assessments.filter(item=>item.level==="strength").length}</dd></div><div><dt>Gaps to work on</dt><dd>{assessments.filter(item=>item.level==="gap"||item.level==="developing").length}</dd></div><div><dt>Not assessed</dt><dd>{role.requirements.filter(item=>!assessments.some(a=>a.requirementId===item.id&&a.level!=="unassessed")).length}</dd></div></dl><button className="text-button" onClick={()=>setTab("Requirements")}>Review requirements<ArrowRight size={13}/></button></section>{role.stack.length>0&&<section><h3>Stack to recognize</h3><p className="target-stack">{role.stack.join(" · ")}</p></section>}</aside></div>}
     {tab === "Requirements" && <div className="target-requirements"><div className="target-section-heading"><h3>Strengths and gaps</h3><span>Self-assessed, with evidence</span></div><p className="target-explainer">Resume connections are starting points. Record what you can demonstrate and what still needs work.</p>{role.requirements.map(item => <div key={item.id}><RequirementRow roleId={role.id} requirement={item} assessment={assessments.find(a=>a.requirementId===item.id)} feedback={debriefs.filter(d=>d.requirementIds.includes(item.id))} save={save} saving={saving}/>{(workspace.practiceAttempts??[]).filter(attempt=>attempt.origin?.roleId===role.id&&attempt.attachment?.requirementId===item.id).map(attempt=><RequirementEvidenceEntry key={attempt.sessionId} attempt={attempt} onView={()=>onViewAttempt(attempt)}/>)}</div>)}</div>}
@@ -291,9 +294,10 @@ function Pipeline({ data, onOpen, onOpenCompany, onCompanyCreated }: { data: Tar
     {showResearch && <CompanyResearch companies={data.companies.filter(company => company.id !== "general")} onCompanyCreated={onCompanyCreated} />}
     {hasCompanies ? sections.map(section => {
       const uniqueCompanyIds = [...section.companyIds].filter(id => id !== "general" && (companyFilter === "all" || id === companyFilter)).sort((a,b) => Number(b === "sycamore") - Number(a === "sycamore") || (companies.get(a)?.name ?? a).localeCompare(companies.get(b)?.name ?? b));
-      return <section className="target-pipeline-section" key={section.id} aria-labelledby={`pipeline-${section.id}`}>
+      const emptyText = companyFilter === "all" ? section.empty : "No matching companies in this section.";
+      return <section className={`target-pipeline-section${uniqueCompanyIds.length ? "" : " is-empty"}`} key={section.id} aria-labelledby={`pipeline-${section.id}`}>
       <header className="target-pipeline-section-heading"><h2 id={`pipeline-${section.id}`}>{section.title}</h2><span>{uniqueCompanyIds.length}</span></header>
-    <div className="target-company-groups" aria-label={section.title}>{uniqueCompanyIds.map(companyId => {
+    {uniqueCompanyIds.length > 0 && <div className="target-company-groups" aria-label={section.title}>{uniqueCompanyIds.map(companyId => {
       const company = companies.get(companyId);
       if (!company) return null;
       const roles = data.roles.filter(role => role.companyId === companyId);
@@ -304,11 +308,11 @@ function Pipeline({ data, onOpen, onOpenCompany, onCompanyCreated }: { data: Tar
         <strong>{company.name}</strong>
         <span className="company-tile-count">{roles.length ? `${roles.length} ${roles.length === 1 ? "role" : "roles"}` : rounds.length ? `${rounds.length} past rounds` : "Company prospect"}</span>
       </button>;
-    })}</div>
-    {!uniqueCompanyIds.length && <p className="target-section-empty">{companyFilter === "all" ? section.empty : "No matching companies in this section."}</p>}
+    })}</div>}
+    {!uniqueCompanyIds.length && <p className="target-section-empty">{emptyText}</p>}
     </section>;
-    }) : <BrandState kind="empty" title="No companies yet" description="Add a company to organize interview roles and preparation." action={<ActionButton onClick={() => setShowResearch(true)}><Plus />Add company</ActionButton>} />}
-    {data.roles.find(role => role.companyId === "general") && <button className="target-general-link" onClick={() => onOpen(data.roles.find(role => role.companyId === "general")!.id)}><BookOpen size={17} /><span><strong>General preparation</strong><small>Shared foundations across every company</small></span><ArrowRight size={14} /></button>}
+    }) : <BrandState kind="empty" title="No companies yet" description="Add a company to organize interview roles and preparation." compact />}
+    {data.roles.find(role => role.companyId === "general") && <button className="target-general-link" onClick={() => onOpen(data.roles.find(role => role.companyId === "general")!.id)}><BookOpen size={17} /><span><strong>General preparation</strong></span><ArrowRight size={14} /></button>}
   </div>;
 }
 
