@@ -33,7 +33,7 @@ export const targetRoles: TargetRole[] = [
   role("sycamore-security", "sycamore", "Member of Technical Staff, Security", "https://sycamore.so/careers/mts-security/"),
   role("sycamore-product-staff", "sycamore", "Member of Product Staff", "https://sycamore.so/careers/member-of-product-staff/"),
   role("tesla-cloud-platforms", "tesla", "Sr. Fullstack Software Engineer, Cloud Platforms", "https://www.tesla.com/careers/search/job/sr-fullstack-software-engineer-cloud-platforms-282632"),
-  role("tesla-robotaxi-sre", "tesla", "Staff Site Reliability Engineer, Robotaxi & Optimus", "https://www.tesla.com/careers/search/job/staff-site-reliability-engineer-fleetnet-vehicle-software-277647"),
+  role("tesla-fleetnet-sre", "tesla", "Staff Site Reliability Engineer, Robotaxi & Optimus", "https://www.tesla.com/careers/search/job/staff-site-reliability-engineer-fleetnet-vehicle-software-277647"),
   role("anthropic-fullstack", "anthropic", "Senior Software Engineer, Full-stack", "https://job-boards.greenhouse.io/anthropic/jobs/5174743008-87"),
   role("anthropic-staff-fde", "anthropic", "Staff Forward Deployed Engineer", "https://job-boards.greenhouse.io/anthropic/jobs/5449229008"),
   role("crunchyroll-infrastructure", "crunchyroll", "Senior Software Engineer, Infrastructure Engineering", "https://job-boards.greenhouse.io/crunchyroll/jobs/8168263?gh_jid=8168263"),
