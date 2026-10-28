@@ -21,6 +21,7 @@ import type { WorkspaceState } from "@/lib/types";
 import type { TargetAssessment, TargetDebrief, TargetInterview, TargetMutation, TargetProgress, TargetRequirement, TargetResource, TargetRole, TargetRoleState, TargetStep, TargetsState } from "@/lib/target-types";
 import "./target-workspace.css";
 import "./target-detail-theme.css";
+import "./company-combined.css";
 import type { PracticeOrigin, PracticeAttempt } from "@/contracts/practice";
 import { RequirementEvidenceEntry } from "@/components/features/practice/evidence";
 import { BrandState } from "@/components/brand";
@@ -131,7 +132,7 @@ export default function TargetWorkspace({ workspace, onResource, onApplication, 
   if(overview) return <section className="targets-workspace company-board" aria-label="Interview preparation">{error&&<div className="notice notice-error" role="alert">{error}</div>}<Pipeline data={data} onOpen={openRole} onOpenCompany={id => { setCompanyId(id); setRoleId(data.roles.find(item => item.companyId === id)?.id ?? ""); setOverview(false); setTab("Company");window.scrollTo({top:0,behavior:"instant"}); }} onCompanyCreated={async id => { const refreshed = await load(); if (refreshed) { const firstRole = refreshed.roles.find(item => item.companyId === id); setCompanyId(id); setRoleId(firstRole?.id ?? ""); setOverview(false); setTab(firstRole ? "Plan" : "Research"); } }}/></section>;
   if (tab === "Company" && company) return <section className="targets-workspace company-home">
     <button className="text-button target-back" onClick={()=>setOverview(true)}>All companies<ChevronRight size={13}/>{company.name}</button>
-    <CompanyHome company={company} data={data} workspace={workspace} onRole={openRole} onApplication={onApplication} onResearch={()=>setTab("Research")} />
+    <CompanyHome company={company} data={data} workspace={workspace} onRole={openRole} onApplication={onApplication} onResearch={()=>setTab("Research")} onGeneralPreparation={onGeneralPreparation} />
   </section>;
   return <section className={`targets-workspace target-detail-workspace ${!role || tab === "Research" ? "target-research-workspace" : ""}`}>
     <button className="text-button target-back" onClick={()=>setOverview(true)}>All interviews<ChevronRight size={13}/>{company?.name}</button>
@@ -316,24 +317,34 @@ function Pipeline({ data, onOpen, onOpenCompany, onCompanyCreated }: { data: Tar
   </div>;
 }
 
-function CompanyHome({company,data,workspace,onRole,onApplication,onResearch}:{company:TargetsState["companies"][number];data:TargetsState;workspace:WorkspaceState;onRole:(id:string)=>void;onApplication:(id:string)=>void;onResearch:()=>void}) {
+function CompanyHome({company,data,workspace,onRole,onApplication,onResearch,onGeneralPreparation}:{company:TargetsState["companies"][number];data:TargetsState;workspace:WorkspaceState;onRole:(id:string)=>void;onApplication:(id:string)=>void;onResearch:()=>void;onGeneralPreparation:()=>void}) {
   const brand=companyBranding[company.id];
   const roles=data.roles.filter(role=>role.companyId===company.id);
   const applicationIds=new Set(roles.map(role=>role.applicationId).filter(Boolean));
   const applications=workspace.applications.filter(item=>applicationIds.has(item.id)||item.company.toLowerCase()===company.name.toLowerCase());
   const activity=workspace.activities.filter(item=>applications.some(app=>app.id===item.applicationId)).sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
-  const rounds=data.interviews.filter(item=>item.companyId===company.id);
+  const rounds=data.interviews.filter(item=>item.companyId===company.id).sort((a,b)=>(b.scheduledAt??b.updatedAt).localeCompare(a.scheduledAt??a.updatedAt));
   const [profile,setProfile]=useState<ReturnType<typeof researchStateSchema.parse>["profiles"][number]|null>(null);
   useEffect(()=>{let cancelled=false;workspaceFetch("/api/company-research",{cache:"no-store"}).then(async r=>r.ok?researchStateSchema.parse(await r.json()):null).then(state=>{if(!cancelled)setProfile(state?.profiles.find(p=>p.companyId===company.id)??null);}).catch(()=>{});return()=>{cancelled=true;};},[company.id]);
-  return <>
-    <header className="company-home-heading"><span className="company-home-logo" style={companySurface(brand?.accent)}>{brand?.logoPath?<img src={brand.logoPath} alt=""/>:<strong>{company.name.slice(0,1)}</strong>}</span><div><h1>{company.name}</h1><p>{profile?.overview||brand?.overview||company.summary||company.focus}</p></div></header>
-    {(profile?.pitch||brand?.pitch)&&<section className="company-home-pitch"><h2>Elevator pitch</h2><p>{profile?.pitch||brand?.pitch}</p></section>}
-    <section className="company-home-section"><header><h2>Careers</h2><button onClick={onResearch}>Research openings<ArrowRight size={14}/></button></header>
-      {roles.length?<div className="company-careers-scroll"><table className="company-careers"><thead><tr><th>Role</th><th>Stage</th><th>Preparation</th></tr></thead><tbody>{roles.map(role=>{const state=data.roleStates.find(item=>item.roleId===role.id);const completed=data.progress.filter(item=>item.roleId===role.id&&item.status==="done").length;return <tr key={role.id}><td><button onClick={()=>onRole(role.id)}>{role.title}<ArrowRight size={14}/></button></td><td>{state?.detailedStage??state?.stage??"Prospect"}</td><td>{completed}/{role.steps.length} steps</td></tr>;})}</tbody></table></div>:<p className="company-home-empty">No saved roles yet. Research openings to find relevant positions.</p>}
+  const overview=profile?.overview||brand?.overview||company.summary||company.focus;
+  const pitch=profile?.pitch||brand?.pitch;
+  return <div className="company-home-content">
+    <section className="company-home-overview" aria-label={`${company.name} overview`}>
+      <header className="company-home-heading"><span className="company-home-logo" style={companySurface(brand?.accent)}>{brand?.logoPath?<img src={brand.logoPath} alt=""/>:<strong>{company.name.slice(0,1)}</strong>}</span><div><h1>{company.name}</h1>{overview&&<p>{overview}</p>}</div></header>
+      {pitch&&<div className="company-home-pitch"><h2>Elevator pitch</h2><p>{pitch}</p></div>}
     </section>
-    <section className="company-home-section"><header><h2>Learning tracks</h2></header><div className="company-track-grid">{roles.map(role=><button key={role.id} onClick={()=>onRole(role.id)}><BookOpen size={23}/><strong>{role.title}</strong><span>{role.steps.length} preparation steps</span></button>)}</div>{!roles.length&&<p className="company-home-empty">Learning tracks appear when you add a role.</p>}</section>
-    <section className="company-home-section"><header><h2>Activity</h2></header>{activity.length||rounds.length?<div className="company-activity">{rounds.map(round=><button key={round.id} onClick={()=>onRole(round.roleId)}><CalendarDays size={16}/><span><strong>{round.title}</strong><small>{round.status} · {round.scheduledAt?new Date(round.scheduledAt).toLocaleString():"Date not set"}</small></span></button>)}{activity.map(item=><button key={item.id} onClick={()=>onApplication(item.applicationId)}><Clock3 size={16}/><span><strong>{item.kind} · {new Date(item.createdAt).toLocaleDateString()}</strong><p>{item.body}</p></span></button>)}</div>:<p className="company-home-empty">No saved activity or interview rounds yet.</p>}</section>
-  </>;
+    <div className="company-home-grid">
+      <section className="company-home-section"><header><h2>Roles</h2><button type="button" onClick={onResearch}>Research openings<ArrowRight size={14}/></button></header>
+        {roles.length?<div className="company-careers-scroll"><table className="company-careers"><thead><tr><th>Role</th><th>Stage</th><th>Preparation</th></tr></thead><tbody>{roles.map(role=>{const state=data.roleStates.find(item=>item.roleId===role.id);const completed=data.progress.filter(item=>item.roleId===role.id&&item.status==="done").length;return <tr key={role.id}><td><button type="button" onClick={()=>onRole(role.id)}>{role.title}<ArrowRight size={14}/></button></td><td>{state?.detailedStage??state?.stage??"Prospect"}</td><td>{completed}/{role.steps.length} steps</td></tr>;})}</tbody></table></div>:<p className="company-home-empty">No roles saved yet.</p>}
+      </section>
+      <section className="company-home-section company-learning-section"><header><h2>Learning tracks</h2></header>
+        {roles.length?<div className="company-track-grid">{roles.map(role=><button key={role.id} type="button" onClick={()=>onRole(role.id)}><BookOpen size={20}/><strong>{role.title}</strong><span>{role.steps.length} preparation steps</span></button>)}</div>:<><p className="company-home-empty">General courses are ready to use for this company.</p><button className="company-general-learning" type="button" onClick={onGeneralPreparation}><BookOpen size={17}/><span>Browse general learning tracks</span><ArrowRight size={14}/></button></>}
+      </section>
+    </div>
+    <section className="company-home-section company-activity-section"><header><h2>Activity</h2></header>
+      {activity.length||rounds.length?<ol className="company-activity">{rounds.map(round=><li key={`round-${round.id}`}><button type="button" onClick={()=>onRole(round.roleId)}><span className="company-activity-icon"><CalendarDays size={16}/></span><span className="company-activity-copy"><strong>{round.title}</strong><small>{round.scheduledAt?new Date(round.scheduledAt).toLocaleString(undefined,{dateStyle:"medium",timeStyle:"short"}):"Date not set"} · {round.status}</small>{(round.format||round.notes)&&<p>{[round.format,round.notes].filter(Boolean).join(" · ")}</p>}</span></button></li>)}{activity.map(item=><li key={`activity-${item.id}`}><button type="button" onClick={()=>onApplication(item.applicationId)}><span className="company-activity-icon"><Clock3 size={16}/></span><span className="company-activity-copy"><strong>{item.kind} · {new Date(item.createdAt).toLocaleString(undefined,{dateStyle:"medium",timeStyle:"short"})}</strong><p>{item.body}</p></span></button></li>)}</ol>:<p className="company-home-empty">Activity and interview rounds will appear here when saved.</p>}
+    </section>
+  </div>;
 }
 
 function CompanyIdentity({ companyId, name, level = "h2" }: { companyId: string; name: string; level?: "h1" | "h2" | "h3" }) {

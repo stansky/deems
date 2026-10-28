@@ -6,7 +6,7 @@ type BrandStateKind = "loading" | "empty" | "error" | "success";
 
 const mascotAssets: Record<MascotState, string> = {
   idle: "/brand/mascot-idle.svg",
-  loading: "/brand/mascot-thinking.svg",
+  loading: "/brand/mascot-idle.svg",
   thinking: "/brand/mascot-thinking.svg",
   empty: "/brand/mascot-curious.svg",
   error: "/brand/mascot-concerned.svg",

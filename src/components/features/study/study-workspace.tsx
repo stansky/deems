@@ -5,8 +5,8 @@ import { workspaceSessionStorage } from "@/components/workspace-client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Dispatch, RefObject, SetStateAction } from "react";
 import {
-  ArrowLeft, ArrowRight, BookOpen, Check, CheckCircle2, ChevronRight,
-  Circle, ExternalLink, Layers3, ListChecks, Printer, RotateCcw, Search, X,
+  ArrowLeft, ArrowRight, BarChart3, BookOpen, Check, CheckCircle2, ChevronRight,
+  Circle, Code2, ExternalLink, Layers3, ListChecks, Network, Printer, RotateCcw, Search, Shield, X,
 } from "lucide-react";
 import { cheatSheets, flashcards } from "@/data/prep";
 import { studyCourses } from "@/data/study-courses";
@@ -18,6 +18,7 @@ import type { WorkspaceState } from "@/lib/types";
 import type { CommandMeta } from "@/domains/career/contracts";
 import "./study-workspace.css";
 import "./study-night.css";
+import "./study-combined.css";
 import { BrandState } from "@/components/brand";
 
 type Props = {
@@ -59,6 +60,7 @@ export default function StudyWorkspace({ state, tab, setTab, selected, setSelect
   const [lessonLaunchMode, setLessonLaunchMode] = useState<"course" | "quiz">("course");
   const [routeReady, setRouteReady] = useState(false);
   const [draft, setDraft] = useState<LessonDraft>(blankDraft);
+  const [savedDrafts, setSavedDrafts] = useState<Record<string, LessonDraft>>({});
   const [draftReadyFor, setDraftReadyFor] = useState("");
   const [saveError, setSaveError] = useState("");
   const [query, setQuery] = useState("");
@@ -80,7 +82,6 @@ export default function StudyWorkspace({ state, tab, setTab, selected, setSelect
   const reviewsByCard = useMemo(() => latestReviews(state.reviews), [state.reviews]);
   const completedLessons = Array.from(progressByLesson.values()).filter(Boolean).length;
   const totalLessons = studyCourses.reduce((total, course) => total + course.lessons.length, 0);
-  const progressPercent = totalLessons ? (completedLessons / totalLessons) * 100 : 0;
   const dueCount = flashcards.filter(card => {
     const latest = reviewsByCard.get(card.id);
     return !latest || new Date(latest.dueAt).getTime() <= Date.now();
@@ -127,6 +128,21 @@ export default function StudyWorkspace({ state, tab, setTab, selected, setSelect
   }, [routeReady, openCourseId, activeLessonId, lessonLaunchMode]);
 
   useEffect(() => {
+    if (!routeReady) return;
+    const found: Record<string, LessonDraft> = {};
+    for (const course of studyCourses) {
+      for (const lesson of course.lessons) {
+        const sectionCount = cheatSheets.find(item => item.id === lesson.guideId)?.sections.length ?? 1;
+        for (const mode of ["course", "quiz"] as const) {
+          const saved = readSavedLessonDraft(course, lesson, mode, sectionCount);
+          if (saved) found[savedDraftKey(lesson.id, mode)] = saved;
+        }
+      }
+    }
+    setSavedDrafts(found);
+  }, [routeReady]);
+
+  useEffect(() => {
     if (!activeLessonId || !activeLesson) return;
     setDraftReadyFor("");
     setSaveError("");
@@ -166,6 +182,7 @@ export default function StudyWorkspace({ state, tab, setTab, selected, setSelect
     if (!activeLessonId || draftReadyFor !== activeLessonId) return;
     try {
       workspaceSessionStorage.setItem(draftStorageKey(activeLessonId, lessonLaunchMode), JSON.stringify(draft));
+      setSavedDrafts(current => ({ ...current, [savedDraftKey(activeLessonId, lessonLaunchMode)]: draft }));
     } catch {
       // Keep the lesson usable if this browser cannot store a same-tab draft.
     }
@@ -175,13 +192,30 @@ export default function StudyWorkspace({ state, tab, setTab, selected, setSelect
     if (tab === "Guides" || !activeLessonId) requestAnimationFrame(() => headingRef.current?.focus());
   }, [tab, selected, openCourseId, activeLessonId]);
 
+  function clearLessonDrafts(lessonId: string) {
+    for (const mode of ["course", "quiz"] as const) {
+      try { workspaceSessionStorage.removeItem(draftStorageKey(lessonId, mode)); } catch { /* Saved progress remains authoritative. */ }
+    }
+    setSavedDrafts(current => {
+      const next = { ...current };
+      delete next[savedDraftKey(lessonId, "course")];
+      delete next[savedDraftKey(lessonId, "quiz")];
+      return next;
+    });
+  }
+
   function openLesson(course: StudyCourse, lesson: StudyLesson, startWithQuiz = false) {
+    if (progressByLesson.get(lesson.id)) clearLessonDrafts(lesson.id);
+    const sectionCount = cheatSheets.find(item => item.id === lesson.guideId)?.sections.length ?? 1;
+    const savedCourseDraft = readSavedLessonDraft(course, lesson, "course", sectionCount);
+    const savedQuizDraft = readSavedLessonDraft(course, lesson, "quiz", sectionCount);
+    const resumeQuiz = startWithQuiz || (!savedCourseDraft && Boolean(savedQuizDraft));
     setOpenCourseId(course.id);
     setActiveLessonId(lesson.id);
-    setLessonLaunchMode(startWithQuiz ? "quiz" : "course");
+    setLessonLaunchMode(resumeQuiz ? "quiz" : "course");
     const guide = cheatSheets.find(item => item.id === lesson.guideId);
     const readingEnd = Math.max(0, (guide?.sections.length ?? 1) - 1);
-    setDraft({ ...blankDraft(course.id, lesson.id), quizOnly: startWithQuiz, ...(startWithQuiz ? { sectionIndex: readingEnd, inChecks: true } : {}) });
+    setDraft({ ...blankDraft(course.id, lesson.id), quizOnly: resumeQuiz, ...(resumeQuiz ? { sectionIndex: readingEnd, inChecks: true } : {}) });
     setDraftReadyFor("");
     setSaveError("");
   }
@@ -274,7 +308,7 @@ export default function StudyWorkspace({ state, tab, setTab, selected, setSelect
       value: JSON.stringify(progress),
     });
     if (saved) {
-      try { workspaceSessionStorage.removeItem(draftStorageKey(activeLesson.id, lessonLaunchMode)); } catch { /* Saved server state remains authoritative. */ }
+      clearLessonDrafts(activeLesson.id);
       setActiveLessonId("");
       setLessonLaunchMode("course");
       setDraftReadyFor("");
@@ -364,57 +398,53 @@ export default function StudyWorkspace({ state, tab, setTab, selected, setSelect
     return <div className="study-workspace">
       <StudyTabs tab={tab} setTab={setTab} dueCount={dueCount} />
       <button type="button" className="sw-back-link" onClick={() => { setOpenCourseId(""); setActiveLessonId(""); }}><ArrowLeft size={16} />All courses</button>
-      <div className="sw-course-layout">
-        <div className="sw-course-overview">
-          <div className={`sw-course-art sw-theme-${currentCourse.theme}`} style={courseArt(currentCourse.illustration)} role="img" aria-label={`${themeLabels[currentCourse.theme]} course illustration`} />
-          <div className="sw-course-copy">
-            <p className="sw-eyebrow">{themeLabels[currentCourse.theme]} course</p>
-            <h1 ref={headingRef} tabIndex={-1}>{currentCourse.title}</h1>
-            <p>{currentCourse.description}</p>
-            <p className="sw-progress-copy"><CheckCircle2 size={16} />{courseProgress} of {currentCourse.lessons.length} {courseCountLabel(currentCourse.lessons.length)} reviewed</p>
-          </div>
-        </div>
-        <section className="sw-lesson-path" aria-labelledby="sw-path-title">
-          <div className="sw-section-heading"><div><p className="sw-eyebrow">Course path</p><h2 id="sw-path-title">{currentCourse.lessons.length} {courseCountLabel(currentCourse.lessons.length)}</h2></div><span>{courseProgress} reviewed</span></div>
-          <ol className="sw-map-nodes">{currentCourse.lessons.map((lesson, index) => {
-            const progress = progressByLesson.get(lesson.id);
-            const guide = cheatSheets.find(item => item.id === lesson.guideId);
-            const status = progress ? "complete" : nextLesson?.id === lesson.id ? "current" : "upcoming";
-            return <li key={lesson.id} className={`sw-map-item is-${status}`}>
-              <button type="button" className="sw-map-node" onClick={() => openLesson(currentCourse, lesson)} aria-current={status === "current" ? "step" : undefined} aria-label={`${status === "complete" ? "Review completed" : status === "current" ? "Continue" : "Start"} lesson ${index + 1}: ${lesson.title}`}>
-                <span className="sw-map-diamond"><span>{status === "complete" ? <Check size={23} /> : status === "current" ? <BookOpen size={22} /> : <span>{String(index + 1).padStart(2, "0")}</span>}</span></span>
-                <span className="sw-map-label"><strong>{lesson.title}</strong><small>{guide?.category ?? "Study guide"} · {lesson.checks.length} checks</small></span>
-              </button>
-              {index < currentCourse.lessons.length - 1 && <span className="sw-map-connector" aria-hidden="true" />}
-            </li>;
-          })}</ol>
-          {nextLesson && <button type="button" className="sw-path-continue" onClick={() => openLesson(currentCourse, nextLesson)}>Continue course<ArrowRight size={17} /></button>}
-        </section>
-      </div>
+      <header className="sw-course-header">
+        <div className={`sw-course-emblem sw-theme-${currentCourse.theme}`} aria-hidden="true">{courseTopicIcon(currentCourse.theme)}</div>
+        <div><p className="sw-eyebrow">{themeLabels[currentCourse.theme]} · {currentCourse.lessons.length} {courseCountLabel(currentCourse.lessons.length)}</p><h1 ref={headingRef} tabIndex={-1}>{currentCourse.title}</h1><p>{currentCourse.description}</p></div>
+        {nextLesson && <button type="button" className="sw-course-next" onClick={() => openLesson(currentCourse, nextLesson)}>{courseProgress ? "Continue" : "Start course"}<ArrowRight size={16} /></button>}
+      </header>
+      <section className="sw-course-lessons" aria-labelledby="sw-path-title">
+        <div className="sw-course-list-heading"><h2 id="sw-path-title">Lessons</h2><span>{courseProgress} of {currentCourse.lessons.length} complete</span></div>
+        <ol>{currentCourse.lessons.map((lesson, index) => {
+          const progress = progressByLesson.get(lesson.id);
+          const sectionCount = cheatSheets.find(item => item.id === lesson.guideId)?.sections.length ?? 1;
+          const savedDraft = savedDrafts[savedDraftKey(lesson.id, "course")] ?? savedDrafts[savedDraftKey(lesson.id, "quiz")];
+          const inProgress = !progress && Boolean(savedDraft);
+          const isNext = !progress && !inProgress && nextLesson?.id === lesson.id;
+          const status = progress ? "Completed" : inProgress ? "In progress" : isNext ? "Up next" : "Not started";
+          const action = progress ? "Review" : inProgress ? "Resume" : "Start";
+          const guide = cheatSheets.find(item => item.id === lesson.guideId);
+          return <li key={lesson.id}>
+            <button type="button" className={`sw-lesson-row ${progress ? "is-complete" : inProgress ? "is-progress" : isNext ? "is-current" : ""}`} onClick={() => openLesson(currentCourse, lesson)} aria-current={isNext || inProgress ? "step" : undefined}>
+              <span className="sw-lesson-index">{progress ? <Check size={17} /> : String(index + 1).padStart(2, "0")}</span>
+              <span className="sw-lesson-row-copy"><strong>{lesson.title}</strong><small>{guide?.category ?? "Study guide"} · {lesson.checks.length} {lesson.checks.length === 1 ? "check" : "checks"}</small></span>
+              <span className="sw-lesson-row-status">{status}</span><span className="sw-lesson-row-action">{action}<ArrowRight size={15} /></span>
+            </button>
+          </li>;
+        })}</ol>
+      </section>
     </div>;
   }
 
   return <div className="study-workspace">
     <StudyTabs tab={tab} setTab={setTab} dueCount={dueCount} />
-    <header className="sw-catalog-heading">
-      <div><h1 ref={headingRef} tabIndex={-1}>Courses</h1><p>Choose a path and work through its lessons at your own pace.</p></div>
-      <button type="button" className="sw-review-nudge" onClick={() => setTab("Flashcards")}><span className="sw-review-icon"><Layers3 size={18} /></span><span><strong>{dueCount ? `${dueCount} cards due` : "Reviews are caught up"}</strong><small>{dueCount ? "Open spaced review" : "Check your saved cards"}</small></span><ArrowRight size={16} /></button>
+    <header className="sw-catalog-heading sw-catalog-toolbar">
+      <h1 ref={headingRef} tabIndex={-1}>Courses</h1>
+      <button type="button" className="sw-catalog-review" onClick={() => setTab("Flashcards")}><Layers3 size={17} /><span>Review</span>{dueCount > 0 && <span className="sw-due-badge">{dueCount} due</span>}<ArrowRight size={16} /></button>
     </header>
     <section className="sw-catalog" aria-label="Study courses">
-      <div className="sw-progress-overview"><div><p className="sw-eyebrow">Your progress</p><strong>{completedLessons} of {totalLessons} lessons reviewed</strong></div><span className="sw-overall-progress" role="progressbar" aria-label="Lessons reviewed" aria-valuemin={0} aria-valuemax={totalLessons} aria-valuenow={completedLessons}><span style={{ width: `${progressPercent}%` }} /></span></div>
-      <div className="sw-section-heading"><div><p className="sw-eyebrow">Learning paths</p><h2>Choose a course</h2></div></div>
+      {completedLessons > 0 && <p className="sw-saved-progress"><CheckCircle2 size={15} />Saved progress · {completedLessons} of {totalLessons} lessons complete</p>}
       <div className="sw-course-grid">{studyCourses.map(course => {
         const done = course.lessons.filter(lesson => progressByLesson.get(lesson.id)).length;
-        const percent = course.lessons.length ? (done / course.lessons.length) * 100 : 0;
-        return <article key={course.id} className={`sw-course-tile sw-theme-${course.theme}`}>
-          <div className="sw-tile-art" style={courseArt(course.illustration)} role="img" aria-label={`${themeLabels[course.theme]} course illustration`} />
-          <div className="sw-tile-copy"><span className="sw-tile-topic">{themeLabels[course.theme]}</span><h3>{course.title}</h3><span className="sw-tile-description">{course.description}</span>
-            <span className="sw-tile-count">{course.lessons.length} {courseCountLabel(course.lessons.length)}</span>
-            <span className="sw-tile-progress" role="progressbar" aria-label={`${course.title} progress`} aria-valuemin={0} aria-valuemax={course.lessons.length} aria-valuenow={done}><span style={{ width: `${percent}%` }} /></span>
-            <span className="sw-tile-footer"><span>{done} of {course.lessons.length} reviewed</span></span>
-            <button type="button" className="sw-course-continue" onClick={() => setOpenCourseId(course.id)}>{done ? done === course.lessons.length ? "Review course" : "Continue course" : "Start course"}<ArrowRight size={17} /></button>
-          </div>
-        </article>;
+        const savedLesson = course.lessons.find(lesson => !progressByLesson.get(lesson.id) && Boolean(savedDrafts[savedDraftKey(lesson.id, "course")] ?? savedDrafts[savedDraftKey(lesson.id, "quiz")]));
+        const resumeLabel = savedLesson ? "Resume" : done === course.lessons.length ? "Review" : done > 0 ? "Continue" : "Start";
+        return <button key={course.id} type="button" className={`sw-course-tile sw-theme-${course.theme}`} onClick={() => setOpenCourseId(course.id)} aria-label={`${resumeLabel} ${course.title}, ${course.lessons.length} ${courseCountLabel(course.lessons.length)}, ${done} complete`}>
+          <span className="sw-course-icon-well" aria-hidden="true">{courseTopicIcon(course.theme)}</span>
+          <span className="sw-tile-topic">{themeLabels[course.theme]}</span>
+          <span className="sw-course-tile-title">{course.title}</span>
+          <span className="sw-course-tile-meta">{course.lessons.length} {courseCountLabel(course.lessons.length)} <span aria-hidden="true">·</span> {done}/{course.lessons.length} complete</span>
+          <span className="sw-course-tile-action">{resumeLabel}<ArrowRight size={16} /></span>
+        </button>;
       })}</div>
     </section>
   </div>;
@@ -445,7 +475,7 @@ function QuizHub({ courses, progressByLesson, courseId, lessonId, onCourseChange
   const guide = lesson && cheatSheets.find(item => item.id === lesson.guideId);
   return <div className="study-workspace sw-quiz-hub">
     <StudyTabs tab="Quizzes" setTab={setTab} dueCount={dueCount} />
-    <header className="sw-quiz-heading"><div><h1>Quizzes</h1><p>Check your understanding of one lesson at a time.</p></div></header>
+    <header className="sw-quiz-heading"><div><h1>Quizzes</h1></div></header>
     <section className="sw-quiz-picker" aria-labelledby="sw-quiz-picker-title">
       <div className="sw-quiz-picker-heading"><p className="sw-eyebrow">Choose a concept</p><h2 id="sw-quiz-picker-title">Practice a concept</h2></div>
       {course && <div className="sw-quiz-selects">
@@ -456,7 +486,7 @@ function QuizHub({ courses, progressByLesson, courseId, lessonId, onCourseChange
         <div><p className="sw-eyebrow">{themeLabels[course.theme]} · {guide?.category ?? "Study guide"}</p><h3>{lesson.title}</h3><p>{lesson.description}</p></div>
         <span>{lesson.checks.length} {lesson.checks.length === 1 ? "check" : "checks"}</span>
       </div>}
-      <div className="sw-quiz-hub-actions">{course && <button type="button" className="sw-quiz-path-link" onClick={() => onOpenCourse(course)}>View course path<ArrowRight size={16} /></button>}{course && lesson && <button type="button" className="sw-primary-button" onClick={() => onStart(course)}>Start quiz<ArrowRight size={17} /></button>}</div>
+      <div className="sw-quiz-hub-actions">{course && <button type="button" className="sw-quiz-path-link" onClick={() => onOpenCourse(course)}>View course<ArrowRight size={16} /></button>}{course && lesson && <button type="button" className="sw-primary-button" onClick={() => onStart(course)}>Start quiz<ArrowRight size={17} /></button>}</div>
     </section>
   </div>;
 }
@@ -496,7 +526,7 @@ function LessonStudy({ course, lesson, draft, setDraft, headingRef, onBack, onSt
   const revealedCount = draft.results.filter(result => result.revealed).length;
 
   return <div className="study-workspace sw-lesson-screen">
-    <div className="sw-lesson-topline"><button type="button" className="sw-close-lesson" onClick={onBack} aria-label="Close lesson"><X size={20} /><span>Close lesson</span></button><span>{quizOnly ? "Question" : "Step"} {Math.min(currentStep, totalSteps)} of {totalSteps}</span></div>
+    <div className="sw-lesson-topline"><button type="button" className="sw-close-lesson" onClick={onBack} aria-label="Close lesson"><X size={20} /><span>Close lesson</span></button><span className="sw-lesson-name">{lesson.title}</span><span>{quizOnly ? "Question" : "Step"} {Math.min(currentStep, totalSteps)} of {totalSteps}</span></div>
     <div className="sw-lesson-progress" role="progressbar" aria-label="Lesson progress" aria-valuemin={0} aria-valuemax={totalSteps} aria-valuenow={Math.min(currentStep - 1, totalSteps)} aria-valuetext={`${Math.max(0, Math.round(progressPercent))}%`}><span style={{ width: `${progressPercent}%` }} /></div>
     <article className="sw-lesson-content">
       {!draft.inChecks && !readingComplete && currentSection && <>
@@ -514,28 +544,28 @@ function LessonStudy({ course, lesson, draft, setDraft, headingRef, onBack, onSt
         <p className="sw-eyebrow">{quizOnly ? `Question ${draft.checkIndex + 1} of ${lesson.checks.length}` : `Check ${draft.checkIndex + 1} of ${lesson.checks.length}`}</p>
         <h1 ref={headingRef} tabIndex={-1}>{check.prompt}</h1>
         <p className="sw-check-source">From the guide section: <strong>{check.sourceSectionTitle}</strong></p>
-        <fieldset className="sw-answer-options" disabled={draft.feedback !== "idle"}>
+        <fieldset className={`sw-answer-options is-${draft.feedback}`} disabled={draft.feedback !== "idle"}>
           <legend>Choose one answer</legend>
-          {check.options.map(option => <label key={option.id} className={`sw-answer-option ${draft.selectedOptionId === option.id ? "is-selected" : ""} ${draft.feedback === "correct" && option.id === check.answerId ? "is-correct" : ""}`}>
+          {check.options.map(option => <label key={option.id} className={`sw-answer-option ${draft.selectedOptionId === option.id ? "is-selected" : ""} ${draft.feedback === "incorrect" && option.id === draft.selectedOptionId ? "is-incorrect" : ""} ${(draft.feedback === "correct" || draft.feedback === "revealed") && option.id === check.answerId ? "is-correct" : ""}`}>
             <input type="radio" name={`study-check-${check.id}`} value={option.id} checked={draft.selectedOptionId === option.id} onChange={() => setDraft(current => ({ ...current, selectedOptionId: option.id }))} />
             <span>{option.text}</span>
           </label>)}
         </fieldset>
-        {draft.feedback === "incorrect" && <div className="sw-feedback sw-feedback-incorrect" role="status"><strong>Not quite. Try another answer, or review the explanation.</strong><div><button type="button" onClick={onRetry}><RotateCcw size={15} />Try again</button><button type="button" onClick={onReveal}>See explanation<ArrowRight size={15} /></button></div></div>}
-        {draft.feedback === "correct" && <div className="sw-feedback sw-feedback-correct" role="status"><strong><CheckCircle2 size={18} />That answer fits.</strong><p>{check.explanation}</p></div>}
-        {draft.feedback === "revealed" && <div className="sw-feedback sw-feedback-revealed" role="status"><strong>The answer is {check.options.find(option => option.id === check.answerId)?.text}</strong><p>{check.explanation}</p></div>}
+        {draft.feedback === "incorrect" && <div className="sw-feedback sw-feedback-incorrect" role="status"><strong><X size={17} />Not quite. Try another answer, or review the explanation.</strong><div><button type="button" onClick={onRetry}><RotateCcw size={15} />Try again</button><button type="button" onClick={onReveal}>See explanation<ArrowRight size={15} /></button></div></div>}
+        {draft.feedback === "correct" && <div className="sw-feedback sw-feedback-correct" role="status"><strong><CheckCircle2 size={18} />Correct</strong><p>{check.explanation}</p></div>}
+        {draft.feedback === "revealed" && <div className="sw-feedback sw-feedback-revealed" role="status"><strong><BookOpen size={17} />Answer revealed</strong><p>{check.options.find(option => option.id === check.answerId)?.text} {check.explanation}</p></div>}
         <div className="sw-lesson-actions">
-          {draft.feedback === "idle" ? <><button type="button" className="sw-check-button" onClick={onSubmit} disabled={!draft.selectedOptionId}>Check<Check size={16} /></button><button type="button" className="sw-reset-selection" onClick={onRetry} disabled={!draft.selectedOptionId}>Reset selection</button></> : draft.feedback === "incorrect" ? null : <button type="button" className="sw-continue-button" onClick={onContinue}>Continue<ArrowRight size={17} /></button>}
+          {draft.feedback === "idle" ? <><button type="button" className="sw-check-button" onClick={onSubmit} disabled={!draft.selectedOptionId}>Check answer<Check size={16} /></button><button type="button" className="sw-reset-selection" onClick={onRetry} disabled={!draft.selectedOptionId}>Reset selection</button></> : draft.feedback === "incorrect" ? null : <button type="button" className="sw-continue-button" onClick={onContinue}>Continue<ArrowRight size={17} /></button>}
         </div>
       </>}
       {checksComplete && <>
         <div className="sw-completion-icon"><CheckCircle2 size={27} /></div>
-        <p className="sw-eyebrow">{quizOnly ? "Quiz complete" : "Lesson complete"}</p>
-        <h1 ref={headingRef} tabIndex={-1}>{quizOnly ? `You finished ${lesson.title}` : `You worked through ${lesson.title}`}</h1>
-        <p className="sw-completion-copy">{correctCount} answered correctly · {revealedCount} {revealedCount === 1 ? "explanation opened" : "explanations opened"}. This records reviewed checks, not mastery.</p>
+        <p className="sw-eyebrow">Ready to save</p>
+        <h1 ref={headingRef} tabIndex={-1}>{lesson.title}</h1>
+        <p className="sw-completion-copy">Save this session to mark the {quizOnly ? "quiz" : "lesson"} complete. This records reviewed checks, not mastery.</p>
         <div className="sw-check-summary"><span><strong>{correctCount}</strong><small>Correct</small></span><span><strong>{revealedCount}</strong><small>Explanations opened</small></span><span><strong>{lesson.checks.length}</strong><small>Checks reviewed</small></span></div>
         {saveError && <p className="sw-save-error" role="alert">{saveError}</p>}
-        <div className="sw-lesson-actions"><button type="button" className="sw-check-button" onClick={onFinish} disabled={saving}>{saving ? "Saving progress…" : quizOnly ? "Save quiz progress" : "Finish lesson"}<Check size={17} /></button></div>
+        <div className="sw-lesson-actions"><button type="button" className="sw-check-button" onClick={onFinish} disabled={saving}>{saving ? "Saving progress…" : "Save progress"}<Check size={17} /></button></div>
       </>}
     </article>
   </div>;
@@ -643,9 +673,28 @@ function replaceAt<T>(items: T[], index: number, value: T): T[] {
   return next;
 }
 
-function courseArt(index: number) {
-  const pose = ["presenting", "research", "notes", "coding"][index] ?? "coding";
-  return { backgroundImage: `url("/brand/pose-${pose}.svg")`, backgroundPosition: "center", backgroundSize: "contain" };
+const savedDraftKey = (lessonId: string, mode: "course" | "quiz") => `${lessonId}:${mode}`;
+
+function courseTopicIcon(theme: StudyCourse["theme"]) {
+  const props = { size: 28, strokeWidth: 1.8, "aria-hidden": true as const };
+  switch (theme) {
+    case "blue": return <Network {...props} />;
+    case "purple": return <Shield {...props} />;
+    case "green": return <BarChart3 {...props} />;
+    case "gold": return <Code2 {...props} />;
+  }
+}
+
+function readSavedLessonDraft(course: StudyCourse, lesson: StudyLesson, mode: "course" | "quiz", sectionCount: number): LessonDraft | null {
+  try {
+    const saved = workspaceSessionStorage.getItem(draftStorageKey(lesson.id, mode));
+    if (!saved) return null;
+    const parsed: unknown = JSON.parse(saved);
+    if (!isLessonDraft(parsed, course.id, lesson, sectionCount)) return null;
+    return (parsed.quizOnly === true) === (mode === "quiz") ? parsed : null;
+  } catch {
+    return null;
+  }
 }
 
 function isLessonDraft(value: unknown, courseId: string, lesson: StudyLesson, sectionCount: number): value is LessonDraft {

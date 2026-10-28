@@ -1,0 +1,103 @@
+.company-home {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 8px 0 48px;
+  color: #fff9f2;
+}
+
+.company-home-content { display: grid; gap: 18px; }
+.company-home-overview,
+.company-home-section {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid #405064;
+  border-radius: 16px;
+  background: #192638;
+}
+.company-home-heading {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  align-items: center;
+  gap: 18px;
+  padding: 0;
+}
+.company-home-heading > div { min-width: 0; }
+.company-home-heading h1 { margin: 0; color: #fff9f2; font-size: 25px; line-height: 1.25; }
+.company-home-heading p { max-width: 760px; margin: 7px 0 0; color: #c3ced9; font-size: 13px; line-height: 1.65; }
+.company-home-logo {
+  flex: none;
+  width: 76px;
+  height: 76px;
+  padding: 12px;
+  border: 1px solid #ffffff25;
+  border-radius: 16px;
+}
+.company-home-logo img { width: 100%; height: 100%; object-fit: contain; }
+.company-home-pitch { margin: 16px 0 0; padding: 14px 16px; border: 1px solid #405064; border-left: 3px solid #ff7a3d; border-radius: 10px; background: #223247; }
+.company-home-pitch h2 { margin: 0 0 6px; color: #ffb491; font-size: 12px; }
+.company-home-pitch p { color: #e3e9ef; font-size: 13px; line-height: 1.6; }
+.company-home-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(250px, .75fr); align-items: start; gap: 18px; }
+.company-home-grid > .company-home-section { min-height: 100%; }
+.company-home-section { margin: 0; }
+.company-home-section > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 14px; }
+.company-home-section > header h2 { margin: 0; color: #fff9f2; font-size: 17px; }
+.company-home-section > header > button { display: inline-flex; min-height: 44px; align-items: center; gap: 8px; padding: 0 12px; border: 1px solid #76513e; border-radius: 8px; background: #392b25; color: #ffc09e; font-size: 12px; }
+.company-home-section > header > button:hover { border-color: #ff7a3d; background: #493126; }
+.company-careers-scroll { overflow-x: auto; border: 1px solid #405064; border-radius: 10px; }
+.company-careers { width: 100%; border-collapse: collapse; text-align: left; font-size: 12px; }
+.company-careers th { padding: 10px 12px; background: #223247; color: #b8c4d1; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+.company-careers td { padding: 11px 12px; border-top: 1px solid #405064; color: #cbd5df; line-height: 1.45; }
+.company-careers td:not(:first-child) { white-space: nowrap; }
+.company-careers td:first-child { min-width: 170px; }
+.company-careers button { display: flex; min-height: 40px; align-items: center; gap: 8px; padding: 0; background: transparent; color: #fff9f2; text-align: left; line-height: 1.45; }
+.company-careers button svg { flex: none; color: #8ec3ff; }
+.company-track-grid { grid-template-columns: 1fr; gap: 8px; }
+.company-track-grid > button { min-height: 0; gap: 7px; padding: 12px; border-color: #405064; border-radius: 10px; background: #223247; transition: border-color 150ms ease, background-color 150ms ease; }
+.company-track-grid > button:hover { border-color: #8a6048; background: #2b3440; }
+.company-track-grid > button svg { color: #ff9c6d; }
+.company-track-grid strong { color: #fff9f2; }
+.company-track-grid span { color: #b8c4d1; }
+.company-general-learning { display: flex; width: 100%; min-height: 44px; align-items: center; gap: 9px; padding: 0 12px; border: 1px solid #405064; border-radius: 9px; background: #223247; color: #d4e8ff; text-align: left; }
+.company-general-learning span { flex: 1; }
+.company-activity-section { max-width: 720px; }
+.company-activity { display: grid; gap: 0; margin: 0; padding: 0; border-top: 1px solid #405064; list-style: none; }
+.company-activity > li { position: relative; margin: 0; padding: 0 0 0 20px; border-bottom: 1px solid #34465b; }
+.company-activity > li::before { position: absolute; top: 23px; bottom: -1px; left: 7px; width: 1px; background: #465970; content: ""; }
+.company-activity > li:last-child::before { display: none; }
+.company-activity > li > button { display: grid; width: 100%; grid-template-columns: 30px minmax(0, 1fr); align-items: start; gap: 10px; padding: 13px 0; background: transparent; color: #d3dce6; text-align: left; }
+.company-activity-icon { z-index: 1; display: grid; width: 26px; height: 26px; place-items: center; border: 1px solid #53667c; border-radius: 50%; background: #192638; color: #ff9c6d; }
+.company-activity-copy { min-width: 0; }
+.company-activity-copy strong { display: block; color: #fff9f2; font-size: 12px; line-height: 1.5; }
+.company-activity-copy small { display: block; margin-top: 3px; color: #bdcad7; font-size: 11px; line-height: 1.5; }
+.company-activity-copy p { margin: 5px 0 0; color: #d3dce6; font-size: 12px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.company-home-empty { margin: 0; padding: 12px 0 2px; border: 0; color: #bdcad7; font-size: 12px; line-height: 1.6; }
+.company-home :is(button,a):focus-visible { outline: 3px solid #6ca8ff; outline-offset: 3px; }
+
+@media (max-width: 760px) {
+  .company-home-grid { grid-template-columns: 1fr; }
+  .company-home-grid > .company-home-section { min-height: 0; }
+  .company-activity-section { max-width: none; }
+}
+@media (max-width: 520px) {
+  .company-home { padding: 4px 0 36px; }
+  .company-home-content { gap: 12px; }
+  .company-home-overview,.company-home-section { padding: 15px; border-radius: 14px; }
+  .company-home-heading { grid-template-columns: 60px minmax(0,1fr); gap: 12px; }
+  .company-home-logo { width: 60px; height: 60px; padding: 9px; border-radius: 13px; }
+  .company-home-heading h1 { font-size: 21px; }
+  .company-home-heading p { font-size: 12px; }
+  .company-home-grid { gap: 12px; }
+  .company-home-section > header { align-items: flex-start; }
+  .company-careers th,.company-careers td { padding: 9px 8px; }
+  .company-careers td:first-child { min-width: 145px; }
+  .company-careers td:not(:first-child) { white-space: normal; min-width: 74px; }
+  .company-careers button { min-height: 44px; }
+  .company-activity-section { max-width: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .company-track-grid > button { transition: none; }
+}
+.company-home .target-back { color: #b8c4d1; }
+.company-home .company-track-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.company-home .company-track-grid > button { min-height: 120px; padding: 12px; }
+.company-home .company-track-grid strong { font-size: 12px; overflow-wrap: anywhere; }

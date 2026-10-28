@@ -237,5 +237,11 @@ export default function LoginPage() {
         <span>{sessionChecked ? "Your workspace is private to your account" : "Checking sign-in session"}</span>
       </footer>}
     </section>
+    <aside className="deems-login-art-panel" aria-label="Deems, ask, learn, explore">
+      <div className="deems-login-art-well">
+        <img src="/brand/pose-reading.svg" alt="" aria-hidden="true" width="340" height="286" />
+      </div>
+      <p>Ask. Learn. Explore.</p>
+    </aside>
   </main>;
 }

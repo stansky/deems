@@ -22,3 +22,6 @@
 .deems-brand-wordmark-light { display:none; }
 .dark .deems-brand-wordmark-ink { display:none; }
 .dark .deems-brand-wordmark-light { display:block; }
+
+.deems-brand-state-action .button { min-height: 44px; }
+@media(max-width:440px) { .deems-brand-state { padding:16px; gap:12px; } .deems-brand-state > .deems-mascot { width:64px; } }
