@@ -1,3 +1,4 @@
+import { practiceAttemptSchema } from "./practice";
 import { z } from "zod";
 import { careerStages } from "@/domains/career/contracts";
 import { commandMetaSchema } from "@/lib/command-validation";
@@ -39,6 +40,7 @@ export const workspaceStateSchema = z.object({
   applications: z.array(workspaceApplicationSchema),
   reviews: z.array(workspaceReviewSchema),
   sessions: z.array(workspaceSessionSchema),
+  practiceAttempts: z.array(practiceAttemptSchema).optional(),
   activities: z.array(workspaceActivitySchema),
   notes: z.record(z.string(), z.string()),
   settings: z.record(z.string(), z.string()),

@@ -1,3 +1,5 @@
+import { authLoginSchema, authChallengeInputSchema, authResponseSchema } from "@/contracts/auth";
+import { practiceAttemptSchema, practiceCommandSchema, practiceResponseSchema } from "@/contracts/practice";
 import { z } from "zod";
 import { personalPrepResponseSchema } from "@/contracts/personal-prep";
 import { studyProgressSchema } from "@/contracts/study";
@@ -39,6 +41,7 @@ const codeReviewResponseSchema = z.object({
 const exportResponseSchema = z.object({
   exportedAt: z.string(), version: z.number().int(), workspace: workspaceStateSchema, targets: targetStateSchema,
   career: z.record(z.string(), z.array(z.record(z.string(), z.unknown()))),
+  practice: z.record(z.string(), z.array(z.record(z.string(), z.unknown()))),
   research: z.record(z.string(), z.array(z.record(z.string(), z.unknown()))),
   algorithms: z.array(z.object({ id: z.string(), data: algorithmQuestionSchema, createdAt: z.string() })),
   knowledge: z.array(z.object({ id: z.string(), data: knowledgeEntrySchema, createdAt: z.string() })),
@@ -63,6 +66,12 @@ export const apiSchemas: Record<string, z.ZodType> = {
   WorkspaceSavedDocument: workspaceSavedDocumentSchema,
   WorkspaceMutation: workspaceMutationSchema,
   WorkspaceError: workspaceErrorSchema,
+  AuthLogin: authLoginSchema,
+  AuthChallenge: authChallengeInputSchema,
+  AuthResponse: authResponseSchema,
+  PracticeAttempt: practiceAttemptSchema,
+  PracticeCommand: practiceCommandSchema,
+  PracticeResponse: practiceResponseSchema,
   TargetsResponse: targetStateSchema,
   TargetMutation: targetMutationSchema,
   TargetError: targetErrorSchema,
@@ -106,6 +115,11 @@ const queryParameters = (schema: z.ZodObject) => Object.entries(schema.shape).ma
 });
 
 const paths = {
+  "/api/auth/login": {post:{operationId:"signIn",summary:"Sign in with the configured Cognito client",requestBody:{required:true,content:{"application/json":{schema:ref("AuthLogin")}}},responses:{"200":jsonResponse("Signed in with a host-only HttpOnly session cookie.","AuthResponse"),"202":jsonResponse("Additional verification required.","AuthResponse"),"400":errorResponse("Invalid sign-in fields or unsupported challenge."),"401":errorResponse("Credentials not accepted."),"403":errorResponse("Origin or account not allowed."),"429":errorResponse("Try again later."),"502":errorResponse("Provider unavailable."),"503":errorResponse("Sign-in setup incomplete.")}}},
+  "/api/auth/challenge": {post:{operationId:"completeSignIn",summary:"Complete an encrypted Cognito sign-in challenge",requestBody:{required:true,content:{"application/json":{schema:ref("AuthChallenge")}}},responses:{"200":jsonResponse("Signed in.","AuthResponse"),"202":jsonResponse("Further verification needed.","AuthResponse"),"400":errorResponse("Invalid or expired challenge."),"401":errorResponse("Verification rejected."),"403":errorResponse("Origin or account not allowed."),"429":errorResponse("Try again later."),"502":errorResponse("Provider unavailable."),"503":errorResponse("Sign-in setup incomplete.")}}},
+  "/api/auth/session": {get:{operationId:"readSignIn",summary:"Check the current authenticated session",responses:{"200":jsonResponse("Session status.","AuthResponse")}}},
+  "/api/auth/logout": {post:{operationId:"signOut",summary:"Clear this browser's Deems session",responses:{"200":jsonResponse("Signed out.","AuthResponse"),"403":errorResponse("Origin not allowed.")}}},
+  "/api/practice": { post: { operationId: "mutatePractice", summary: "Save a practice attempt or explicitly attach evidence", description: "Immutable attempt saves and versioned requirement links. Producer/action/key retries are idempotent. Never runs code or changes readiness.", requestBody: {required: true, content: {"application/json": {schema: ref("PracticeCommand")}}}, responses: {"200": jsonResponse("Saved attempt.", "PracticeResponse"), "400": errorResponse("Invalid practice command."), "403": errorResponse("Origin is not allowed."), "404": errorResponse("Exercise, origin or attempt not found."), "409": errorResponse("Retry input or revision conflict."), "413": errorResponse("Body too large."), "503": errorResponse("Save not confirmed.")} } },
   "/api/personal-prep": { get: { operationId: "getPersonalPrep", summary: "Read local experience stories; empty on hosted installations", responses: { "200": jsonResponse("Local preparation stories.", "PersonalPrepResponse"), "503": errorResponse("Local story file is unavailable or invalid.") } } },
   "/api/health": { get: { operationId: "getHealth", summary: "Check app and database health", responses: { "200": jsonResponse("Application and PostgreSQL are ready.", "HealthResponse"), "503": jsonResponse("Database is unavailable.", "HealthResponse") } } },
   "/api/workspace": {
@@ -121,7 +135,7 @@ const paths = {
     get: { operationId: "getCompanyResearch", summary: "Read recent company research", description: "Returns tracked company research profiles and a bounded recent window of up to 100 runs, sources, and role suggestions. Full source captures remain internal and are included only in the local export.", responses: { "200": jsonResponse("Company research state.", "CompanyResearchResponse"), "503": errorResponse("Company research is unavailable.") } },
     post: { operationId: "mutateCompanyResearch", summary: "Create or refresh company research, or review a role suggestion", description: "Creates a company and queues public read-only research, updates a company's research profile and queues a refresh, or accepts/dismisses a suggested job. Accepting a suggestion creates a local prospect role and candidacy only after user action; it never applies to a job or changes another candidacy's stage. Browser same-origin checks apply.", requestBody: { required: true, content: { "application/json": { schema: ref("CompanyResearchCommand") } } }, responses: { "200": jsonResponse("Updated company research state.", "CompanyResearchResponse"), "400": errorResponse("Invalid research command."), "403": errorResponse("Origin is not allowed."), "404": errorResponse("Company or suggestion was not found."), "409": errorResponse("Duplicate company, stale suggestion, source, or review conflict."), "413": errorResponse("Body or research result is too large."), "503": errorResponse("Research command could not be confirmed.") } },
   },
-  "/api/export": { get: { operationId: "exportWorkspace", summary: "Export local workspace data", description: "Returns a JSON attachment containing workspace, target, career history, all company research records and captures, algorithm, reference, and coaching data. Export version 6.", responses: { "200": { description: "JSON export attachment.", content: { "application/json": { schema: ref("ExportResponse") } } }, "503": errorResponse("Export is unavailable.") } } },
+  "/api/export": { get: { operationId: "exportWorkspace", summary: "Export local workspace data", description: "Returns a JSON attachment containing workspace, target, career history, all company research records and captures, algorithm, reference, and coaching data. Export version 7, including practice snapshots, evidence revisions and retry receipts.", responses: { "200": { description: "JSON export attachment.", content: { "application/json": { schema: ref("ExportResponse") } } }, "503": errorResponse("Export is unavailable.") } } },
   "/api/algorithms": { get: { operationId: "listAlgorithms", summary: "List algorithm questions", responses: { "200": jsonResponse("Algorithm question bank.", "AlgorithmsResponse"), "503": errorResponse("Question library is unavailable.") } } },
   "/api/questions/{id}": { get: { operationId: "getQuestion", summary: "Read an algorithm question", parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }, ...queryParameters(questionDetailQuerySchema)], responses: { "200": jsonResponse("Question details and linked reference entries.", "QuestionDetailResponse"), "400": errorResponse("Invalid query parameters."), "404": errorResponse("Question was not found."), "503": errorResponse("Question library is unavailable.") } } },
   "/api/questions/match": { post: { operationId: "matchQuestion", summary: "Match submitted text to the local question bank", description: "Matching can use local or semantic mode. Submitted content is not saved by this endpoint. The requestId is correlation only.", requestBody: { required: true, content: { "application/json": { schema: ref("QuestionMatchRequest") } } }, responses: { "200": jsonResponse("Match result, including clarification or no-match status.", "QuestionMatchResponse"), "400": errorResponse("Invalid JSON or request."), "403": errorResponse("Origin is not allowed."), "413": errorResponse("Request body is too large."), "429": errorResponse("Matcher is busy."), "503": errorResponse("Question matching is unavailable.") } } },
@@ -143,7 +157,7 @@ export function createOpenApiDocument() {
     info: {
       title: "Deems API",
       version: "1.0.0",
-      description: "Local API contract for Deems. This local-only service has no authentication and must not be exposed publicly or on a LAN.",
+      description: "Deems API. Hosted app and data routes require an allowed Cognito session plus deployment protection. Loopback local mode is unauthenticated unless explicitly enabled.",
     },
     servers: [{ url: "/", description: "Same origin as the local Deems app." }],
     paths,

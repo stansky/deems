@@ -19,6 +19,7 @@ interview-desk-handoff.zip
 *.tar.gz
 docs/*
 !docs/deployment.md
+!docs/practice-evidence.md
 !docs/vendor/
 
 __pycache__/

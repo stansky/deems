@@ -14,6 +14,8 @@ export async function GET() {
     for (const table of ["company_research_profiles","company_research_runs","company_research_sources","company_research_suggestions","company_research_command_receipts"]) {
       research[table]=(await pool.query(`SELECT * FROM ${table}`)).rows;
     }
-    return Response.json({exportedAt:new Date().toISOString(),version:6,workspace,targets:await getTargets(),career,research,algorithms:await db.select().from(algorithmBank),knowledge:await db.select().from(knowledgeBank),coaching:await db.select().from(coaching)},{headers:{"Content-Disposition":"attachment; filename=deems-export.json","Cache-Control":"no-store"}});
+    const practice:Record<string,unknown[]>={};
+    for (const table of ["practice_attempts","practice_evidence_revisions","practice_command_receipts"]) practice[table]=(await pool.query(`SELECT * FROM ${table}`)).rows;
+    return Response.json({exportedAt:new Date().toISOString(),version:7,workspace,targets:await getTargets(),career,research,practice,algorithms:await db.select().from(algorithmBank),knowledge:await db.select().from(knowledgeBank),coaching:await db.select().from(coaching)},{headers:{"Content-Disposition":"attachment; filename=deems-export.json","Cache-Control":"no-store"}});
   } catch { return Response.json({error:"Export unavailable"},{status:503}); }
 }

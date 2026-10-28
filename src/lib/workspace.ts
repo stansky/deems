@@ -1,3 +1,4 @@
+import { readPracticeAttempts } from "@/domains/practice/service";
 import { desc, eq, sql } from "drizzle-orm";
 import { createEmptyCard, fsrs, Rating, type Card } from "ts-fsrs";
 import { db, ensureDb, pool } from "./db";
@@ -20,6 +21,7 @@ export async function getWorkspace(): Promise<WorkspaceState> {
   const career = await readCareer(pool);
   const noteHeads = await pool.query<{entity_id:string;revision:number}>("SELECT entity_id,revision FROM record_heads WHERE entity_type='note'");
   return {
+    practiceAttempts: await readPracticeAttempts(pool),
     noteRevisions: Object.fromEntries(noteHeads.rows.map(row=>[row.entity_id,row.revision])),
     careerRevisions: career.revisions,
     applications: applications.map(row=>{const c=career.candidacies.find(item=>item.applicationId===row.id);return {...row,stage:c?.stage??row.stage,notes:c?.notes??row.notes,nextAction:c?.nextAction??row.nextAction,revision:c?.revision??0,updatedAt:c?.updatedAt??row.updatedAt.toISOString()};}),
@@ -59,7 +61,12 @@ export async function mutateWorkspace(mutation:z.infer<typeof mutationSchema>) {
     case "session": {
       if(!exercises.some(exercise=>exercise.id===mutation.data.exerciseId)) throw new Error("Unknown exercise");
       const data={...mutation.data,completedAt:new Date(mutation.data.completedAt)};
-      await db.insert(schema.sessions).values(data).onConflictDoUpdate({target:schema.sessions.id,set:data}); break;
+      await db.transaction(async tx => {
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${`practice-session:${data.id}`}))`);
+        const found = await tx.execute(sql`SELECT session_id FROM practice_attempts WHERE session_id=${data.id}`);
+        if (found.rows.length) throw new CareerError("Saved practice attempts cannot be overwritten. Start a new attempt.",409,"immutable_attempt");
+        await tx.insert(schema.sessions).values(data).onConflictDoUpdate({target:schema.sessions.id,set:data});
+      }); break;
     }
     case "setting": {
       await db.insert(schema.settings).values(mutation.data).onConflictDoUpdate({target:schema.settings.key,set:{value:mutation.data.value}}); break;

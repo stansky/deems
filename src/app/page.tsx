@@ -5,7 +5,9 @@ import { Activity as ActivityIcon, ArrowDown, ArrowLeft, ArrowRight, BookOpen, B
 import { roles, cheatSheets, flashcards, exercises, stories } from "@/data/prep";
 import type { Application, Exercise, WorkspaceState } from "@/lib/types";
 import { Badge, Button, Empty } from "@/components/ui";
-import CodeEditor from "@/components/code-editor";
+import Practice from "@/components/features/practice/practice-workspace";
+import type { PracticeOrigin, PracticeCommand, PracticeAttempt } from "@/contracts/practice";
+import { practiceCommandSchema, practiceResponseSchema } from "@/contracts/practice";
 import DesignBoard from "@/components/design-board";
 import { ApplicationDocuments, RoleLibrary } from "@/components/documents";
 import AlgorithmLab from "@/components/algorithm-lab";
@@ -41,6 +43,15 @@ export default function InterviewDesk() {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState("");
+  const [authenticated, setAuthenticated] = useState(false);
+  useEffect(()=>{void fetch("/api/auth/session",{cache:"no-store"}).then(response=>response.json()).then(data=>setAuthenticated(data.authenticated===true)).catch(()=>{});},[]);
+  async function signOut() {
+    try {
+      const response=await fetch("/api/auth/logout",{method:"POST"});
+      if(!response.ok) throw new Error("Could not sign out. Please retry.");
+      window.location.assign("/login");
+    } catch(error) {setError(error instanceof Error?error.message:"Could not sign out.");}
+  }
   const [mobileMenu, setMobileMenu] = useState(false);
   const [headerDate, setHeaderDate] = useState("");
   useEffect(() => {
@@ -59,6 +70,12 @@ export default function InterviewDesk() {
   useEffect(() => {
     const restoreView = () => {
       const params = new URLSearchParams(window.location.search);
+      if (params.get("view") === "practice") {
+        const exercise = params.get("exercise");
+        if (exercise && exercises.some(item => item.id === exercise)) setSelectedExercise(exercise);
+        setPracticeOrigin(params.get("role") && params.get("step") ? {roleId:params.get("role")!,planStepId:params.get("step")!} : null);
+        setSelectedAttemptId(params.get("attempt") ?? undefined);
+      }
       if (params.get("view") === "study") {
         setView("Study");
         const format = params.get("format");
@@ -78,6 +95,8 @@ export default function InterviewDesk() {
   }, []);
   const [selectedGuide, setSelectedGuide] = useState(cheatSheets[0]?.id ?? "");
   const [selectedExercise, setSelectedExercise] = useState(exercises[0]?.id ?? "");
+  const [practiceOrigin, setPracticeOrigin] = useState<PracticeOrigin | null>(null);
+  const [selectedAttemptId, setSelectedAttemptId] = useState<string | undefined>();
   const [selectedAlgorithm, setSelectedAlgorithm] = useState<string | undefined>();
   const [selectedReference, setSelectedReference] = useState<string | undefined>();
   const [selectedApplication, setSelectedApplication] = useState<string | null>(null);
@@ -116,7 +135,39 @@ export default function InterviewDesk() {
       void load().then(loaded=>{if(loaded)show();});
     } else show();
   }
-  function openPractice(kind?: string) { if (kind) setSelectedExercise(exercises.find(e => e.kind === kind)?.id ?? selectedExercise); navigate("Practice"); }
+  function openExercise(id: string, origin: PracticeOrigin | null = null, attemptId?: string) {
+    setSelectedExercise(id); setPracticeOrigin(origin); setSelectedAttemptId(attemptId); navigate("Practice");
+    const url = new URL(window.location.href);
+    url.searchParams.set("exercise",id);
+    for (const key of ["role","step","attempt"]) url.searchParams.delete(key);
+    if (origin) {url.searchParams.set("role",origin.roleId);url.searchParams.set("step",origin.planStepId);}
+    if (attemptId) url.searchParams.set("attempt",attemptId);
+    window.history.replaceState(null,"",url);
+  }
+  function openPractice(kind?: string) {openExercise(exercises.find(item=>item.kind===kind)?.id ?? selectedExercise);}
+  function returnToPlan(origin: PracticeOrigin) {
+    navigate("Interviews");
+    const url = new URL(window.location.href);
+    url.searchParams.set("role",origin.roleId);url.searchParams.set("step",origin.planStepId);
+    url.searchParams.delete("attempt");url.searchParams.delete("exercise");
+    window.history.replaceState(null,"",url);
+  }
+  async function practiceCommand(command: PracticeCommand): Promise<PracticeAttempt | null> {
+    setSaving(true);setError("");
+    try {
+      const response = await fetch("/api/practice",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(practiceCommandSchema.parse(command))});
+      if (!response.ok) {
+        const problem=await response.json().catch(()=>({}));
+        if(response.status===409) await load();
+        throw new Error(problem.error || "Practice save could not be confirmed. Retry with your saved draft.");
+      }
+      const {attempt}=practiceResponseSchema.parse(await response.json());
+      const refreshed=await load();
+      if(!refreshed) throw new Error("The save was accepted, but readback failed. Retry the same save to confirm it.");
+      setSaved("Saved");return attempt;
+    } catch(error) {setError(error instanceof Error?error.message:"Practice save failed.");return null;}
+    finally {setSaving(false);}
+  }
   function openStudy(id?: string) { if (id) setSelectedGuide(id); setStudyTab("Guides"); navigate("Study"); }
   const activeApplication = state.applications.find(a => a.id === selectedApplication);
   function openCategory(category: PrepCategory) {
@@ -141,17 +192,17 @@ export default function InterviewDesk() {
           <button className={view === "Interviews" ? "desk-primary is-active" : "desk-primary"} aria-current={view === "Interviews" ? "page" : undefined} onClick={() => navigate("Interviews")}>Interview Prep</button>
           <details><summary className={view === "Preparation" || view === "Practice" || view === "Algorithms" ? "is-active" : ""}>Prepare<ChevronRight size={13}/></summary><div className="desk-menu">{(["Coding", "System design", "Behavioral", "Management"] as PrepCategory[]).map(category => <button key={category} onClick={event => {closeNavigation(event);openCategory(category);}}>{category === "Management" ? "Management & communication" : category}</button>)}</div></details>
           <details><summary className={view === "Study" || view === "Reference" ? "is-active" : ""}>Library<ChevronRight size={13}/></summary><div className="desk-menu">{(["Courses","Quizzes","Guides","Flashcards"] as StudyTab[]).map(tab => <button key={tab} onClick={event => {closeNavigation(event);library(tab);}}>{tab === "Flashcards" ? "Review" : tab}</button>)}<button onClick={event=>{closeNavigation(event);navigate("Reference");}}>Reference</button></div></details>
-          <details><summary>Records<ChevronRight size={13}/></summary><div className="desk-menu"><button onClick={event=>{closeNavigation(event);navigate("Applications");}}>Applications</button><button onClick={event=>{closeNavigation(event);navigate("Experience");}}>Experience & stories</button><button onClick={event=>{closeNavigation(event);navigate("Today");}}>Schedule</button><a href="/api/export" download>Export workspace</a></div></details>
+          <details><summary>Records<ChevronRight size={13}/></summary><div className="desk-menu"><button onClick={event=>{closeNavigation(event);navigate("Applications");}}>Applications</button><button onClick={event=>{closeNavigation(event);navigate("Experience");}}>Experience & stories</button><button onClick={event=>{closeNavigation(event);navigate("Today");}}>Schedule</button><a href="/api/export" download>Export workspace</a>{authenticated&&<button onClick={()=>void signOut()}>Sign out</button>}</div></details>
         </nav>
       </header>
       <main className={`main-content ${view === "Study" ? "study-main" : focused ? "prep-main" : ""}`}>
         {error && <div className="notice notice-error" role="alert"><span>{error}</span><Button variant="ghost" onClick={load}>Retry connection</Button></div>}
         <div className={`save-status ${saving || saved ? "is-visible" : ""}`} role="status">{saving ? <><Loader2 size={13} className="spin" />Saving...</> : saved ? <><Check size={13} />{saved}</> : null}</div>
         {view === "Preparation" && <PrepLibrary category={prepCategory} onGuide={openStudy} onPractice={openPractice} onAlgorithms={()=>navigate("Algorithms")} onStories={()=>navigate("Experience")} onStudy={()=>library("Courses")} onReference={()=>navigate("Reference")}/>}
-        {view === "Interviews" && <TargetWorkspace workspace={state} onApplication={id => { setSelectedApplication(id); navigate("Applications"); }} onResource={resource => { if (resource.kind === "guide") openStudy(resource.id); else if (resource.kind === "exercise") { setSelectedExercise(resource.id); navigate("Practice"); } else if (resource.kind === "algorithm") { setSelectedAlgorithm(resource.id); navigate("Algorithms"); } else if (resource.kind === "reference") { setSelectedReference(resource.id); navigate("Reference"); } }} />}
+        {view === "Interviews" && <TargetWorkspace workspace={state} onApplication={id => { setSelectedApplication(id); navigate("Applications"); }} onViewAttempt={attempt => openExercise(attempt.exerciseId,attempt.origin,attempt.sessionId)} onResource={(resource, origin) => { if (resource.kind === "guide") openStudy(resource.id); else if (resource.kind === "exercise") { openExercise(resource.id, origin ?? null); } else if (resource.kind === "algorithm") { setSelectedAlgorithm(resource.id); navigate("Algorithms"); } else if (resource.kind === "reference") { setSelectedReference(resource.id); navigate("Reference"); } }} />}
         {view === "Today" && <Today state={state} onPractice={openPractice} onStudy={openStudy} onNavigate={navigate} onApplication={id => { setSelectedApplication(id); navigate("Applications"); }} onReview={() => { setStudyTab("Flashcards"); navigate("Study"); }} />}
         {view === "Study" && (state === blank ? <p className="learning-loading" role="status">{loading ? "Loading your learning progress…" : "Connect to your workspace to load saved progress."}</p> : <StudyWorkspace state={state} tab={studyTab} setTab={setStudyTab} selected={selectedGuide} setSelected={setSelectedGuide} mutate={mutate} saving={saving} />)}
-        {view === "Practice" && <Practice key={selectedExercise} exerciseId={selectedExercise} select={setSelectedExercise} state={state} mutate={mutate} saving={saving} />}
+        {view === "Practice" && <Practice key={selectedExercise} exerciseId={selectedExercise} select={id=>openExercise(id)} state={state} onCommand={practiceCommand} saving={saving} origin={practiceOrigin} onReturn={returnToPlan} selectedAttemptId={selectedAttemptId} />}
         {view === "Algorithms" && <AlgorithmLab initialSelectedId={selectedAlgorithm} state={state} mutate={mutate} saving={saving} />}
         {view === "Reference" && <KnowledgeLibrary initialSelectedId={selectedReference} />}
         {view === "Applications" && <Applications state={state} selected={activeApplication} select={setSelectedApplication} mutate={mutate} saving={saving} loading={loading} />}
@@ -192,34 +243,6 @@ function Today({ state, onPractice, onStudy, onNavigate, onApplication, onReview
   </div>;
 }
 
-function Practice({ exerciseId, select, state, mutate, saving }: { exerciseId: string; select: (s: string) => void; state: WorkspaceState; mutate: (a: string, d: unknown, meta?: CommandMeta) => Promise<boolean>; saving: boolean }) {
-  const exercise = exercises.find(e => e.id === exerciseId) ?? exercises[0];
-  const [mode, setMode] = useState("Coach");
-  const [running, setRunning] = useState(false);
-  const [elapsed, setElapsed] = useState(0);
-  const [hints, setHints] = useState(0);
-  const [solution, setSolution] = useState(false);
-  const [solutionSeen, setSolutionSeen] = useState(false);
-  const [notes, setNotes] = useState("");
-  const [language, setLanguage] = useState<"python" | "javascript">("python");
-  const [code, setCode] = useState("");
-  const [draftReady, setDraftReady] = useState(false);
-  const [coachUsed, setCoachUsed] = useState(false);
-  const starter = exercise?.kind === "System design" ? "" : exercise?.languages?.[language]?.starter ?? exercise?.starter ?? "";
-  const referenceSolution = exercise?.languages?.[language]?.solution ?? exercise?.solution;
-  const draftKey = `interview-draft-${exerciseId}-${exercise?.kind === "System design" ? "design" : language}`;
-  const [selfReview, setSelfReview] = useState("");
-  const [savedSession, setSavedSession] = useState(false);
-  const [checks, setChecks] = useState<string[]>([]);
-  const startRef = useRef<number | null>(null);
-  useEffect(() => { setDraftReady(false); setRunning(false); const raw = localStorage.getItem(draftKey); let d: Record<string, string | number | boolean> = {}; if (raw) { try { d = JSON.parse(raw); } catch { /* Start fresh when a draft cannot be read. */ } } setNotes(String(d.notes ?? "")); setCode(String(d.code ?? starter)); setSelfReview(String(d.selfReview ?? "")); setElapsed(Number(d.elapsed ?? 0)); setSavedSession(false); setSolution(false); setHints(Number(d.hints ?? 0)); setSolutionSeen(Boolean(d.solutionSeen)); setCoachUsed(Boolean(d.coachUsed)); setMode(String(d.mode ?? "Coach")); setDraftReady(true); }, [draftKey, starter]);
-  useEffect(() => { if (!running) return; startRef.current = Date.now() - elapsed * 1000; const timer = window.setInterval(() => { const next = Math.floor((Date.now() - (startRef.current ?? Date.now())) / 1000); setElapsed(next); if (next >= (exercise?.duration ?? 60) * 60) setRunning(false); }, 500); return () => window.clearInterval(timer); }, [running, exercise?.duration]); // elapsed is anchored when the timer starts.
-  useEffect(() => { if (!draftReady) return; const persist = () => localStorage.setItem(draftKey, JSON.stringify({ notes, code, selfReview, elapsed, hints, solutionSeen, coachUsed, mode })); const timeout = window.setTimeout(persist, 250); return () => { window.clearTimeout(timeout); persist(); }; }, [draftReady, draftKey, notes, code, selfReview, elapsed, hints, solutionSeen, coachUsed, mode]);
-  if (!exercise) return <Empty title="No exercises yet">Practice exercises will appear here.</Empty>;
-  const remaining = Math.max(0, exercise.duration * 60 - elapsed);
-  async function finish() { setRunning(false); const ok = await mutate("session", { id: newId(), exerciseId: exercise.id, mode, notes, code, elapsed, completedAt: new Date().toISOString(), selfReview: `Language: ${exercise.kind === "System design" ? "System design" : language}. Hints revealed: ${hints}. Reference solution revealed: ${solutionSeen ? "yes" : "no"}. Coach assistance used: ${coachUsed ? "yes" : "no"}.\n${checks.length ? `Checked: ${checks.join("; ")}\n` : ""}${selfReview}` }); if (ok) setSavedSession(true); }
-  return <><PageHeading title="Practice" /><div className="practice-layout"><aside className="exercise-index"><p className="nav-section-label">CHOOSE A SESSION</p>{exercises.map(e => <button key={e.id} className={e.id === exercise.id ? "selected" : ""} onClick={() => { if (running) setRunning(false); select(e.id); }}><span className="exercise-kind">{e.kind === "System design" ? <Layers3 size={16} /> : <Code2 size={16} />}{e.kind}</span><strong>{e.title}</strong><span className="muted small">{e.duration} min<ChevronRight size={14} /></span></button>)}</aside><div className="practice-content"><div className="session-toolbar"><div className="mode-toggle" aria-label="Practice mode">{["Coach", "Mock"].map(m => <button key={m} className={m === mode ? "selected" : ""} disabled={running} onClick={() => setMode(m)}>{m === "Coach" ? <Lightbulb size={14} /> : <Target size={14} />}{m}</button>)}</div>{exercise.kind !== "System design" && <select className="language-select" aria-label="Coding language" value={language} disabled={running} onChange={e => { setDraftReady(false); setLanguage(e.target.value as "python" | "javascript"); }}><option value="python">Python</option><option value="javascript">JavaScript</option></select>}<div className={`timer ${remaining === 0 ? "timer-ended" : ""}`}><Clock3 size={17} /><span>{String(Math.floor(remaining / 60)).padStart(2, "0")}:{String(remaining % 60).padStart(2, "0")}</span><button className="icon-button" aria-label={running ? "Pause timer" : "Start timer"} onClick={() => setRunning(!running)} disabled={remaining === 0}>{running ? <Pause size={16} /> : <Play size={16} />}</button><button className="icon-button" aria-label="Reset timer" onClick={() => { setRunning(false); setElapsed(0); }}><RotateCcw size={15} /></button></div></div><article className="exercise-card"><div className="exercise-title"><Badge tone="blue">{exercise.kind}</Badge><span className="muted small">Suggested practice prompt</span><h2>{exercise.title}</h2><p>{exercise.description}</p></div><div className="exercise-section"><h3>Requirements</h3><ul className="requirements">{exercise.requirements.map(r => <li key={r}><Circle size={12} />{r}</li>)}</ul></div><div className="phase-strip">{exercise.phases.map((p, i) => <div key={p.label}><span>{String(i + 1).padStart(2, "0")}</span><strong>{p.label}</strong><small>{p.minutes} min</small></div>)}</div><div className="exercise-section"><label className="field-label" htmlFor="practice-notes">{exercise.kind === "System design" ? "Your design and tradeoffs" : "Clarifications and approach"}</label><textarea id="practice-notes" className="notes-textarea" placeholder={exercise.kind === "System design" ? "Users and requirements\nCore data flow\nData model\nTradeoffs and failure cases" : "What would you clarify? What is the simplest useful solution?"} value={notes} onChange={e => { setNotes(e.target.value); setSavedSession(false); }} /><p className="field-help">Draft saved in this browser. Finish the session to save to your database.</p></div>{exercise.kind !== "System design" && <div className="exercise-section"><div className="code-heading"><label className="field-label" htmlFor="practice-code">Your implementation</label><span>Scratchpad · code is not executed</span></div>{draftReady && <CodeEditor value={code} onChange={value => { setCode(value); setSavedSession(false); }} language={language} />}</div>}{exercise.kind === "System design" && <div className="exercise-section"><h3>Sketch the system</h3><p className="field-help">Use the board for components, data flow, and failure boundaries. The scene is saved with your session.</p>{draftReady && <DesignBoard value={code} onChange={value => { setCode(value); setSavedSession(false); }} />}</div>}{mode === "Coach" && <div className="exercise-section hint-section"><div className="inline-section-heading"><h3><Lightbulb size={17} />Hints</h3><Button variant="secondary" onClick={() => { setCoachUsed(true); setHints(h => Math.min(h + 1, exercise.hints.length)); }} disabled={hints >= exercise.hints.length}>Reveal hint{hints < exercise.hints.length && <span>{hints + 1}/{exercise.hints.length}</span>}</Button></div>{exercise.hints.slice(0, hints).map((h, i) => <div className="hint" key={h}><span>{i + 1}</span><p>{h}</p></div>)}</div>}<div className="exercise-section"><h3>Self assessment</h3><div className="rubric-list">{exercise.rubric.map(r => <label key={r}><input type="checkbox" checked={checks.includes(r)} onChange={e => setChecks(c => e.target.checked ? [...c, r] : c.filter(x => x !== r))} /><span>{r}</span></label>)}</div><textarea aria-label="Self assessment" className="notes-textarea short-textarea" value={selfReview} onChange={e => { setSelfReview(e.target.value); setSavedSession(false); }} placeholder="What went well? Where did you get stuck? What is one thing to try next time?" /></div>{referenceSolution && (mode === "Coach" || savedSession) && <div className="exercise-section solution-section"><button className="disclosure-button" onClick={() => { setSolution(!solution); setSolutionSeen(true); setCoachUsed(true); }}><BookOpen size={17} /><span>{solution ? "Hide" : "Reveal"} a reference solution</span><ChevronRight size={16} className={solution ? "rotate" : ""} /></button>{solution && <div className="reference-solution"><p className="field-help">One possible approach, not the only correct answer.</p><pre>{referenceSolution}</pre></div>}</div>}<div className="exercise-footer"><span className="muted small">{state.sessions.filter(s => s.exerciseId === exercise.id).length} previous attempts saved</span><Button onClick={finish} disabled={saving || savedSession}>{saving ? <Loader2 size={16} className="spin" /> : <CheckCircle2 size={16} />}{savedSession ? "Session saved" : "Finish & save session"}</Button></div></article><section className="saved-sessions"><h3>Previous attempts</h3>{state.sessions.filter(s => s.exerciseId === exercise.id).slice().sort((a, b) => b.completedAt.localeCompare(a.completedAt)).map(s => <details key={s.id}><summary><span>{new Date(s.completedAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</span><span>{s.mode} · {Math.floor(s.elapsed / 60)} min</span></summary><h4>Approach and notes</h4><p>{s.notes || "No notes saved."}</p><h4>Self assessment</h4><p>{s.selfReview || "No reflection saved."}</p>{s.code && exercise.kind !== "System design" && <pre>{s.code}</pre>}{s.code && exercise.kind === "System design" && <Button variant="secondary" onClick={() => { setCode(s.code); setNotes(s.notes); setSavedSession(false); }}>Load this diagram into the board</Button>}</details>)}{!state.sessions.some(s => s.exerciseId === exercise.id) && <p className="small muted">Finish a session to keep your work and reflection here.</p>}</section></div></div></>;
-}
 
 function Applications({ state, selected, select, mutate, saving, loading }: { state: WorkspaceState; selected?: Application; select: (s: string | null) => void; mutate: (a: string, d: unknown, meta?: CommandMeta) => Promise<boolean>; saving: boolean; loading: boolean }) {
   const [newApplicationId,setNewApplicationId]=useState(newId);
