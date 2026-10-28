@@ -35,6 +35,7 @@ function testEnvironment(overrides: Record<string, string> = {}) {
 async function withProxyAuthEnvironment<T>(operation: () => Promise<T>, configured: boolean): Promise<T> {
   const previous = Object.fromEntries(authEnvironmentKeys.map((key) => [key, process.env[key]]));
   process.env.DEEMS_AUTH_ENABLED = "true";
+  process.env.DEEMS_MULTIUSER = "false";
   delete process.env.VERCEL;
   delete process.env.DEEMS_HOSTED_READY;
   if (configured) {
