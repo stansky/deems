@@ -294,6 +294,8 @@ test("registration requires same-origin bounded inputs, verified codes and an en
   await withProxyAuthEnvironment(async () => {
     assert.equal((await registerPost(request({ action: "recover", email: "test@example.com" }))).status, 403);
     process.env.DEEMS_MULTIUSER = "true";
+    const previousSignup = process.env.DEEMS_SIGNUP_ENABLED;
+    process.env.DEEMS_SIGNUP_ENABLED = "true";
     const oldFetch = globalThis.fetch;
     const calls: string[] = [];
     globalThis.fetch = async (_input, init) => {
@@ -314,6 +316,19 @@ test("registration requires same-origin bounded inputs, verified codes and an en
       const exists = await registerPost(request({ action: "signup", email: "test@example.com", password: "a valid long password" }));
       assert.equal(exists.status, 200);
       assert.deepEqual(await exists.json(), { accepted: true, confirmationRequired: true });
-    } finally { globalThis.fetch = oldFetch; }
+    } finally { globalThis.fetch = oldFetch; if (previousSignup === undefined) delete process.env.DEEMS_SIGNUP_ENABLED; else process.env.DEEMS_SIGNUP_ENABLED = previousSignup; }
   }, true);
+});
+
+test("registration defaults closed and robots excludes all crawlers", async () => {
+  const previous = process.env.DEEMS_SIGNUP_ENABLED; delete process.env.DEEMS_SIGNUP_ENABLED;
+  try {
+    await withProxyAuthEnvironment(async () => {
+      process.env.DEEMS_MULTIUSER = "true";
+      const response = await registerPost(new Request("https://deems.dev/api/auth/register", {method:"POST",headers:{origin:"https://deems.dev","Content-Type":"application/json"},body:JSON.stringify({action:"signup",email:"test@example.com",password:"a valid long password"})}));
+      assert.equal(response.status,403);
+    }, true);
+    const robots = await proxy(new NextRequest("https://deems.dev/robots.txt"));
+    assert.equal(robots.status,200); assert.match(await robots.text(), /Disallow: \//);
+  } finally { if (previous !== undefined) process.env.DEEMS_SIGNUP_ENABLED = previous; }
 });

@@ -53,3 +53,11 @@ Browser drafts use the same workspace key. Local installations retain their orig
 For the first public release, keep Vercel Authentication on All Deployments while testing staging and production. After verifying two-account persistence/export isolation and authenticated API boundaries, change production to Standard Protection so other users can reach `/signup`; Deems authentication still protects all workspace pages and APIs. Keep staging on All Deployments. Do not change protection before these checks. `DEEMS_HOSTED_READY` is a setup guard, not authentication.
 
 Run `npm run typecheck`, `npm run check:contracts`, `npm test` and `npm run build`. The PostgreSQL pool isolation test is skipped unless `DEEMS_ISOLATION_TEST_DATABASE_URL` explicitly points at a disposable hosted test database. It creates and drops only two generated test schemas. Live release verification should use separate disposable Cognito users and verify reads, writes, history, export, forged workspace headers, expired sessions and browser account switching. Do not treat mocked auth tests as provider or email-delivery evidence.
+
+## Closed registration and crawler policy
+
+Both environments expose the Deems login page without Vercel deployment protection. Workspace pages and APIs still require a verified Deems session. `DEEMS_SIGNUP_ENABLED=true` is required in addition to multi-user mode for signup, confirmation and resend. Default is closed. Password recovery remains available. Keep the Cognito pool self-registration setting consistent with this flag so callers cannot bypass the app through the public Cognito API.
+
+Administrators belong to the Cognito `admin` group, checked from verified token claims rather than a submitted email. This does not grant cross-workspace data access.
+
+All responses carry crawler exclusion headers and `/robots.txt` disallows every crawler. These are instructions for compliant crawlers; authentication protects private data from clients that ignore them.

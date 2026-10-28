@@ -296,3 +296,12 @@ export function getCookie(request: Request, name: string): string | null {
 }
 
 export const AUTH_COOKIE_NAMES = { session: SESSION_COOKIE, challenge: CHALLENGE_COOKIE } as const;
+
+export function registrationEnabled(env: Record<string, string | undefined> = process.env): boolean {
+  return env.DEEMS_MULTIUSER === "true" && env.DEEMS_SIGNUP_ENABLED === "true";
+}
+
+export function isAdmin(claims: JWTPayload): boolean {
+  const groups = claims["cognito:groups"];
+  return Array.isArray(groups) && groups.includes("admin");
+}

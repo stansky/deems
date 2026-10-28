@@ -63,13 +63,14 @@ export default function LoginPage() {
   useEffect(() => {
     let active = true;
     nextPath.current = safeNext(new URLSearchParams(window.location.search).get("next"));
-    if (new URLSearchParams(window.location.search).get("mode") === "signup") setScreen("signup");
+    
     async function checkSession() {
       try {
         const response = await fetch("/api/auth/session", { method: "GET", cache: "no-store", credentials: "same-origin" });
         const body = await readResponse(response);
         if (!active) return;
         setRegistrationEnabled(body.registrationEnabled === true);
+        if (body.registrationEnabled === true && new URLSearchParams(window.location.search).get("mode") === "signup") setScreen("signup");
         if (response.ok && body.authenticated) {
           window.location.replace(nextPath.current);
           return;

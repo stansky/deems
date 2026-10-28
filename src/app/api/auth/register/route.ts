@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { authRegistrationSchema, authRegistrationResponseSchema } from "@/contracts/auth";
-import { AuthSetupError, cognitoRequest, getAuthEnvironment, hasSameOrigin, readBoundedJson } from "@/domains/auth/server";
+import { registrationEnabled, AuthSetupError, cognitoRequest, getAuthEnvironment, hasSameOrigin, readBoundedJson } from "@/domains/auth/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,6 +14,7 @@ export async function POST(request: Request) {
     const env = getAuthEnvironment();
     if (!env.multiUser) return NextResponse.json({ error: "Registration is not enabled." }, { status: 403, headers });
     const input = parsed.data;
+    if (["signup", "confirm", "resend"].includes(input.action) && !registrationEnabled()) return NextResponse.json({ error: "Registration is not enabled." }, { status: 403, headers });
     const common = { ClientId: env.clientId, Username: input.email };
     const respond = (body: Parameters<typeof authRegistrationResponseSchema.parse>[0]) => NextResponse.json(authRegistrationResponseSchema.parse(body), { headers });
     if (input.action === "signup") {

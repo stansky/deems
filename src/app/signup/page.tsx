@@ -1,2 +1,4 @@
 import { redirect } from "next/navigation";
-export default function SignupPage() { redirect("/login?mode=signup"); }
+import { registrationEnabled } from "@/domains/auth/server";
+export const dynamic = "force-dynamic";
+export default function SignupPage() { redirect(registrationEnabled() ? "/login?mode=signup" : "/login"); }

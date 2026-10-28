@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { authResponseSchema } from "@/contracts/auth";
-import { authEnabled, getAuthEnvironment, getCookie, verifyIdToken } from "@/domains/auth/server";
+import { isAdmin, registrationEnabled, authEnabled, getAuthEnvironment, getCookie, verifyIdToken } from "@/domains/auth/server";
 import { workspaceSchema } from "@/domains/auth/workspace-key";
 
 export const runtime = "nodejs";
@@ -11,9 +11,9 @@ export async function GET(request: Request) {
     if (!authEnabled()) return NextResponse.json(authResponseSchema.parse({ authenticated: false, authRequired: false }), { headers: { "Cache-Control": "no-store" } });
     const env = getAuthEnvironment();
     const token = getCookie(request, "deems_session");
-    if (!token) return NextResponse.json(authResponseSchema.parse({ authenticated: false, authRequired: true, registrationEnabled: env.multiUser }), { headers: { "Cache-Control": "no-store" } });
+    if (!token) return NextResponse.json(authResponseSchema.parse({ authenticated: false, authRequired: true, registrationEnabled: registrationEnabled() }), { headers: { "Cache-Control": "no-store" } });
     const claims = await verifyIdToken(token, env);
-    return NextResponse.json(authResponseSchema.parse({ authenticated: true, authRequired: true, workspaceKey: workspaceSchema(claims.sub!), registrationEnabled: env.multiUser, expiresAt: claims.exp }), { headers: { "Cache-Control": "no-store" } });
+    return NextResponse.json(authResponseSchema.parse({ authenticated: true, authRequired: true, admin: isAdmin(claims), workspaceKey: workspaceSchema(claims.sub!), registrationEnabled: registrationEnabled(), expiresAt: claims.exp }), { headers: { "Cache-Control": "no-store" } });
   } catch {
     return NextResponse.json(authResponseSchema.parse({ authenticated: false }), { headers: { "Cache-Control": "no-store" } });
   }

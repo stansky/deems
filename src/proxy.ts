@@ -23,6 +23,7 @@ function isStaticAssetPath(path: string): boolean {
 }
 
 export async function proxy(request: NextRequest) {
+  if (request.nextUrl.pathname === "/robots.txt") return new NextResponse("User-agent: *\nDisallow: /\n", { headers: { "Content-Type": "text/plain", "X-Robots-Tag": "noindex, nofollow, noai, noimageai" } });
   if (isStaticAssetPath(request.nextUrl.pathname)) return NextResponse.next();
   if (process.env.VERCEL && process.env.DEEMS_HOSTED_READY !== "true") {
     return setupResponse("Deems is being set up. Access is not enabled yet.", 503);
