@@ -2,6 +2,8 @@
 import LearningHome from "@/components/learning-home";
 import { WorkspaceHeader, WorkspaceFooter, type WorkspaceView } from "@/components/workspace-chrome";
 import { studyCourses } from "@/data/study-courses";
+import { studyPaths } from "@/data/study-catalog";
+import { isInLearning, learningSelection } from "@/lib/learning-catalog";
 import { WorkspaceSession } from "@/components/workspace-session";
 import { notifyAccountChange, workspaceSessionStorage } from "@/components/workspace-client";
 
@@ -25,7 +27,7 @@ import "./learning-shell.css";
 import "./desk-navigation.css";
 import "./lms-theme.css";
 import PrepLibrary, { type PrepCategory } from "@/components/features/prep/prep-library";
-import { studyRouteKey, type StudyTab, type StudyLaunch } from "@/contracts/study";
+import { studyRouteKey, learningSelectionKey, type StudyTab, type StudyLaunch } from "@/contracts/study";
 import { workspaceStateSchema, workspaceMutationSchema } from "@/contracts/workspace";
 import { targetStateSchema } from "@/contracts/targets";
 import TargetWorkspace from "@/components/target-workspace";
@@ -76,7 +78,7 @@ function InterviewDesk() {
   function setStudyTab(tab: StudyTab) {
     updateStudyTab(tab);
     const url = new URL(window.location.href);
-    url.searchParams.set("format", tab.toLowerCase());
+    url.searchParams.set("format", tab === "My learning" ? "my-learning" : tab.toLowerCase());
     window.history.replaceState(null, "", url);
   }
   useEffect(() => {
@@ -91,7 +93,7 @@ function InterviewDesk() {
       if (params.get("view") === "study") {
         setView("Study");
         const format = params.get("format");
-        updateStudyTab(format === "quizzes" ? "Quizzes" : format === "guides" ? "Guides" : format === "flashcards" ? "Flashcards" : "Courses");
+        updateStudyTab(format === "my-learning" ? "My learning" : format === "quizzes" ? "Quizzes" : format === "guides" ? "Guides" : format === "flashcards" ? "Flashcards" : "Courses");
       } else if (params.get("view") === "preparation") {
         setView("Preparation");
         const category = params.get("category");
@@ -191,14 +193,26 @@ function InterviewDesk() {
     try { workspaceSessionStorage.removeItem(studyRouteKey); } catch { /* The in-memory route still opens the requested view. */ }
     setStudyTab(tab); navigate("Study");
   }
-  function openCourse(courseId: string, lessonId?: string, mode: "course" | "quiz" = "course") {
+  async function openCourse(courseId: string, lessonId?: string, mode: "course" | "quiz" = "course") {
     const course = studyCourses.find(item => item.id === courseId);
     if (!course) return;
     const lesson = course.lessons.find(item => item.id === lessonId);
+    if (lesson) {
+      const selection = learningSelection(state.settings, "course", course.id, true, { lessonId: lesson.id, mode });
+      if (!await mutate("setting", { key: learningSelectionKey("course", course.id), value: JSON.stringify(selection) })) return;
+    }
     const route: StudyLaunch = { courseId: course.id, ...(lesson ? { lessonId: lesson.id } : {}), mode };
     setStudyLaunch(route); setStudyNavigationKey(key => key + 1);
     try { workspaceSessionStorage.setItem(studyRouteKey, JSON.stringify(route)); } catch { /* The in-memory route still opens the requested course. */ }
-    setStudyTab("Courses"); navigate("Study");
+    setStudyTab(isInLearning({ kind: "course", item: course }, state.settings) ? "My learning" : "Courses"); navigate("Study");
+  }
+  function openPath(pathId: string) {
+    const path = studyPaths.find(item => item.id === pathId);
+    if (!path) return;
+    const route: StudyLaunch = { pathId };
+    setStudyLaunch(route); setStudyNavigationKey(key => key + 1);
+    try { workspaceSessionStorage.setItem(studyRouteKey, JSON.stringify(route)); } catch { /* The in-memory route still opens this path. */ }
+    setStudyTab(isInLearning({ kind: "path", item: path }, state.settings) ? "My learning" : "Courses"); navigate("Study");
   }
   const focused = view === "Home" || view === "Study" || view === "Interviews" || view === "Preparation";
 
@@ -214,11 +228,11 @@ function InterviewDesk() {
       <main className={`main-content ${view === "Study" ? "study-main" : focused ? "prep-main" : ""}`}>
         {error && (view !== "Home" || !workspaceUnavailable) && <div className="notice notice-error" role="alert"><span>{error}</span><Button variant="ghost" onClick={load}>Retry connection</Button></div>}
         <div className={`save-status ${saving || saved ? "is-visible" : ""}`} role="status">{saving ? <><Loader2 size={13} className="spin" />Saving...</> : saved ? <><Check size={13} />{saved}</> : null}</div>
-        {view === "Home" && <LearningHome state={state} loading={loading} onOpenCourse={openCourse} onReview={() => library("Flashcards")} historyUnavailable={workspaceUnavailable} onRetry={() => void load()} onCourses={() => library("Courses")} onArea={area => { if (area === "Coding") openCategory("Coding"); else if (area === "AI & systems") library("Courses"); else if (area === "Frameworks & tools") navigate("Reference"); else if (area === "Team management") openCategory("Management"); else openCategory("Behavioral"); }} />}
+        {view === "Home" && <LearningHome state={state} loading={loading} onOpenCourse={openCourse} onOpenPath={openPath} onMyLearning={() => library("My learning")} onReview={() => library("Flashcards")} historyUnavailable={workspaceUnavailable} onRetry={() => void load()} onCourses={() => library("Courses")} onArea={area => { if (area === "Coding") openCategory("Coding"); else if (area === "AI & systems") library("Courses"); else if (area === "Frameworks & tools") navigate("Reference"); else if (area === "Team management") openCategory("Management"); else openCategory("Behavioral"); }} />}
         {view === "Preparation" && <PrepLibrary category={prepCategory} onGuide={openStudy} onPractice={openPractice} onAlgorithms={()=>navigate("Algorithms")} onStories={()=>navigate("Experience")} onStudy={()=>library("Courses")} onReference={()=>navigate("Reference")}/>}
         {view === "Interviews" && <TargetWorkspace onGeneralPreparation={() => { const url = new URL(window.location.href); url.searchParams.delete("role"); url.searchParams.delete("step"); window.history.replaceState(null, "", url); navigate("Preparation"); }} workspace={state} onApplication={id => { setSelectedApplication(id); navigate("Applications"); }} onViewAttempt={attempt => openExercise(attempt.exerciseId,attempt.origin,attempt.sessionId)} onResource={(resource, origin) => { if (resource.kind === "guide") openStudy(resource.id); else if (resource.kind === "exercise") { openExercise(resource.id, origin ?? null); } else if (resource.kind === "algorithm") { setSelectedAlgorithm(resource.id); navigate("Algorithms"); } else if (resource.kind === "reference") { setSelectedReference(resource.id); navigate("Reference"); } }} />}
         {view === "Today" && <Today state={state} onPractice={openPractice} onStudy={openStudy} onNavigate={navigate} onApplication={id => { setSelectedApplication(id); navigate("Applications"); }} onReview={() => { setStudyTab("Flashcards"); navigate("Study"); }} />}
-        {view === "Study" && (state === blank ? <BrandState kind={loading ? "loading" : "error"} title={loading ? "Loading your learning progress" : "Could not load your progress"} action={!loading ? <Button onClick={load}>Try again</Button> : undefined} /> : <StudyWorkspace key={studyNavigationKey} initialRoute={studyLaunch} state={state} tab={studyTab} setTab={setStudyTab} selected={selectedGuide} setSelected={setSelectedGuide} mutate={mutate} saving={saving} />)}
+        {view === "Study" && (state === blank ? <BrandState kind={loading ? "loading" : "error"} title={loading ? "Loading your learning progress" : "Could not load your progress"} action={!loading ? <Button onClick={load}>Try again</Button> : undefined} /> : <StudyWorkspace key={studyNavigationKey} initialRoute={studyLaunch} state={state} tab={studyTab} setTab={setStudyTab} selected={selectedGuide} setSelected={setSelectedGuide} mutate={mutate} saving={saving} onPractice={id => openExercise(id)} />)}
         {view === "Practice" && <Practice key={selectedExercise} exerciseId={selectedExercise} select={id=>openExercise(id)} state={state} onCommand={practiceCommand} saving={saving} origin={practiceOrigin} onReturn={returnToPlan} selectedAttemptId={selectedAttemptId} />}
         {view === "Algorithms" && <AlgorithmLab initialSelectedId={selectedAlgorithm} state={state} mutate={mutate} saving={saving} />}
         {view === "Reference" && <KnowledgeLibrary initialSelectedId={selectedReference} />}

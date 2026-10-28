@@ -29,9 +29,23 @@ export type StudyLesson = z.infer<typeof studyLessonSchema>;
 export type StudyCheck = z.infer<typeof studyCheckSchema>;
 export type StudyCheckResult = z.infer<typeof studyCheckResultSchema>;
 export type StudyProgress = z.infer<typeof studyProgressSchema>;
-export type StudyTab = "Courses" | "Quizzes" | "Guides" | "Flashcards";
+export type StudyTab = "My learning" | "Courses" | "Quizzes" | "Guides" | "Flashcards";
 export const studyRouteKey = "interview-study-course-route-v1";
-export type StudyLaunch = { courseId: string; lessonId?: string; mode?: "course" | "quiz" };
+export type StudyLaunch = { courseId?: string; pathId?: string; lessonId?: string; mode?: "course" | "quiz" };
+export const learningSelectionSchema = z.object({
+  version: z.literal(1), kind: z.enum(["course", "path"]), id,
+  saved: z.boolean(), addedAt: z.iso.datetime({ offset: true }),
+  lastOpenedAt: z.iso.datetime({ offset: true }).optional(),
+  lessonId: id.optional(), mode: z.enum(["course", "quiz"]).optional(),
+}).strict();
+export type LearningSelection = z.infer<typeof learningSelectionSchema>;
+export const learningSelectionKey = (kind: LearningSelection["kind"], itemId: string) => `study:learning:${kind}:${itemId}`;
+export function readLearningSelection(settings: Record<string, string>, kind: LearningSelection["kind"], itemId: string): LearningSelection | null {
+  try {
+    const parsed = learningSelectionSchema.safeParse(JSON.parse(settings[learningSelectionKey(kind, itemId)] ?? "null"));
+    return parsed.success && parsed.data.kind === kind && parsed.data.id === itemId ? parsed.data : null;
+  } catch { return null; }
+}
 export const studyProgressKey = (lessonId: string) => `study:lesson:${lessonId}`;
 export function readStudyProgress(settings: Record<string, string>, lessonId: string): StudyProgress | null {
   try {

@@ -2,6 +2,16 @@
 
 The owner supplied the Deems brand archive on October 28, 2026 and requested applying it to the interface. The approved-reference illustration board is the primary direction. The SVG redraws and sample screens are starter assets; mock integrations and learning scores are not product requirements.
 
+## Current learning direction
+
+The owner reviewed Codecademy's live [Python catalog](https://www.codecademy.com/catalog/language/python), [machine-learning path](https://www.codecademy.com/learn/paths/machine-learning-engineer), authenticated [My learning](https://www.codecademy.com/learn?page=learning), dashboard and enrolled-course syllabus, then approved applying the whole review. [Learning implementation plan](lms-learning-plan.md) records the reference lock and data boundaries.
+
+Home, My learning and Browse now have separate jobs. My learning contains explicitly saved courses/paths and existing completed-module work, with an explicit removal state that preserves history. Browse uses reusable square tiles, type bands, search and filters. Two ordered paths reuse the four existing courses; each existing lesson record groups reading and knowledge checks as a module, with real practice projects linked from the course syllabus. Resume is stored per course. Counts and completion rollups come from saved records and do not require model calls.
+
+The visual direction keeps the light Deems canvas and original illustrated scene, while using stronger ink borders, blue path bands, lime course bands, brighter topic fills and orange actions. Shared shadcn learning variants and light tokens prevent the former dark controls from appearing on light pages. Curriculum appears before supporting outcomes on mobile, and changing course/path moves focus and scroll to its heading. The header is wordmark-only; career tools remain secondary.
+
+Learning selections use the existing account-scoped PostgreSQL settings store, a versioned Zod/TypeScript contract and an OpenAPI model. Keys are per item, and server validation checks catalog membership and resume details. No schema migration, reseeding, proficiency scoring or fabricated enrollment is involved. Existing progress, FSRS records, drafts, authentication, signup controls and crawler exclusions remain intact.
+
 ## Current login and logo direction
 
 The owner rejected a mascot in the logo alongside a separate mascot illustration. Shared headers now use only the supplied outlined wordmark. The character belongs in a relevant scene or state, not in the header lockup. The workspace remains a light personal LMS.

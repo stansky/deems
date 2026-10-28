@@ -10,8 +10,11 @@ import {
 } from "lucide-react";
 import { cheatSheets, flashcards } from "@/data/prep";
 import { studyCourses } from "@/data/study-courses";
+import { studyPaths } from "@/data/study-catalog";
+import { learningSelection } from "@/lib/learning-catalog";
+import { LearningLibrary, PathOverview, CourseOverview, type SaveLearning } from "./learning-library";
 import {
-  readStudyProgress, studyProgressKey, studyProgressSchema, studyRouteKey, type StudyLaunch,
+  readStudyProgress, studyProgressKey, studyProgressSchema, studyRouteKey, learningSelectionKey, type StudyLaunch,
   studyCheckResultSchema, type StudyCheckResult, type StudyCourse, type StudyLesson, type StudyProgress, type StudyTab,
 } from "@/contracts/study";
 import type { WorkspaceState } from "@/lib/types";
@@ -30,6 +33,7 @@ type Props = {
   setSelected: (id: string) => void;
   mutate: (action: string, data: unknown, meta?: CommandMeta) => Promise<boolean>;
   saving: boolean;
+  onPractice: (id: string) => void;
 };
 
 type LessonDraft = {
@@ -55,8 +59,9 @@ const themeLabels: Record<StudyCourse["theme"], string> = {
   gold: "Coding",
 };
 
-export default function StudyWorkspace({ initialRoute, state, tab, setTab, selected, setSelected, mutate, saving }: Props) {
+export default function StudyWorkspace({ initialRoute, state, tab, setTab, selected, setSelected, mutate, saving, onPractice }: Props) {
   const [openCourseId, setOpenCourseId] = useState("");
+  const [openPathId, setOpenPathId] = useState("");
   const [activeLessonId, setActiveLessonId] = useState("");
   const [lessonLaunchMode, setLessonLaunchMode] = useState<"course" | "quiz">("course");
   const [routeReady, setRouteReady] = useState(false);
@@ -75,14 +80,13 @@ export default function StudyWorkspace({ initialRoute, state, tab, setTab, selec
   const [lastReviewedCard, setLastReviewedCard] = useState("");
   const headingRef = useRef<HTMLHeadingElement>(null);
   const currentCourse = studyCourses.find(course => course.id === openCourseId);
+  const currentPath = studyPaths.find(path => path.id === openPathId);
   const activeLesson = currentCourse?.lessons.find(lesson => lesson.id === activeLessonId);
   const progressByLesson = useMemo(
-    () => new Map(studyCourses.flatMap(course => course.lessons.map(lesson => [lesson.id, readStudyProgress(state.settings, lesson.id)] as const))),
+    () => new Map(studyCourses.flatMap(course => course.lessons.map(lesson => { const saved = readStudyProgress(state.settings, lesson.id); return [lesson.id, saved?.courseId === course.id ? saved : null] as const; }))),
     [state.settings],
   );
   const reviewsByCard = useMemo(() => latestReviews(state.reviews), [state.reviews]);
-  const completedLessons = Array.from(progressByLesson.values()).filter(Boolean).length;
-  const totalLessons = studyCourses.reduce((total, course) => total + course.lessons.length, 0);
   const dueCount = flashcards.filter(card => {
     const latest = reviewsByCard.get(card.id);
     return !latest || new Date(latest.dueAt).getTime() <= Date.now();
@@ -96,7 +100,9 @@ export default function StudyWorkspace({ initialRoute, state, tab, setTab, selec
         route = saved ? JSON.parse(saved) : null;
       }
       if (route && typeof route === "object") {
-        const { courseId, lessonId } = route as { courseId?: unknown; lessonId?: unknown };
+        const { courseId, lessonId, pathId } = route as { courseId?: unknown; lessonId?: unknown; pathId?: unknown };
+        const path = studyPaths.find(item => item.id === pathId);
+        if (path) setOpenPathId(path.id);
         const course = studyCourses.find(item => item.id === courseId);
         if (course) {
           setOpenCourseId(course.id);
@@ -121,15 +127,15 @@ export default function StudyWorkspace({ initialRoute, state, tab, setTab, selec
   useEffect(() => {
     if (!routeReady) return;
     try {
-      if (!openCourseId) {
+      if (!openCourseId && !openPathId) {
         workspaceSessionStorage.removeItem(routeStorageKey);
       } else {
-        workspaceSessionStorage.setItem(routeStorageKey, JSON.stringify({ courseId: openCourseId, lessonId: activeLessonId || null, mode: activeLessonId ? lessonLaunchMode : "course" }));
+        workspaceSessionStorage.setItem(routeStorageKey, JSON.stringify({ courseId: openCourseId || undefined, pathId: openPathId || undefined, lessonId: activeLessonId || undefined, mode: activeLessonId ? lessonLaunchMode : "course" }));
       }
     } catch {
       // Course navigation remains usable without session storage.
     }
-  }, [routeReady, openCourseId, activeLessonId, lessonLaunchMode]);
+  }, [routeReady, openCourseId, openPathId, activeLessonId, lessonLaunchMode]);
 
   useEffect(() => {
     if (!routeReady) return;
@@ -208,12 +214,21 @@ export default function StudyWorkspace({ initialRoute, state, tab, setTab, selec
     });
   }
 
-  function openLesson(course: StudyCourse, lesson: StudyLesson, startWithQuiz = false) {
-    if (progressByLesson.get(lesson.id)) clearLessonDrafts(lesson.id);
+  const saveSelection: SaveLearning = async (kind, id, saved, launch) => {
+    const selection = learningSelection(state.settings, kind, id, saved, launch);
+    return mutate("setting", { key: learningSelectionKey(kind, id), value: JSON.stringify(selection) });
+  };
+
+  async function openLesson(course: StudyCourse, lesson: StudyLesson, startWithQuiz = false) {
+    if (saving) return;
+    const completed = Boolean(progressByLesson.get(lesson.id));
     const sectionCount = cheatSheets.find(item => item.id === lesson.guideId)?.sections.length ?? 1;
-    const savedCourseDraft = readSavedLessonDraft(course, lesson, "course", sectionCount);
-    const savedQuizDraft = readSavedLessonDraft(course, lesson, "quiz", sectionCount);
+    const savedCourseDraft = completed ? null : readSavedLessonDraft(course, lesson, "course", sectionCount);
+    const savedQuizDraft = completed ? null : readSavedLessonDraft(course, lesson, "quiz", sectionCount);
     const resumeQuiz = startWithQuiz || (!savedCourseDraft && Boolean(savedQuizDraft));
+    const enrolled = await saveSelection("course", course.id, true, { lessonId: lesson.id, mode: resumeQuiz ? "quiz" : "course" });
+    if (!enrolled) return;
+    if (completed) clearLessonDrafts(lesson.id);
     setOpenCourseId(course.id);
     setActiveLessonId(lesson.id);
     setLessonLaunchMode(resumeQuiz ? "quiz" : "course");
@@ -235,6 +250,7 @@ export default function StudyWorkspace({ initialRoute, state, tab, setTab, selec
     setSelected(guideId);
     setTab("Guides");
     setOpenCourseId("");
+    setOpenPathId("");
     setActiveLessonId("");
     setLessonLaunchMode("course");
   }
@@ -396,67 +412,22 @@ export default function StudyWorkspace({ initialRoute, state, tab, setTab, selec
     />;
   }
 
-  if (tab === "Courses" && currentCourse) {
-    const courseProgress = currentCourse.lessons.filter(lesson => progressByLesson.get(lesson.id)).length;
-    const nextLesson = currentCourse.lessons.find(lesson => !progressByLesson.get(lesson.id));
-    return <div className="study-workspace">
-      <StudyTabs tab={tab} setTab={setTab} dueCount={dueCount} />
-      <button type="button" className="sw-back-link" onClick={() => { setOpenCourseId(""); setActiveLessonId(""); }}><ArrowLeft size={16} />All courses</button>
-      <header className="sw-course-header">
-        <div className={`sw-course-emblem sw-theme-${currentCourse.theme}`} aria-hidden="true">{courseTopicIcon(currentCourse.theme)}</div>
-        <div><p className="sw-eyebrow">{themeLabels[currentCourse.theme]} · {currentCourse.lessons.length} {courseCountLabel(currentCourse.lessons.length)}</p><h1 ref={headingRef} tabIndex={-1}>{currentCourse.title}</h1><p>{currentCourse.description}</p></div>
-        {nextLesson && <button type="button" className="sw-course-next" onClick={() => openLesson(currentCourse, nextLesson)}>{courseProgress ? "Continue" : "Start course"}<ArrowRight size={16} /></button>}
-      </header>
-      <section className="sw-course-lessons" aria-labelledby="sw-path-title">
-        <div className="sw-course-list-heading"><h2 id="sw-path-title">Lessons</h2><span>{courseProgress} of {currentCourse.lessons.length} complete</span></div>
-        <ol>{currentCourse.lessons.map((lesson, index) => {
-          const progress = progressByLesson.get(lesson.id);
-          const sectionCount = cheatSheets.find(item => item.id === lesson.guideId)?.sections.length ?? 1;
-          const savedDraft = savedDrafts[savedDraftKey(lesson.id, "course")] ?? savedDrafts[savedDraftKey(lesson.id, "quiz")];
-          const inProgress = !progress && Boolean(savedDraft);
-          const isNext = !progress && !inProgress && nextLesson?.id === lesson.id;
-          const status = progress ? "Completed" : inProgress ? "In progress" : isNext ? "Up next" : "Not started";
-          const action = progress ? "Review" : inProgress ? "Resume" : "Start";
-          const guide = cheatSheets.find(item => item.id === lesson.guideId);
-          return <li key={lesson.id}>
-            <button type="button" className={`sw-lesson-row ${progress ? "is-complete" : inProgress ? "is-progress" : isNext ? "is-current" : ""}`} onClick={() => openLesson(currentCourse, lesson)} aria-current={isNext || inProgress ? "step" : undefined}>
-              <span className="sw-lesson-index">{progress ? <Check size={17} /> : String(index + 1).padStart(2, "0")}</span>
-              <span className="sw-lesson-row-copy"><strong>{lesson.title}</strong><small>{guide?.category ?? "Study guide"} · {lesson.checks.length} {lesson.checks.length === 1 ? "check" : "checks"}</small></span>
-              <span className="sw-lesson-row-status">{status}</span><span className="sw-lesson-row-action">{action}<ArrowRight size={15} /></span>
-            </button>
-          </li>;
-        })}</ol>
-      </section>
-    </div>;
+  if ((tab === "Courses" || tab === "My learning") && currentCourse) {
+    return <CourseOverview course={currentCourse} state={state} saving={saving} onSave={saveSelection}
+      hasDraft={id => Boolean(savedDrafts[savedDraftKey(id, "course")] ?? savedDrafts[savedDraftKey(id, "quiz")])}
+      onLesson={(lesson, quiz) => void openLesson(currentCourse, lesson, quiz)} onGuide={openGuide} onPractice={onPractice}
+      onBack={() => { setOpenCourseId(""); setActiveLessonId(""); }} backLabel={currentPath?.title ?? (tab === "My learning" ? "My learning" : "Browse")} />;
   }
-
-  return <div className="study-workspace">
-    <StudyTabs tab={tab} setTab={setTab} dueCount={dueCount} />
-    <header className="sw-catalog-heading sw-catalog-toolbar">
-      <h1 ref={headingRef} tabIndex={-1}>Courses</h1>
-      <button type="button" className="sw-catalog-review" onClick={() => setTab("Flashcards")}><Layers3 size={17} /><span>Review</span>{dueCount > 0 && <span className="sw-due-badge">{dueCount} due</span>}<ArrowRight size={16} /></button>
-    </header>
-    <section className="sw-catalog" aria-label="Study courses">
-      {completedLessons > 0 && <p className="sw-saved-progress"><CheckCircle2 size={15} />Saved progress · {completedLessons} of {totalLessons} lessons complete</p>}
-      <div className="sw-course-grid">{studyCourses.map(course => {
-        const done = course.lessons.filter(lesson => progressByLesson.get(lesson.id)).length;
-        const savedLesson = course.lessons.find(lesson => !progressByLesson.get(lesson.id) && Boolean(savedDrafts[savedDraftKey(lesson.id, "course")] ?? savedDrafts[savedDraftKey(lesson.id, "quiz")]));
-        const resumeLabel = savedLesson ? "Resume" : done === course.lessons.length ? "Review" : done > 0 ? "Continue" : "Start";
-        return <button key={course.id} type="button" className={`sw-course-tile sw-theme-${course.theme}`} onClick={() => setOpenCourseId(course.id)} aria-label={`${resumeLabel} ${course.title}, ${course.lessons.length} ${courseCountLabel(course.lessons.length)}, ${done} complete`}>
-          <span className="sw-course-icon-well" aria-hidden="true">{courseTopicIcon(course.theme)}</span>
-          <span className="sw-tile-topic">{themeLabels[course.theme]}</span>
-          <span className="sw-course-tile-title">{course.title}</span>
-          <span className="sw-course-tile-meta">{course.lessons.length} {courseCountLabel(course.lessons.length)} <span aria-hidden="true">·</span> {done}/{course.lessons.length} complete</span>
-          <span className="sw-course-tile-action">{resumeLabel}<ArrowRight size={16} /></span>
-        </button>;
-      })}</div>
-    </section>
-  </div>;
+  if ((tab === "Courses" || tab === "My learning") && currentPath) {
+    return <PathOverview path={currentPath} state={state} saving={saving} onSave={saveSelection} onCourse={setOpenCourseId} onBack={() => setOpenPathId("")} />;
+  }
+  return <LearningLibrary mine={tab === "My learning"} state={state} saving={saving} onSave={saveSelection}
+    onOpenCourse={setOpenCourseId} onOpenPath={setOpenPathId} onBrowse={() => setTab("Courses")} onReview={() => setTab("Flashcards")} />;
 }
 
 function StudyTabs({ tab, setTab, dueCount }: { tab: StudyTab; setTab: (tab: StudyTab) => void; dueCount: number }) {
   return <nav className="sw-tabs" aria-label="Study formats">
-    {(["Courses", "Quizzes", "Guides", "Flashcards"] as const).map(item => <button type="button" key={item} className={tab === item ? "is-selected" : ""} aria-current={tab === item ? "page" : undefined} onClick={() => setTab(item)}>
+    {(["My learning", "Courses", "Quizzes", "Guides", "Flashcards"] as const).map(item => <button type="button" key={item} className={tab === item ? "is-selected" : ""} aria-current={tab === item ? "page" : undefined} onClick={() => setTab(item)}>
       {item === "Courses" ? <BookOpen size={16} /> : item === "Quizzes" ? <ListChecks size={16} /> : item === "Guides" ? <Circle size={15} /> : <Layers3 size={16} />}{item}{item === "Flashcards" && dueCount > 0 && tab !== "Flashcards" ? <span>{dueCount}</span> : null}
     </button>)}
   </nav>;

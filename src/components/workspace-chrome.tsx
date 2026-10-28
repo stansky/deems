@@ -25,12 +25,13 @@ export function WorkspaceHeader({ view, studyTab, authenticated, onSignOut, onNa
     return () => { document.removeEventListener("pointerdown", outside); document.removeEventListener("keydown", escape); };
   }, []);
   const practicing = ["Preparation", "Practice", "Algorithms"].includes(view);
-  const library = ["Reference", "Interviews", "Applications", "Experience", "Today"].includes(view) || (view === "Study" && studyTab !== "Courses");
+  const library = ["Reference", "Interviews", "Applications", "Experience", "Today"].includes(view) || (view === "Study" && studyTab !== "Courses" && studyTab !== "My learning");
   return <header ref={header} className="learning-header desk-header workspace-header">
     <button className="learning-brand" aria-label="Deems home" onClick={() => go(() => onNavigate("Home"))}><DeemsBrand /></button>
     <nav className="desk-navigation" aria-label="Workspace sections">
-      <button className={view === "Home" ? "is-active" : ""} aria-current={view === "Home" ? "page" : undefined} onClick={() => go(() => onNavigate("Home"))}>Home</button>
-      <button className={view === "Study" && studyTab === "Courses" ? "is-active" : ""} aria-current={view === "Study" && studyTab === "Courses" ? "page" : undefined} onClick={() => go(() => onLibrary("Courses"))}>Learn</button>
+      <button className={`workspace-nav-home ${view === "Home" ? "is-active" : ""}`} aria-current={view === "Home" ? "page" : undefined} onClick={() => go(() => onNavigate("Home"))}>Home</button>
+      <button className={view === "Study" && studyTab === "My learning" ? "is-active" : ""} aria-current={view === "Study" && studyTab === "My learning" ? "page" : undefined} onClick={() => go(() => onLibrary("My learning"))}>My learning</button>
+      <button className={view === "Study" && studyTab === "Courses" ? "is-active" : ""} aria-current={view === "Study" && studyTab === "Courses" ? "page" : undefined} onClick={() => go(() => onLibrary("Courses"))}>Browse</button>
       <details name="deems-header-menu"><summary className={practicing ? "is-active" : ""}>Practice<ChevronDown size={14} /></summary><div className="desk-menu">
         {(["Coding", "System design", "Management", "Behavioral"] as PrepCategory[]).map(category => <button key={category} onClick={() => go(() => onCategory(category))}>{category === "Management" ? "Team management" : category === "Behavioral" ? "Interview skills" : category}</button>)}
         <button onClick={() => go(() => onNavigate("Algorithms"))}>Algorithm practice</button>
@@ -56,7 +57,8 @@ export function WorkspaceFooter({ onNavigate, onLibrary, onCategory }: Navigatio
   return <footer className="workspace-footer"><div className="workspace-footer-inner">
     <div className="workspace-footer-brand"><strong>Deems</strong><span>Your personal learning space</span></div>
     <nav aria-label="Footer navigation">
-      <button onClick={() => onLibrary("Courses")}><BookOpen size={14} />Courses</button>
+      <button onClick={() => onLibrary("My learning")}><BookOpen size={14} />My learning</button>
+      <button onClick={() => onLibrary("Courses")}>Browse</button>
       <button onClick={() => onCategory("Coding")}><Code2 size={14} />Practice</button>
       <button onClick={() => onNavigate("Reference")}><FileText size={14} />Reference</button>
       <a href="/api/export" download><ArrowDownToLine size={14} />Export</a>

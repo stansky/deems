@@ -1,11 +1,23 @@
 import { studyCourses } from "@/data/study-courses";
-import { studyProgressKey, studyProgressSchema } from "@/contracts/study";
+import { studyProgressKey, studyProgressSchema, learningSelectionKey, learningSelectionSchema } from "@/contracts/study";
+import { studyPaths } from "@/data/study-catalog";
 
-// Generic settings stay unchanged. Course progress has a separate, bounded contract.
+// Learning selections and progress have bounded contracts within existing settings.
 export function studySettingError(key: string, value: string): string | null {
   if (!key.startsWith("study:")) return null;
   let raw: unknown;
   try { raw = JSON.parse(value); } catch { return "Study progress must be valid JSON."; }
+  if (key.startsWith("study:learning:")) {
+    const parsed = learningSelectionSchema.safeParse(raw);
+    if (!parsed.success) return "Learning selection fields are invalid.";
+    const selection = parsed.data;
+    const course = studyCourses.find(item => item.id === selection.id);
+    if (key !== learningSelectionKey(selection.kind, selection.id) || (selection.kind === "course" ? !course : !studyPaths.some(path => path.id === selection.id))) return "Choose an existing course or path.";
+    if (selection.kind === "path" && (selection.lessonId || selection.mode || selection.lastOpenedAt)) return "A path selection cannot contain a course activity.";
+    if (selection.lessonId && !course?.lessons.some(lesson => lesson.id === selection.lessonId)) return "The current module must belong to this course.";
+    if ((selection.mode || selection.lastOpenedAt) && !selection.lessonId) return "A current module is required for resume details.";
+    return null;
+  }
   const parsed = studyProgressSchema.safeParse(raw);
   if (!parsed.success) return "Study progress fields are invalid.";
   const progress = parsed.data;

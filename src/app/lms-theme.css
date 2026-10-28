@@ -1,7 +1,16 @@
 /* Deems personal LMS surfaces. Imported last by the LMS shell and page. */
 .desk-shell.light-lms,
 .desk-shell.light-lms.learning-shell {
-  --lms-canvas: #faf9f6;
+  --lms-canvas: #fff8ee;
+  --desk-background: #fffefa;
+  --desk-foreground: #172331;
+  --desk-primary: #ff874f;
+  --desk-secondary: #e9edff;
+  --desk-secondary-foreground: #172331;
+  --desk-accent: #eeeaff;
+  --desk-accent-foreground: #172331;
+  --desk-input: #c7cdd3;
+  --desk-border: #263443;
   --lms-surface: #ffffff;
   --lms-soft: #f0f3f6;
   --lms-line: #e0e5eb;

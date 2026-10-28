@@ -2,7 +2,7 @@ import { authLoginSchema, authChallengeInputSchema, authResponseSchema, authRegi
 import { practiceAttemptSchema, practiceCommandSchema, practiceResponseSchema } from "@/contracts/practice";
 import { z } from "zod";
 import { personalPrepResponseSchema } from "@/contracts/personal-prep";
-import { studyProgressSchema } from "@/contracts/study";
+import { studyProgressSchema, learningSelectionSchema } from "@/contracts/study";
 import { sceneWeatherSchema } from "@/contracts/scene-weather";
 import { codeReviewInput } from "@/lib/code-review";
 import { matchInput } from "@/lib/question-match";
@@ -56,6 +56,7 @@ function jsonSchema(schema: z.ZodType): Record<string, unknown> {
 }
 
 export const apiSchemas: Record<string, z.ZodType> = {
+  LearningSelection: learningSelectionSchema.describe("A saved course or path, stored with action setting and key study:learning:<kind>:<id>. Removing it preserves progress and drafts. Course resume details must name a module in that course."),
   StudyProgress: studyProgressSchema.describe("Versioned lesson review saved as a JSON string with action setting and key study:lesson:<lessonId>. Server validation also checks course membership, exact check IDs and correct or explicitly revealed answers."),
   ApiError: errorSchema,
   HealthResponse: healthSchema,

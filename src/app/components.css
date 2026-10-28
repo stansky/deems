@@ -9,15 +9,15 @@
   --color-foreground: var(--desk-foreground);
   --color-primary: var(--desk-primary);
   --color-primary-foreground: var(--brand-ink);
-  --color-secondary: #252c32;
-  --color-secondary-foreground: #eef1f3;
+  --color-secondary: var(--desk-secondary, #252c32);
+  --color-secondary-foreground: var(--desk-secondary-foreground, #eef1f3);
   --color-muted-foreground: #aab4bf;
-  --color-accent: #303a2b;
-  --color-accent-foreground: #dcf6b5;
+  --color-accent: var(--desk-accent, #303a2b);
+  --color-accent-foreground: var(--desk-accent-foreground, #dcf6b5);
   --color-popover: #20262b;
   --color-popover-foreground: #eef1f3;
-  --color-input: #414b55;
-  --color-border: #414b55;
+  --color-input: var(--desk-input, #414b55);
+  --color-border: var(--desk-border, #414b55);
   --color-ring: var(--brand-sky);
   --color-destructive: #f87171;
 }

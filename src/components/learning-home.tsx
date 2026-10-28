@@ -1,14 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowRight, Blocks, BookOpen, BrainCircuit, Check, Code2, Layers3, MessageSquare, Network, RotateCcw, ShieldCheck, Users, WifiOff } from "lucide-react";
+import { ArrowRight, Blocks, Bookmark, BrainCircuit, Check, Code2, Layers3, MessageSquare, RotateCcw, Users, WifiOff } from "lucide-react";
 import type { WorkspaceState } from "@/lib/types";
 import { studyCourses } from "@/data/study-courses";
+import { studyPaths } from "@/data/study-catalog";
 import { exercises } from "@/data/prep";
-import { readStudyProgress, studyRouteKey, type StudyCourse, type StudyLaunch } from "@/contracts/study";
+import { readStudyProgress, studyRouteKey, type StudyLaunch } from "@/contracts/study";
+import { itemCourses, itemProgress, itemStarted, myLearning, nextCourseLesson } from "@/lib/learning-catalog";
 import { workspaceSessionStorage } from "./workspace-client";
 import { Button } from "./ui/button";
 import { SceneArt } from "./scene-art";
+import { LearningCard } from "./features/study/learning-library";
 import "./learning-home.css";
 
 const areas = [
@@ -18,32 +21,20 @@ const areas = [
   { title: "Team management", detail: "Feedback & leadership", icon: Users, color: "peach" },
   { title: "Interview skills", detail: "Stories & communication", icon: MessageSquare, color: "yellow" },
 ] as const;
-const courseIcons = { blue: Network, purple: ShieldCheck, green: BrainCircuit, gold: Code2 };
-const courseTopics = { blue: "AI & systems", purple: "Security & AI", green: "AI evaluation", gold: "Coding" };
 
 type Props = {
   state: WorkspaceState; loading: boolean; historyUnavailable?: boolean; onRetry?: () => void;
-  onCourses: () => void; onOpenCourse: (courseId: string, lessonId?: string, mode?: "course" | "quiz") => void;
+  onCourses: () => void; onMyLearning: () => void; onOpenPath: (id: string) => void;
+  onOpenCourse: (courseId: string, lessonId?: string, mode?: "course" | "quiz") => void;
   onArea: (area: string) => void; onReview: () => void;
 };
 
-function CourseTile({ course, completed, unavailable, onOpen }: { course: StudyCourse; completed: number; unavailable: boolean; onOpen: () => void }) {
-  const Icon = courseIcons[course.theme];
-  return <button className={`home-course home-course-${course.theme}`} onClick={onOpen}>
-    <div className="home-course-top"><span className="home-course-icon"><Icon size={24} strokeWidth={1.7} /></span><span>{courseTopics[course.theme]}</span></div>
-    <h3>{course.title}</h3><p>{course.description}</p>
-    {!unavailable && completed > 0 && <div className="home-course-progress"><progress value={completed} max={course.lessons.length} aria-label={`${course.title}: ${completed} of ${course.lessons.length} lessons completed`} /><span>{completed} of {course.lessons.length} completed</span></div>}
-    <div className="home-course-bottom"><span>{course.lessons.length} {course.lessons.length === 1 ? "lesson" : "lessons"}</span><strong>{unavailable ? "Open course" : completed === course.lessons.length ? "Review course" : completed > 0 ? "Continue" : "Start course"}<ArrowRight size={15} /></strong></div>
-  </button>;
-}
-
-export default function LearningHome({ state, loading, historyUnavailable = false, onRetry, onCourses, onOpenCourse, onArea, onReview }: Props) {
+export default function LearningHome({ state, loading, historyUnavailable = false, onRetry, onCourses, onMyLearning, onOpenCourse, onOpenPath, onArea, onReview }: Props) {
   const [route, setRoute] = useState<StudyLaunch | null>(null);
   const [date, setDate] = useState("");
   useEffect(() => {
     const refreshDate = () => setDate(new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" }));
-    refreshDate();
-    window.addEventListener("focus", refreshDate);
+    refreshDate(); window.addEventListener("focus", refreshDate);
     try {
       const saved = JSON.parse(workspaceSessionStorage.getItem(studyRouteKey) ?? "null");
       const course = studyCourses.find(item => item.id === saved?.courseId);
@@ -52,51 +43,34 @@ export default function LearningHome({ state, loading, historyUnavailable = fals
     } catch { /* A missing route does not block learning. */ }
     return () => window.removeEventListener("focus", refreshDate);
   }, []);
-  const progress = new Map(studyCourses.flatMap(course => course.lessons.map(lesson => {
-    const saved = readStudyProgress(state.settings, lesson.id);
-    return [lesson.id, saved?.courseId === course.id ? saved : null] as const;
-  })));
-  const completedFor = (course: StudyCourse) => course.lessons.filter(lesson => progress.get(lesson.id)).length;
-  const partial = studyCourses.filter(course => completedFor(course) > 0 && completedFor(course) < course.lessons.length).sort((a, b) => {
-    const lastCompleted = (course: StudyCourse) => Math.max(...course.lessons.map(lesson => Date.parse(progress.get(lesson.id)?.completedAt ?? "") || 0));
-    return lastCompleted(b) - lastCompleted(a);
-  })[0];
-  const nextLesson = partial?.lessons.find(lesson => !progress.get(lesson.id));
-  const resumable: StudyLaunch | null = historyUnavailable || loading ? null : route && !progress.get(route.lessonId ?? "") ? route : partial && nextLesson ? { courseId: partial.id, lessonId: nextLesson.id, mode: "course" } : null;
+  const mine = myLearning(state.settings);
+  const nextEntry = mine.find(entry => { const progress = itemProgress(entry, state.settings); return progress.done < progress.total; });
+  const nextCourse = nextEntry && itemCourses(nextEntry).find(course => course.lessons.some(lesson => !readStudyProgress(state.settings, lesson.id)));
+  const next = nextCourse && nextCourseLesson(nextCourse, state.settings);
+  const currentRoute = route && !readStudyProgress(state.settings, route.lessonId ?? "") ? route : null;
+  const resumable: StudyLaunch | null = loading || historyUnavailable ? null : currentRoute ?? (nextCourse && next ? { courseId: nextCourse.id, lessonId: next.lesson.id, mode: next.mode } : null);
   const resumeCourse = studyCourses.find(course => course.id === resumable?.courseId);
   const resumeLesson = resumeCourse?.lessons.find(lesson => lesson.id === resumable?.lessonId);
+  const started = Boolean(currentRoute) || Boolean(nextEntry && itemStarted(nextEntry, state.settings));
   const recent = [
     ...studyCourses.flatMap(course => course.lessons.flatMap(lesson => {
-      const saved = progress.get(lesson.id);
-      return saved ? [{ id: lesson.id, title: lesson.title, date: saved.completedAt, kind: "Lesson completed", icon: Check }] : [];
+      const saved = readStudyProgress(state.settings, lesson.id);
+      return saved?.courseId === course.id ? [{ id: lesson.id, title: lesson.title, date: saved.completedAt, kind: "Module completed", icon: Check }] : [];
     })),
     ...state.sessions.map(session => ({ id: session.id, title: exercises.find(item => item.id === session.exerciseId)?.title ?? session.mode, date: session.completedAt, kind: "Practice saved", icon: Code2 })),
-  ].filter(item => Number.isFinite(Date.parse(item.date))).sort((a, b) => Date.parse(b.date) - Date.parse(a.date)).slice(0, 4);
+  ].filter(item => Number.isFinite(Date.parse(item.date))).sort((a, b) => Date.parse(b.date) - Date.parse(a.date)).slice(0, 3);
 
   return <div className="learning-home">
-    <header className="home-heading">
-      <div className="home-welcome-copy"><p className="home-date">{date || "Your learning space"}</p><h1>Welcome back</h1>
-        <p className="home-welcome-detail">{resumeLesson ? resumeLesson.title : "Find your next lesson, or practice something you’re working on."}</p>
-        {resumeCourse && <p className="home-resume-context">{resumeCourse.title}</p>}
-        <Button variant="secondary" className="home-primary" onClick={() => resumeCourse && resumeLesson ? onOpenCourse(resumeCourse.id, resumeLesson.id, resumable?.mode) : onCourses()}>{resumeLesson ? "Continue learning" : "Browse courses"}<ArrowRight size={17} /></Button>
-      </div>
-      <SceneArt className="home-scene" />
-    </header>
+    <header className="home-heading"><div className="home-welcome-copy"><p className="home-date">{date || "Your learning space"}</p><h1>Welcome back</h1><p className="home-welcome-detail">{resumeLesson ? resumeLesson.title : "What will you make progress on today?"}</p>{resumeCourse && <p className="home-resume-context">{resumeCourse.title}</p>}<Button variant="learning" className="lc-action home-primary" onClick={() => resumeCourse && resumeLesson ? onOpenCourse(resumeCourse.id, resumeLesson.id, resumable?.mode) : onCourses()}>{resumeLesson ? started ? "Continue learning" : "Start learning" : "Find your next course"}<ArrowRight size={17} /></Button></div><SceneArt className="home-scene" /></header>
 
-    <section className="home-topics" aria-labelledby="learning-areas-title"><div className="home-section-heading"><h2 id="learning-areas-title">Explore by topic</h2></div>
-      <div className="home-area-grid">{areas.map(({ title, detail, icon: Icon, color }) => <button key={title} className={`home-area home-area-${color}`} onClick={() => onArea(title)}><Icon size={23} strokeWidth={1.7} /><h3>{title}</h3><p>{detail}</p><ArrowRight className="home-area-arrow" size={15} /></button>)}</div>
+    <section className="home-my-learning" aria-labelledby="home-my-learning"><div className="home-section-heading"><h2 id="home-my-learning">My learning</h2>{!loading && !historyUnavailable && <button className="home-text-action" onClick={mine.length ? onMyLearning : onCourses}>{mine.length ? "View all" : "Browse"}<ArrowRight size={15} /></button>}</div>
+      {loading ? <div className="home-learning-skeleton" aria-busy="true" aria-label="Loading your learning"><span /><span /><span /></div> : historyUnavailable ? <div className="home-learning-state" role="alert"><WifiOff size={25} /><div><h3>Your learning is unavailable</h3><p>Your saved work is unchanged. Try loading it again.</p></div><Button className="lc-action lc-action-outline" variant="learning-outline" onClick={onRetry}>Try again<RotateCcw size={15} /></Button></div> : mine.length ? <div className="lc-card-grid">{mine.slice(0, 4).map(entry => <LearningCard key={`${entry.kind}-${entry.item.id}`} entry={entry} settings={state.settings} onOpen={() => entry.kind === "path" ? onOpenPath(entry.item.id) : onOpenCourse(entry.item.id)} />)}</div> : <div className="home-learning-state"><span className="home-state-icon"><Bookmark size={25} /></span><div><h3>Pick something you want to learn</h3><p>Save a course or path. Come back here to keep going.</p></div></div>}
     </section>
 
-    <div className="home-learning-grid">
-      <section aria-labelledby="home-courses-title"><div className="home-section-heading"><h2 id="home-courses-title">Your courses</h2><button className="home-text-action" onClick={onCourses}>View all<ArrowRight size={14} /></button></div>
-        {loading ? <div className="home-course-grid" aria-label="Loading course progress" aria-busy="true">{studyCourses.map(course => <div key={course.id} className="home-course-skeleton"><span /><span /><span /></div>)}</div> : <div className="home-course-grid">{studyCourses.map(course => <CourseTile key={course.id} course={course} completed={completedFor(course)} unavailable={historyUnavailable} onOpen={() => onOpenCourse(course.id)} />)}</div>}
-      </section>
-      <aside className="home-sidebar">
-        <section className="home-activity" aria-labelledby="home-activity-title"><div className="home-section-heading"><h2 id="home-activity-title">Recent learning</h2></div>
-          {loading ? <div className="home-activity-loading" role="status">Loading your activity…</div> : historyUnavailable ? <div className="home-activity-state" role="alert"><WifiOff size={24} strokeWidth={1.6} /><h3>Activity is unavailable</h3><p>Your saved work is unchanged. Try loading it again.</p><button className="home-text-action" onClick={onRetry}>Try again<RotateCcw size={14} /></button></div> : recent.length ? <div className="home-recent-list">{recent.map(item => <div key={`${item.kind}-${item.id}`}><span className="home-activity-icon"><item.icon size={16} /></span><div><strong>{item.title}</strong><span>{item.kind}</span><time dateTime={item.date}>{new Date(item.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</time></div></div>)}</div> : <div className="home-activity-state"><BookOpen size={25} strokeWidth={1.5} /><h3>A fresh start</h3><p>Your completed lessons and saved practice will appear here.</p></div>}
-        </section>
-        <section className="home-study-tools" aria-labelledby="home-tools-title"><h2 id="home-tools-title">A little practice</h2><button onClick={() => onArea("Coding")}><Code2 size={19} /><span><strong>Work through a problem</strong><small>Coding and debugging</small></span><ArrowRight size={15} /></button><button onClick={onReview}><Layers3 size={19} /><span><strong>Review a concept</strong><small>Spaced recall</small></span><ArrowRight size={15} /></button><button onClick={() => onArea("Interview skills")}><MessageSquare size={19} /><span><strong>Find the words</strong><small>Interview stories and communication</small></span><ArrowRight size={15} /></button></section>
-      </aside>
-    </div>
+    <section className="home-discover" aria-labelledby="home-discover"><div className="home-section-heading"><h2 id="home-discover">Take a learning path</h2><button className="home-text-action" onClick={onCourses}>Browse all<ArrowRight size={15} /></button></div><div className="home-discover-layout"><div className="home-path-grid">{studyPaths.map(path => <LearningCard key={path.id} entry={{ kind: "path", item: path }} settings={historyUnavailable || loading ? {} : state.settings} onOpen={() => onOpenPath(path.id)} />)}</div><aside className="home-practice-panel"><span className="home-practice-label">A little practice</span><h3>Put an idea to work.</h3><p>Try a problem, revisit a concept, or talk through a decision.</p><button onClick={() => onArea("Coding")}><Code2 size={19} /><span>Coding & debugging</span><ArrowRight size={15} /></button><button onClick={onReview}><Layers3 size={19} /><span>Spaced review</span><ArrowRight size={15} /></button><button onClick={() => onArea("Interview skills")}><MessageSquare size={19} /><span>Interview stories</span><ArrowRight size={15} /></button></aside></div></section>
+
+    <section className="home-topics" aria-labelledby="home-topics"><div className="home-section-heading"><h2 id="home-topics">Explore by topic</h2></div><div className="home-area-grid">{areas.map(({ title, detail, icon: Icon, color }) => <button key={title} className={`home-area home-area-${color}`} onClick={() => onArea(title)}><Icon size={24} strokeWidth={1.8} /><h3>{title}</h3><p>{detail}</p><ArrowRight className="home-area-arrow" size={15} /></button>)}</div></section>
+
+    {!loading && !historyUnavailable && recent.length > 0 && <section className="home-recent" aria-labelledby="home-recent"><div className="home-section-heading"><h2 id="home-recent">Recent activity</h2></div><div className="home-recent-grid">{recent.map(item => <div key={`${item.kind}-${item.id}`}><item.icon size={18} /><div><strong>{item.title}</strong><span>{item.kind} · <time dateTime={item.date}>{new Date(item.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</time></span></div></div>)}</div></section>}
   </div>;
 }
