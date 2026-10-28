@@ -1,10 +1,11 @@
 import { CareerError } from "@/domains/career/service";
 import { getWorkspace, mutateWorkspace } from "@/lib/workspace";
 import { mutationSchema, sameOrigin } from "@/lib/validation";
+import { reportDatabaseError } from "@/lib/database-error";
 export const dynamic="force-dynamic";
 export async function GET() {
   try { return Response.json(await getWorkspace(),{headers:{"Cache-Control":"no-store"}}); }
-  catch(error) { console.error("Workspace read failed", error instanceof Error?error.message:"Unknown error"); return Response.json({error:"Your workspace is temporarily unavailable. Please try again."},{status:503}); }
+  catch(error) { reportDatabaseError("Workspace read failed", error); return Response.json({error:"Your workspace is temporarily unavailable. Please try again."},{status:503}); }
 }
 export async function POST(request:Request) {
   if(!sameOrigin(request)) return Response.json({error:"Origin is not allowed"},{status:403});
@@ -16,5 +17,5 @@ export async function POST(request:Request) {
   const parsed=mutationSchema.safeParse(raw);
   if(!parsed.success) return Response.json({error:"Please check the saved fields.",details:parsed.error.flatten()},{status:400});
   try { return Response.json(await mutateWorkspace(parsed.data),{headers:{"Cache-Control":"no-store"}}); }
-  catch(error) { if(error instanceof CareerError) return Response.json({error:error.message,code:error.code,currentRevision:error.currentRevision},{status:error.status}); console.error("Workspace save failed",error instanceof Error?error.message:"Unknown error"); return Response.json({error:"Could not save. Your changes have not been confirmed. Retry when the database is available."},{status:503}); }
+  catch(error) { if(error instanceof CareerError) return Response.json({error:error.message,code:error.code,currentRevision:error.currentRevision},{status:error.status}); reportDatabaseError("Workspace save failed",error); return Response.json({error:"Could not save. Your changes have not been confirmed. Retry when the database is available."},{status:503}); }
 }

@@ -20,7 +20,7 @@ import { otherResearchSources } from "@/data/company-research-other";
 import { recruiterApplications, recruiterActivities, recruiterDocuments, sycamoreDocuments } from "@/data/recruiter-context";
 
 const globalDb = globalThis as unknown as { deemsRawPool?: Pool; deemsWorkspaceInit?: Map<string, Promise<void>> };
-const rawPool = globalDb.deemsRawPool ?? new Pool({ connectionString: process.env.DATABASE_URL, max: 5, connectionTimeoutMillis: 5000 });
+const rawPool = globalDb.deemsRawPool ?? new Pool({ connectionString: process.env.DATABASE_URL, max: 5, connectionTimeoutMillis: 15000 });
 globalDb.deemsRawPool = rawPool;
 export const pool = createWorkspacePool(rawPool, currentWorkspaceSchema);
 export const db = drizzle(pool, { schema });
