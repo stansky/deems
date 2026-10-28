@@ -45,3 +45,9 @@ export function BrandState({ kind = "loading", title, description, action, compa
     </div>
   </section>;
 }
+
+export type BrandPoseName = "celebrating" | "coding" | "coffee" | "interview" | "listening" | "notes" | "presenting" | "reading" | "reflecting" | "research" | "studying" | "typing";
+
+export function BrandPose({ pose, size = 96, className = "" }: { pose: BrandPoseName; size?: number; className?: string }) {
+  return <span className={`deems-pose ${className}`} style={{ "--deems-pose-size": `${size}px` } as CSSProperties} aria-hidden="true"><img src={`/brand/pose-${pose}.svg`} width="250" height="210" alt="" /></span>;
+}

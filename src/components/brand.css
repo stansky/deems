@@ -25,3 +25,5 @@
 
 .deems-brand-state-action .button { min-height: 44px; }
 @media(max-width:440px) { .deems-brand-state { padding:16px; gap:12px; } .deems-brand-state > .deems-mascot { width:64px; } }
+
+.deems-pose{display:inline-flex;width:var(--deems-pose-size);align-items:center;justify-content:center;flex:none}.deems-pose img{display:block;width:100%;height:auto;object-fit:contain}

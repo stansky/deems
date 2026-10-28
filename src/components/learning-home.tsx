@@ -6,7 +6,7 @@ import type { WorkspaceState } from "@/lib/types";
 import { studyCourses } from "@/data/study-courses";
 import { studyProgressSchema } from "@/contracts/study";
 import { workspaceSessionStorage } from "./workspace-client";
-import { Mascot } from "./brand";
+import { BrandPose, Mascot } from "./brand";
 import "./learning-home.css";
 
 const areas = [
@@ -17,7 +17,7 @@ const areas = [
   { title: "Interview skills", detail: "Communication, stories and preparation", icon: MessageSquare, color: "yellow" },
 ] as const;
 
-export default function LearningHome({ state, loading, onCourses, onArea }: { state: WorkspaceState; loading: boolean; onCourses: () => void; onArea: (area: string) => void }) {
+export default function LearningHome({ state, loading, historyUnavailable = false, onRetry, onCourses, onArea }: { state: WorkspaceState; loading: boolean; historyUnavailable?: boolean; onRetry?: () => void; onCourses: () => void; onArea: (area: string) => void }) {
   const [resume, setResume] = useState<{ course: string; lesson: string } | null>(null);
   useEffect(() => {
     try {
@@ -38,9 +38,9 @@ export default function LearningHome({ state, loading, onCourses, onArea }: { st
   });
   const recent = [...completed, ...state.sessions.map(session => ({ title: session.mode, date: session.completedAt, kind: "Practice saved" }))].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 4);
   return <div className="learning-home">
-    <header className="home-heading"><div><p className="home-kicker">Your personal learning space</p><h1>Welcome back</h1></div><button className="home-primary" onClick={onCourses}>Browse courses<ArrowRight size={17}/></button></header>
-    {resume && <button className="home-resume" onClick={onCourses}><BookOpen size={22}/><span><small>Continue learning</small><strong>{resume.lesson}</strong><span>{resume.course}</span></span><ArrowRight size={19}/></button>}
-    <section aria-labelledby="learning-areas-title"><div className="home-section-heading"><h2 id="learning-areas-title">What would you like to work on?</h2></div><div className="home-area-grid">{areas.map(({ title, detail, icon: Icon, color }) => <button key={title} className={`home-area home-area-${color}`} onClick={() => onArea(title)}><span className="home-icon"><Icon size={27} strokeWidth={1.7}/></span><h3>{title}</h3><p>{detail}</p><ArrowRight className="home-area-arrow" size={17}/></button>)}</div></section>
-    <section className="home-activity" aria-labelledby="home-activity-title"><div className="home-section-heading"><h2 id="home-activity-title">Recent learning</h2></div>{loading ? <p className="home-muted" role="status">Loading your saved activity…</p> : recent.length ? <div className="home-recent-list">{recent.map((item, index) => <div key={`${item.date}-${index}`}><BookOpen size={18}/><span><strong>{item.title}</strong><small>{item.kind}</small></span><time dateTime={item.date}>{new Date(item.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</time></div>)}</div> : <div className="home-first-session"><Mascot state="idle" size={64}/><div><h3>No learning activity yet</h3><p>Complete a lesson or save a practice session to see it here.</p><button onClick={onCourses}>Explore courses<ArrowRight size={15}/></button></div></div>}</section>
+    <header className="home-heading"><div className="home-welcome"><BrandPose pose="coffee" size={112}/><div className="home-welcome-copy"><h1>Welcome back</h1><p>What would you like to explore today?</p></div></div><button className="home-primary" onClick={onCourses}>Browse courses<ArrowRight size={17}/></button></header>
+    {resume && <button className="home-resume" onClick={onCourses}><BrandPose pose="typing" size={80}/><span><small>Continue learning</small><strong>{resume.lesson}</strong><span>{resume.course}</span></span><ArrowRight size={19}/></button>}
+    <section aria-labelledby="learning-areas-title"><div className="home-section-heading"><h2 id="learning-areas-title">Learning areas</h2></div><div className="home-area-grid">{areas.map(({ title, detail, icon: Icon, color }) => <button key={title} className={`home-area home-area-${color}`} onClick={() => onArea(title)}><span className="home-icon"><Icon size={27} strokeWidth={1.7}/></span><h3>{title}</h3><p>{detail}</p><ArrowRight className="home-area-arrow" size={17}/></button>)}</div></section>
+    <section className="home-activity" aria-labelledby="home-activity-title"><div className="home-section-heading"><h2 id="home-activity-title">Recent learning</h2></div>{loading ? <div className="home-history-loading" role="status"><Mascot state="loading" size={56}/><p>Loading your saved activity…</p></div> : historyUnavailable ? <div className="home-first-session home-history-error" role="alert"><Mascot state="error" size={96}/><div><h3>Learning history is unavailable</h3><p>Your saved work is unchanged. Try loading it again.</p><button onClick={onRetry}>Try again<ArrowRight size={15}/></button></div></div> : recent.length ? <div className="home-recent-list">{recent.map((item, index) => <div key={`${item.date}-${index}`}><BookOpen size={18}/><span><strong>{item.title}</strong><small>{item.kind}</small></span><time dateTime={item.date}>{new Date(item.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</time></div>)}</div> : <div className="home-first-session"><span className="home-empty-art"><BrandPose pose="reading" size={128}/></span><div><h3>No learning activity yet</h3><p>Complete a lesson or save a practice session to see it here.</p><button onClick={onCourses}>Explore courses<ArrowRight size={15}/></button></div></div>}</section>
   </div>;
 }
