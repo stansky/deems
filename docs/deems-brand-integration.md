@@ -2,6 +2,22 @@
 
 The owner supplied the Deems brand archive on October 28, 2026 and requested applying it to the interface. The approved-reference illustration board is the primary direction. The SVG redraws and sample screens are starter assets; mock integrations and learning scores are not product requirements.
 
+## Current login and logo direction
+
+The owner rejected a mascot in the logo alongside a separate mascot illustration. Shared headers now use only the supplied outlined wordmark. The character belongs in a relevant scene or state, not in the header lockup. The workspace remains a light personal LMS.
+
+The latest owner-supplied Base44 screenshot locks the login composition: a wordmark in the upper-left corner, a centered form in the left half, and a large rounded image occupying the right half. The stronger color and depth belong in the image. Earlier dark-shell and boxed-pose directions below are historical and do not govern this login surface.
+
+| Decision | Reference | Role |
+| --- | --- | --- |
+| Two equal columns, centered form, large inset image | Owner Base44 screenshot | Primary layout target |
+| Full illustrated environment in the image panel | [Refero Playbook](https://refero.design/pages/86e068a5-d83b-4e81-872c-af135556d0df) | Media scale and framing, not its colors or social login |
+| Contrast and depth within the scene | [Refero SAVEE](https://refero.design/pages/de6f39d3-68f8-4848-b874-937c4df1a244), Tracky style ccf22ee4-0891-4773-9420-5d2a29f7ae8e | Rich image shadows and legible ink form text |
+| Wordmark without mascot | Owner correction and archive wordmark | Header identity only |
+| Cream character in a complete learning studio | Archive character and owner request for relevant scenes | Generated decorative art, not product evidence |
+
+`public/brand/learning-studio.webp` is an original generated scene based on the supplied Deems character. It depicts studying with a laptop and notebook in a warm studio overlooking a teal night landscape. It contains no logo, baked-in text, or sample UI. The image is 1024 by 1536 and about 203 KB. Live copy stays in HTML. Mobile uses a compact scene above the form, with the wordmark over the image. Authentication, signup flags, account separation, and crawler exclusions are unchanged.
+
 ## Reference lock
 
 | Decision | Source | Application |

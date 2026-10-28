@@ -51,7 +51,7 @@ export function Registration({ initialMode, initialEmail, onBack, onComplete }: 
   return <>
     <div className="deems-login-heading">
       <h1 id="login-title">{title}</h1>
-      <p>{needsCode ? `Enter the six-digit code sent to ${email}.` : mode === "signup" ? "Your interview prep, in your own private workspace." : "We’ll email you a code to reset your password."}</p>
+      <p>{needsCode ? `Enter the six-digit code sent to ${email}.` : mode === "signup" ? "Your learning, in your own private workspace." : "We’ll email you a code to reset your password."}</p>
     </div>
     {notice && <p className="deems-login-notice" role="status">{notice}</p>}
     {error && <p className="deems-login-error" role="alert">{error}</p>}

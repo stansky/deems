@@ -163,21 +163,20 @@ export default function LoginPage() {
       ? "Text message code"
       : challenge === "NEW_PASSWORD_REQUIRED"
         ? "Choose a new password"
-        : "Sign in to Deems";
+        : "Welcome back";
 
   const accountForm = screen === "signup" || screen === "confirm" || screen === "recover";
   return <main className="deems-login-page">
     <section className={`deems-login-card${accountForm ? " deems-login-card-registration" : ""}`} aria-labelledby="login-title">
-      <header className="deems-login-brand">
-        <DeemsBrand />
-      </header>
+      <header className="deems-login-brand"><DeemsBrand /></header>
 
+      <div className="deems-login-content">
       {screen === "signup" || screen === "confirm" || screen === "recover" ? <Registration key={screen} initialMode={screen} initialEmail={email} onBack={returnToSignIn} onComplete={(address, message) => { setEmail(address); returnToSignIn(); setNotice(message); }} /> : <>
       <div className="deems-login-heading">
         <h1 id="login-title">{title}</h1>
-        {screen !== "signin" && <p>{challenge === "NEW_PASSWORD_REQUIRED"
+        <p>{screen === "signin" ? "Your personal space to learn and grow." : challenge === "NEW_PASSWORD_REQUIRED"
             ? "Your account needs a new password before you can continue."
-            : `Enter the verification code for ${email}.`}</p>}
+            : `Enter the verification code for ${email}.`}</p>
       </div>
 
       {notice && <p className="deems-login-notice" role="status">{notice}</p>}
@@ -189,7 +188,7 @@ export default function LoginPage() {
           <input id="login-email" name="username" type="email" autoComplete="username" inputMode="email" autoCapitalize="none" spellCheck={false} required value={email} onChange={event => setEmail(event.target.value)} placeholder="you@example.com" />
         </label>
         <div className="deems-login-field">
-          <label htmlFor="login-password">Password</label>
+          <div className="deems-login-password-label"><label htmlFor="login-password">Password</label><button className="deems-login-forgot" type="button" onClick={() => { setError(""); setScreen("recover"); }} disabled={busy}>Forgot password?</button></div>
           <span className="deems-login-password-wrap">
             <input id="login-password" name="password" type={showPassword ? "text" : "password"} autoComplete="current-password" required value={password} onChange={event => setPassword(event.target.value)} />
             <button type="button" className="deems-login-reveal" onClick={() => setShowPassword(value => !value)} aria-label={showPassword ? "Hide password" : "Show password"} aria-pressed={showPassword}>
@@ -201,7 +200,6 @@ export default function LoginPage() {
           {busy ? <><LoaderCircle size={16} className="deems-login-spinner" aria-hidden="true" /> Signing in</> : "Sign in"}
         </button>
         {registrationEnabled && <button className="deems-login-back" type="button" onClick={() => { setError(""); setScreen("signup"); }} disabled={busy}>Create an account</button>}
-          <button className="deems-login-back" type="button" onClick={() => { setError(""); setScreen("recover"); }} disabled={busy}>Forgot password?</button>
       </form> : <form className="deems-login-form" onSubmit={submitChallenge}>
         {challenge === "NEW_PASSWORD_REQUIRED" ? <>
           <div className="deems-login-field">
@@ -232,16 +230,15 @@ export default function LoginPage() {
         <button className="deems-login-back" type="button" onClick={returnToSignIn} disabled={busy}>Back to sign in</button>
       </form>}
       </>}
+      </div>
 
       {!accountForm && <footer className="deems-login-footer">
         <span>{sessionChecked ? "Your workspace is private to your account" : "Checking sign-in session"}</span>
       </footer>}
     </section>
-    <aside className="deems-login-art-panel" aria-label="Deems, ask, learn, explore">
-      <div className="deems-login-art-well">
-        <img src="/brand/pose-reading.svg" alt="" aria-hidden="true" width="340" height="286" />
-      </div>
-      <p>Ask. Learn. Explore.</p>
+    <aside className="deems-login-art-panel" aria-label="An illustrated learning studio">
+      <img className="deems-login-scene" src="/brand/learning-studio.webp" alt="" aria-hidden="true" width="1024" height="1536" fetchPriority="high" />
+      <div className="deems-login-scene-copy"><p>Your personal learning space</p><h2>Make room for<br />what’s next.</h2></div>
     </aside>
   </main>;
 }

@@ -15,9 +15,8 @@ const mascotAssets: Record<MascotState, string> = {
 
 export function DeemsBrand({ compact = false, className = "" }: { compact?: boolean; className?: string }) {
   return <span className={`deems-brand${compact ? " deems-brand-compact" : ""}${className ? ` ${className}` : ""}`} role="img" aria-label="Deems">
-    <img className="deems-brand-mark" src="/brand/deems-mark.svg" alt="" aria-hidden="true" width="40" height="35" />
-    {!compact && <><img className="deems-brand-wordmark deems-brand-wordmark-ink" src="/brand/deems-wordmark.svg" alt="" aria-hidden="true" width="104" height="43" />
-      <img className="deems-brand-wordmark deems-brand-wordmark-light" src="/brand/deems-wordmark-light.svg" alt="" aria-hidden="true" width="104" height="43" /></>}
+    <img className="deems-brand-wordmark deems-brand-wordmark-ink" src="/brand/deems-wordmark.svg" alt="" aria-hidden="true" width="104" height="43" />
+    <img className="deems-brand-wordmark deems-brand-wordmark-light" src="/brand/deems-wordmark-light.svg" alt="" aria-hidden="true" width="104" height="43" />
   </span>;
 }
 
