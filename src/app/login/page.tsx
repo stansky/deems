@@ -237,7 +237,7 @@ export default function LoginPage() {
       </footer>}
     </section>
     <aside className="deems-login-art-panel" aria-label="An illustrated San Francisco apartment study space">
-      <img className="deems-login-scene" src="/brand/presidio-study.webp" alt="" aria-hidden="true" width="1024" height="1536" fetchPriority="high" />
+      <img className="deems-login-scene" src="/brand/presidio-study-illustrated.webp" alt="" aria-hidden="true" width="1024" height="1536" fetchPriority="high" />
       <div className="deems-login-scene-copy"><p>Your personal learning space</p><h2>Make room for<br />what’s next.</h2></div>
     </aside>
   </main>;

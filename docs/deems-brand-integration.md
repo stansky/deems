@@ -16,7 +16,7 @@ The latest owner-supplied Base44 screenshot locks the login composition: a wordm
 | Wordmark without mascot | Owner correction and archive wordmark | Header identity only |
 | Cream character in a complete learning studio | Archive character and owner request for relevant scenes | Generated decorative art, not product evidence |
 
-`public/brand/presidio-study.webp` is an original generated scene based on the supplied Deems character. At the owner's request, it replaces the elaborate studio with a modest San Francisco apartment: a simple desk, ordinary rectangular window, books and a radiator, with an illustrated Presidio and Golden Gate Bridge view. It contains no logo, baked-in text, or sample UI. The image is 1024 by 1536 and about 197 KB. Live copy stays in HTML. Mobile uses a compact scene above the form, with the wordmark over the image. Authentication, signup flags, account separation, and crawler exclusions are unchanged.
+`public/brand/presidio-study-illustrated.webp` is an original generated scene based on the supplied Deems character. At the owner's request, it replaces the elaborate studio with a modest San Francisco apartment: a simple desk, ordinary rectangular window, books and a radiator, with an illustrated Presidio and Golden Gate Bridge view. It contains no logo, baked-in text, or sample UI. The image is 1024 by 1536. The owner requested an animated illustration style: outlined shapes, flat color blocks, simplified furniture and graphic foliage replace realistic textures and lighting. Live copy stays in HTML. Mobile uses a compact scene above the form, with the wordmark over the image. Authentication, signup flags, account separation, and crawler exclusions are unchanged.
 
 ## Reference lock
 
