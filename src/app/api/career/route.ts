@@ -6,6 +6,6 @@ export async function GET() {
     await ensureDb();
     return Response.json(await readCareer(pool), { headers: { "Cache-Control": "no-store" } });
   } catch {
-    return Response.json({error:"Career history is unavailable. Retry when the local database is available."},{status:503});
+    return Response.json({error:"Career history is unavailable. Retry when your workspace is available."},{status:503});
   }
 }

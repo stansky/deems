@@ -1,5 +1,7 @@
 "use client";
 
+import { workspaceFetch } from "@/components/workspace-client";
+
 import { useCallback, useRef, useState, useEffect } from "react";
 import { ArrowRight, BookOpen, ChevronRight, ExternalLink, Lightbulb, Loader2, RotateCcw, Search } from "lucide-react";
 import type { KnowledgeEntry } from "@/data/knowledge";
@@ -22,7 +24,7 @@ export default function KnowledgeLibrary({ initialSelectedId = "" }: { initialSe
   const load = useCallback(async () => {
     setLoading(true); setError("");
     try {
-      const response = await fetch("/api/knowledge", { cache: "no-store" });
+      const response = await workspaceFetch("/api/knowledge", { cache: "no-store" });
       if (!response.ok) throw new Error("Could not load the reference library.");
       const result = knowledgeListResponseSchema.parse(await response.json());
       setEntries(result.entries); setSelectedId(id => id || result.entries[0]?.id || "");

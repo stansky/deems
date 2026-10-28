@@ -46,6 +46,6 @@ export async function POST(request: Request) {
   catch (error) {
     if (error instanceof CareerError) return Response.json({error:error.message,code:error.code,currentRevision:error.currentRevision},{status:error.status,headers});
     if (error instanceof TargetInputError) return Response.json({ error: error.message }, { status: error.status, headers });
-    return Response.json({ error: "Your change has not been confirmed. Retry when the local database is available." }, { status: 503, headers });
+    return Response.json({ error: "Your change has not been confirmed. Retry when your workspace is available." }, { status: 503, headers });
   }
 }

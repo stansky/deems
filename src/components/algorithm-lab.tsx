@@ -1,5 +1,7 @@
 "use client";
 
+import { workspaceFetch } from "@/components/workspace-client";
+
 import { useCallback, useEffect, useState } from "react";
 import { ArrowRight, BookOpen, Check, ChevronDown, ChevronRight, ExternalLink, Lightbulb, Loader2, RotateCcw, Search, Settings2, Sparkles } from "lucide-react";
 import { learningConcepts } from "@/data/algorithms";
@@ -50,7 +52,7 @@ export default function AlgorithmLab({ state, mutate, saving, initialSelectedId 
   useEffect(() => { setProfile(readProfile(state.settings["learning-profile"])); }, [state.settings]);
   const load = useCallback(async () => {
     setLoading(true); setError("");
-    try { const response = await fetch("/api/algorithms", { cache: "no-store" }); if (!response.ok) throw new Error("Could not load the question bank."); const data = algorithmsResponseSchema.parse(await response.json()); setQuestions(data.questions); setSelectedId(id => id || data.questions[0]?.id || ""); }
+    try { const response = await workspaceFetch("/api/algorithms", { cache: "no-store" }); if (!response.ok) throw new Error("Could not load the question bank."); const data = algorithmsResponseSchema.parse(await response.json()); setQuestions(data.questions); setSelectedId(id => id || data.questions[0]?.id || ""); }
     catch (issue) { setError(issue instanceof Error ? issue.message : "Could not load the question bank."); }
     finally { setLoading(false); }
   }, []);
@@ -100,7 +102,7 @@ function AiCoach({ question, language, revealed }: { question: AlgorithmQuestion
   const [activeAnswer, setActiveAnswer] = useState<CoachingRecord | null>(null);
   const load = useCallback(async () => {
     setChecking(true); setError("");
-    try { const response = await fetch(`/api/coach?questionId=${encodeURIComponent(question.id)}`, { cache: "no-store" }); if (!response.ok) throw new Error("Could not connect to the coach."); const data = coachingHistoryResponseSchema.parse(await response.json()); setConfigured(data.configured); setHistory(data.history); }
+    try { const response = await workspaceFetch(`/api/coach?questionId=${encodeURIComponent(question.id)}`, { cache: "no-store" }); if (!response.ok) throw new Error("Could not connect to the coach."); const data = coachingHistoryResponseSchema.parse(await response.json()); setConfigured(data.configured); setHistory(data.history); }
     catch (issue) { setError(issue instanceof Error ? issue.message : "Could not connect to the coach."); }
     finally { setChecking(false); }
   }, [question.id]);
@@ -109,7 +111,7 @@ function AiCoach({ question, language, revealed }: { question: AlgorithmQuestion
     setLastMode(mode); setPending(true); setError("");
     try {
       const request = coachInputSchema.parse({ questionId: question.id, language, message: message.trim() || (mode === "rephrase" ? "Rephrase this question using my learning preferences." : mode === "hint" ? "Give me a small hint for my next step." : "Explain this using my learning preferences."), mode, revealSolution: revealed });
-      const response = await fetch("/api/coach", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(request) });
+      const response = await workspaceFetch("/api/coach", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(request) });
       const payload: unknown = await response.json();
       if (!response.ok) {
         const problem = payload && typeof payload === "object" && "error" in payload && typeof payload.error === "string" ? payload.error : "The coach could not respond. Please try again.";

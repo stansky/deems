@@ -17,12 +17,12 @@ Use Cloudflare for authoritative DNS if the domains are on Cloudflare. Add the r
 3. Attach a fresh PostgreSQL database per environment. Set DATABASE_URL in the corresponding project. Never upload a local backup or personal seed files.
 4. Add server-only DEEMS_OPENAI_KEY and OPENAI_PROJECT_ID when coaching is needed. Keys must belong to the chosen project. Basic reading/saves do not require AI credentials.
 5. Add the custom domain and verify DNS and HTTPS.
-6. Configure and verify the Cognito settings below, including a private subject allowlist.
+6. Configure and verify the Cognito account and workspace settings below.
 7. Set DEEMS_HOSTED_READY=true only once authentication and storage are verified. Without this flag, every app/API request returns 503 before accessing data. This flag is a setup guard, not authentication.
 
 ## GitHub pipeline
 
-Check Deems runs typecheck, OpenAPI validation, tests and a production build. Deploy Deems is a manual workflow with staging/production selection. Production requires main. Both environments run checks before a pinned Vercel CLI build/deploy. Vercel Git builds run the same typecheck, contracts and tests before the build. Connect main as the deems production branch, and staging as the deems-staging production branch. The manual workflow is an optional CLI deployment path requiring its environment credentials.
+Check Deems runs typecheck, OpenAPI validation, tests and a production build. Deploy Deems runs automatically for main and staging pushes and also supports manual environment selection. Production requires main. Both environments run checks before a pinned Vercel CLI build/deploy. Vercel Git builds run the same typecheck, contracts and tests before the build. Connect main as the deems production branch, and staging as the deems-staging production branch. The GitHub deployment workflow requires its environment credentials. Its project-scoped deployment tokens expire after 90 days and must be replaced before expiry.
 
 Configure GitHub environments staging and production. Each needs VERCEL_ORG_ID and VERCEL_PROJECT_ID as environment variables and VERCEL_TOKEN as an environment secret. The staging environment points to deems-staging, whose production domain is deems.dev. The production environment points to deems, whose production domain is deems.app. This provides separate database and secret scopes without depending on a paid custom-environment feature.
 
@@ -40,26 +40,16 @@ The headless research worker needs a persistent container and is not deployed by
 
 References: [Vercel private production protection](https://vercel.com/changelog/protect-production-deployments-for-free-on-every-plan), [custom domains](https://vercel.com/docs/domains/set-up-custom-domain).
 
-## Deems Cognito login
+## User accounts and workspaces
 
-The app serves its own Deems-branded `/login` form. Credentials go only to the server and Cognito over HTTPS. The server verifies each session token's signature, issuer, client audience, token use, expiry and allowed subject before serving app or data routes. Cognito sign-in alone does not authorize every pool user to this private workspace.
+Production and staging use separate Deems Cognito user pools and app clients. `DEEMS_MULTIUSER=true` enables account registration, email confirmation and password recovery. Set the server-only `DEEMS_COGNITO_REGION`, `DEEMS_COGNITO_USER_POOL_ID`, `DEEMS_COGNITO_CLIENT_ID` and an independent random `DEEMS_AUTH_SECRET` in each environment. Use public clients without a client secret, with `ALLOW_USER_PASSWORD_AUTH`, email usernames, automatic email verification and user-existence error suppression. Passwords require at least 12 characters. Do not reuse or change another product's app client.
 
-Configure these server-only values independently in staging and production:
+The app verifies ID token signature, issuer, audience, expiry, token use and verified email before allowing workspace access. Sessions use Secure, HttpOnly, SameSite=Lax, host-only cookies and last at most one hour. Registration and recovery actions accept bounded, same-origin, Zod-validated requests. Existing single-owner deployments can keep `DEEMS_MULTIUSER=false` and their `DEEMS_COGNITO_ALLOWED_SUBS` allowlist.
 
-| Variable | Value |
-| --- | --- |
-| `DEEMS_COGNITO_REGION` | Region containing the user pool |
-| `DEEMS_COGNITO_USER_POOL_ID` | The approved identity pool for this workspace |
-| `DEEMS_COGNITO_CLIENT_ID` | A distinct Deems app client for this environment |
-| `DEEMS_COGNITO_ALLOWED_SUBS` | Comma-separated Cognito subject IDs allowed to access this workspace |
-| `DEEMS_AUTH_SECRET` | Random secret of at least 32 characters, different in each environment |
+Each authenticated Cognito subject maps to a private PostgreSQL schema named from a fixed-length SHA-256 digest. The subject comes only from a verified session, never a submitted workspace ID. Every database query and transaction selects that schema. There is no public-schema fallback for authenticated requests. Connections roll back unfinished work and reset their search path before returning to the pool. Each schema has its own migration ledger, record IDs, foreign keys, constraints, revisions and command receipts. Catalog inserts are batched and preserve existing rows. Schema isolation is enforced by the app's database connection layer; this does not create a separate PostgreSQL login or RLS policy for every account.
 
-Use public app clients without a client secret and enable `ALLOW_USER_PASSWORD_AUTH`. Do not change ByteCrunch's existing client. If reusing its identity pool, create separate Deems clients and explicitly choose the permitted subjects. Otherwise provision a separate pool and accounts. Do not send account invitations automatically.
+Browser drafts use the same workspace key. Local installations retain their original draft keys and public schema. A stale tab carries its original workspace key, so switching accounts cannot silently save its draft into the new account. Account changes refresh other tabs. Export reads only the authenticated schema. Local personal files and database contents are never imported into hosted accounts automatically.
 
-The app supports password login, authenticator/SMS MFA challenges and a required new password. It does not offer self-registration, password recovery, MFA enrollment or provider federation. Unsupported challenges show an error. Tokens live in secure HttpOnly, host-only cookies, never browser localStorage; staging and production cookies are separate. Sessions expire after at most one hour and require sign-in again. Records > Sign out clears this browser's session. It does not revoke a token already copied elsewhere before logout.
+For the first public release, keep Vercel Authentication on All Deployments while testing staging and production. After verifying two-account persistence/export isolation and authenticated API boundaries, change production to Standard Protection so other users can reach `/signup`; Deems authentication still protects all workspace pages and APIs. Keep staging on All Deployments. Do not change protection before these checks. `DEEMS_HOSTED_READY` is a setup guard, not authentication.
 
-Keep Vercel Authentication on All Deployments as required above. This is an additional protection layer before the branded login. Do not enable `DEEMS_HOSTED_READY` with missing authentication or storage. Missing config fails closed. The setup flag never grants access by itself.
-
-Before release, verify the anonymous custom-domain and deployment-domain boundaries, sign in as an explicitly allowed subject, read/write a disposable record in staging, verify denied subjects cannot read any API, then verify the production health/read path. Do not claim successful real Cognito login from mocked tests. Preserve live data before an additive migration.
-
-Loopback development stays unauthenticated by default. `DEEMS_AUTH_ENABLED=true` enables the same auth boundary locally and requires HTTPS for secure browser cookies. Keep forwarded host/protocol headers controlled by the reverse proxy.
+Run `npm run typecheck`, `npm run check:contracts`, `npm test` and `npm run build`. The PostgreSQL pool isolation test is skipped unless `DEEMS_ISOLATION_TEST_DATABASE_URL` explicitly points at a disposable hosted test database. It creates and drops only two generated test schemas. Live release verification should use separate disposable Cognito users and verify reads, writes, history, export, forged workspace headers, expired sessions and browser account switching. Do not treat mocked auth tests as provider or email-delivery evidence.

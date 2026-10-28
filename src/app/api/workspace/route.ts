@@ -4,7 +4,7 @@ import { mutationSchema, sameOrigin } from "@/lib/validation";
 export const dynamic="force-dynamic";
 export async function GET() {
   try { return Response.json(await getWorkspace(),{headers:{"Cache-Control":"no-store"}}); }
-  catch(error) { console.error("Workspace read failed", error instanceof Error?error.message:"Unknown error"); return Response.json({error:"Database is unavailable. Start Docker Compose and retry."},{status:503}); }
+  catch(error) { console.error("Workspace read failed", error instanceof Error?error.message:"Unknown error"); return Response.json({error:"Your workspace is temporarily unavailable. Please try again."},{status:503}); }
 }
 export async function POST(request:Request) {
   if(!sameOrigin(request)) return Response.json({error:"Origin is not allowed"},{status:403});

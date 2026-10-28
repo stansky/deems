@@ -128,7 +128,7 @@ export async function executePracticeCommand(pool: Pool, input: PracticeCommand)
   } catch (error) {
     await client.query("ROLLBACK");
     if (error instanceof PracticeError) throw error;
-    throw new PracticeError("Your practice change has not been confirmed. Retry with the same command key when the local database is available.", 503, "save_unconfirmed");
+    throw new PracticeError("Your practice change has not been confirmed. Retry with the same command key when your workspace is available.", 503, "save_unconfirmed");
   } finally { client.release(); }
 }
 
@@ -137,6 +137,6 @@ export async function readPracticeAttempts(pool: Pool): Promise<PracticeAttempt[
     const result = await pool.query<{data: unknown}>("SELECT data FROM practice_attempts ORDER BY saved_at DESC,session_id");
     return result.rows.map(row => asAttempt(row.data));
   } catch {
-    throw new PracticeError("Practice attempts could not be loaded from the local database.", 503, "read_unavailable");
+    throw new PracticeError("Practice attempts could not be loaded from your workspace.", 503, "read_unavailable");
   }
 }

@@ -30,6 +30,6 @@ export async function GET(request: Request) {
     });
     return Response.json({ entries, total: entries.length }, { headers });
   } catch {
-    return Response.json({ error: "The reference library is unavailable. Check the local database and retry." }, { status: 503, headers });
+    return Response.json({ error: "The reference library is unavailable. Please try again shortly." }, { status: 503, headers });
   }
 }

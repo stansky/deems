@@ -20,7 +20,8 @@ function safeError(error: unknown) {
   if (error instanceof AuthSetupError) return NextResponse.json({ error: error.message }, { status: 503, headers: { "Cache-Control": "no-store" } });
   const status = typeof error === "object" && error && "status" in error && typeof error.status === "number" ? error.status : 502;
   const message = status !== 502 && error instanceof Error ? error.message : "Sign-in is temporarily unavailable.";
-  return NextResponse.json({ error: message }, { status, headers: { "Cache-Control": "no-store" } });
+  const code = typeof error === "object" && error && "code" in error && error.code === "verification_required" ? error.code : undefined;
+  return NextResponse.json({ error: message, code }, { status, headers: { "Cache-Control": "no-store" } });
 }
 
 export async function POST(request: Request) {

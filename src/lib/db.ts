@@ -4,6 +4,8 @@ import { applyStorageGuardsMigration } from "./migrations/storage-v3";
 import { applyCompanyResearchMigration } from "./migrations/company-research-v4";
 import { applyCareerMigration } from "./migrations/career-v1";
 import { Pool } from "pg";
+import { currentWorkspaceSchema } from "@/domains/auth/workspace";
+import { createWorkspacePool } from "./workspace-pool";
 import { drizzle } from "drizzle-orm/node-postgres";
 import * as schema from "./schema";
 import { roles } from "@/data/prep";
@@ -17,9 +19,10 @@ import { secondaryResearchSources } from "@/data/company-research-secondary";
 import { otherResearchSources } from "@/data/company-research-other";
 import { recruiterApplications, recruiterActivities, recruiterDocuments, sycamoreDocuments } from "@/data/recruiter-context";
 
-const globalDb = globalThis as unknown as { deemsPool?: Pool; deemsInit?: Promise<void> };
-export const pool = globalDb.deemsPool ?? new Pool({ connectionString: process.env.DATABASE_URL, max: 5, connectionTimeoutMillis: 5000 });
-globalDb.deemsPool = pool;
+const globalDb = globalThis as unknown as { deemsRawPool?: Pool; deemsWorkspaceInit?: Map<string, Promise<void>> };
+const rawPool = globalDb.deemsRawPool ?? new Pool({ connectionString: process.env.DATABASE_URL, max: 5, connectionTimeoutMillis: 5000 });
+globalDb.deemsRawPool = rawPool;
+export const pool = createWorkspacePool(rawPool, currentWorkspaceSchema);
 export const db = drizzle(pool, { schema });
 
 async function initialize() {
@@ -52,22 +55,12 @@ async function initialize() {
       CREATE INDEX IF NOT EXISTS activities_application_idx ON activities(application_id, created_at);
       CREATE TABLE IF NOT EXISTS documents (id text PRIMARY KEY, application_id text NOT NULL REFERENCES applications(id), company text NOT NULL, title text NOT NULL, kind text NOT NULL, body text NOT NULL, source_url text NOT NULL DEFAULT '', source_date text NOT NULL DEFAULT '', captured_at timestamptz NOT NULL DEFAULT now(), tech_stack jsonb NOT NULL DEFAULT '[]', requirements jsonb NOT NULL DEFAULT '[]');
     `);
-    for (const company of [...targetCompanies, ...extraTargetCompanies]) {
-      await client.query("INSERT INTO target_companies (id,data) VALUES ($1,$2) ON CONFLICT (id) DO NOTHING", [company.id, JSON.stringify(company)]);
-    }
-    for (const role of [...targetRoles, ...extraTargetRoles]) {
-      await client.query("INSERT INTO target_roles (id,company_id,data) VALUES ($1,$2,$3) ON CONFLICT (id) DO NOTHING", [role.id, role.companyId, JSON.stringify(role)]);
-      if (role.companyId !== "general") await client.query("INSERT INTO target_role_states (role_id,data) VALUES ($1,$2) ON CONFLICT (role_id) DO NOTHING", [role.id, JSON.stringify({ roleId: role.id, stage: "prospect", notes: "", updatedAt: new Date().toISOString() })]);
-    }
-    for (const source of [...targetSources, ...localTargetSources, ...primaryResearchSources, ...secondaryResearchSources, ...otherResearchSources]) {
-      await client.query("INSERT INTO target_sources (id,company_id,data) VALUES ($1,$2,$3) ON CONFLICT (id) DO NOTHING", [source.id, source.companyId, JSON.stringify(source)]);
-    }
-    for (const question of algorithmQuestions) {
-      await client.query("INSERT INTO algorithm_bank (id,data) VALUES ($1,$2) ON CONFLICT (id) DO NOTHING",[question.id,JSON.stringify(question)]);
-    }
-    for (const entry of knowledgeEntries) {
-      await client.query("INSERT INTO knowledge_bank (id,data) VALUES ($1,$2) ON CONFLICT (id) DO NOTHING",[entry.id,JSON.stringify(entry)]);
-    }
+    await client.query("INSERT INTO target_companies(id,data) SELECT item->>'id',item FROM jsonb_array_elements($1::jsonb) AS item ON CONFLICT(id) DO NOTHING", [JSON.stringify([...targetCompanies, ...extraTargetCompanies])]);
+    await client.query("INSERT INTO target_roles(id,company_id,data) SELECT item->>'id',item->>'companyId',item FROM jsonb_array_elements($1::jsonb) AS item ON CONFLICT(id) DO NOTHING", [JSON.stringify([...targetRoles, ...extraTargetRoles])]);
+    await client.query("INSERT INTO target_role_states(role_id,data) SELECT item->>'id',jsonb_build_object('roleId',item->>'id','stage','prospect','notes','','updatedAt',$2::text) FROM jsonb_array_elements($1::jsonb) AS item WHERE item->>'companyId'<>'general' ON CONFLICT(role_id) DO NOTHING", [JSON.stringify([...targetRoles, ...extraTargetRoles]), new Date().toISOString()]);
+    await client.query("INSERT INTO target_sources(id,company_id,data) SELECT item->>'id',item->>'companyId',item FROM jsonb_array_elements($1::jsonb) AS item ON CONFLICT(id) DO NOTHING", [JSON.stringify([...targetSources, ...localTargetSources, ...primaryResearchSources, ...secondaryResearchSources, ...otherResearchSources])]);
+    await client.query("INSERT INTO algorithm_bank(id,data) SELECT item->>'id',item FROM jsonb_array_elements($1::jsonb) AS item ON CONFLICT(id) DO NOTHING", [JSON.stringify(algorithmQuestions)]);
+    await client.query("INSERT INTO knowledge_bank(id,data) SELECT item->>'id',item FROM jsonb_array_elements($1::jsonb) AS item ON CONFLICT(id) DO NOTHING", [JSON.stringify(knowledgeEntries)]);
     for (const role of roles) {
       await client.query("INSERT INTO applications (id,role_id,company,title,stage,next_action) VALUES ($1,$2,'Sycamore',$3,'Interested','Confirm role and interview expectations') ON CONFLICT (id) DO NOTHING", [role.id, role.id, role.title]);
     }
@@ -94,6 +87,11 @@ async function initialize() {
 
 export async function ensureDb() {
   if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is required");
-  if (!globalDb.deemsInit) globalDb.deemsInit = initialize().catch(error => {globalDb.deemsInit=undefined; throw error;});
-  await globalDb.deemsInit;
+  const schema = await currentWorkspaceSchema();
+  const initializations = globalDb.deemsWorkspaceInit ??= new Map();
+  if (!initializations.has(schema)) initializations.set(schema, initialize().catch(error => {
+    initializations.delete(schema);
+    throw error;
+  }));
+  await initializations.get(schema);
 }

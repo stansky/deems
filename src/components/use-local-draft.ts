@@ -1,5 +1,7 @@
 "use client";
 
+import { workspaceSessionStorage } from "@/components/workspace-client";
+
 import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
 
 const prefix = "interview-draft-v1:";
@@ -21,7 +23,7 @@ export function useLocalDraft<T extends Record<string, unknown>>(key: string, in
     let value = initialValue.current;
     let restored = false;
     try {
-      const raw = sessionStorage.getItem(prefix + key);
+      const raw = workspaceSessionStorage.getItem(prefix + key);
       if (raw) {
         const parsed: unknown = JSON.parse(raw);
         if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
@@ -48,13 +50,13 @@ export function useLocalDraft<T extends Record<string, unknown>>(key: string, in
     current.current = next;
     setValue(next);
     try {
-      sessionStorage.setItem(prefix + key, JSON.stringify(next));
+      workspaceSessionStorage.setItem(prefix + key, JSON.stringify(next));
       setHasDraft(true);
     } catch { setHasDraft(false); }
   }, [key]);
 
   const clearDraft = useCallback(() => {
-    try { sessionStorage.removeItem(prefix + key); } catch { /* The server save still succeeded. */ }
+    try { workspaceSessionStorage.removeItem(prefix + key); } catch { /* The server save still succeeded. */ }
     setHasDraft(false);
   }, [key]);
 

@@ -20,6 +20,7 @@ export type AuthEnvironment = {
   userPoolId: string;
   clientId: string;
   allowedSubjects: Set<string>;
+  multiUser: boolean;
   secret: Uint8Array;
 };
 
@@ -47,10 +48,11 @@ export function getAuthEnvironment(env: Record<string, string | undefined> = pro
   const userPoolId = env.DEEMS_COGNITO_USER_POOL_ID?.trim();
   const clientId = env.DEEMS_COGNITO_CLIENT_ID?.trim();
   const secretText = env.DEEMS_AUTH_SECRET ?? "";
+  const multiUser = env.DEEMS_MULTIUSER === "true";
   const allowedSubjects = new Set((env.DEEMS_COGNITO_ALLOWED_SUBS ?? "")
     .split(",").map((value) => value.trim()).filter(Boolean));
 
-  if (!region || !userPoolId || !clientId || secretText.length < 32 || allowedSubjects.size === 0) {
+  if (!region || !userPoolId || !clientId || secretText.length < 32 || (!multiUser && allowedSubjects.size === 0)) {
     throw new AuthSetupError("Sign-in setup is incomplete.");
   }
   if (!/^[a-z0-9-]+$/.test(region) || !userPoolId.startsWith(`${region}_`)) {
@@ -62,6 +64,7 @@ export function getAuthEnvironment(env: Record<string, string | undefined> = pro
     userPoolId,
     clientId,
     allowedSubjects,
+    multiUser,
     secret: createHash("sha256").update(secretText, "utf8").digest(),
   };
 }
@@ -155,7 +158,9 @@ export async function verifyIdToken(token: string, env: AuthEnvironment): Promis
   if (payload.token_use !== "id" || typeof payload.sub !== "string") {
     throw new Error("Token is not authorized for this Deems workspace.");
   }
-  if (!env.allowedSubjects.has(payload.sub)) throw new AuthSubjectDeniedError();
+  if (env.multiUser) {
+    if (payload.email_verified !== true || typeof payload.email !== "string") throw new AuthSubjectDeniedError();
+  } else if (!env.allowedSubjects.has(payload.sub)) throw new AuthSubjectDeniedError();
   return payload;
 }
 
@@ -211,7 +216,7 @@ export async function readChallengeEnvelope(value: string, env: AuthEnvironment)
 }
 
 export async function cognitoRequest<T>(
-  target: "InitiateAuth" | "RespondToAuthChallenge",
+  target: "InitiateAuth" | "RespondToAuthChallenge" | "SignUp" | "ConfirmSignUp" | "ResendConfirmationCode" | "ForgotPassword" | "ConfirmForgotPassword",
   body: Record<string, unknown>,
   region: string,
 ): Promise<T> {
@@ -253,6 +258,15 @@ export async function cognitoRequest<T>(
     if (!response.ok) {
       const error = data as { __type?: string; code?: string };
       const code = (error.__type ?? error.code ?? "").split("#").pop()?.split(":").pop();
+      if (code === "UserNotConfirmedException") {
+        throw Object.assign(new Error("Verify your email before signing in."), { status: 403, code: "verification_required" });
+      }
+      if (code === "UsernameExistsException") {
+        throw Object.assign(new Error("Try signing in or resetting your password."), { status: 409 });
+      }
+      if (code === "InvalidPasswordException" || code === "PasswordHistoryPolicyViolationException") {
+        throw Object.assign(new Error("Choose a new password with at least 12 characters."), { status: 400 });
+      }
       if (code === "TooManyRequestsException" || code === "LimitExceededException") {
         throw Object.assign(new Error("Too many sign-in attempts. Try again shortly."), { status: 429 });
       }

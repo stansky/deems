@@ -1,5 +1,7 @@
 "use client";
 
+import { workspaceLocalStorage } from "@/components/workspace-client";
+
 import { useCallback, useEffect, useRef, useState, type SetStateAction } from "react";
 import type { PracticeCommand, PracticeOrigin, PracticeSave } from "@/contracts/practice";
 
@@ -31,7 +33,7 @@ export function usePracticeDraft(key: string, starter: string, launchOrigin: Pra
     loadedKeyRef.current = null;
     let next = emptyPracticeDraft(starter, launchOrigin);
     try {
-      const raw = localStorage.getItem(key);
+      const raw = workspaceLocalStorage.getItem(key);
       if (raw) {
         const stored = JSON.parse(raw) as Partial<PracticeDraft> & Record<string, unknown>;
         next = { ...next, ...stored,
@@ -61,7 +63,7 @@ export function usePracticeDraft(key: string, starter: string, launchOrigin: Pra
     draftRef.current = next;
     setDraftState(next);
     // Store the latest edit before a reload can interrupt a save or retry.
-    try { localStorage.setItem(key, JSON.stringify(next)); } catch { /* Keep the draft in memory if browser storage is full. */ }
+    try { workspaceLocalStorage.setItem(key, JSON.stringify(next)); } catch { /* Keep the draft in memory if browser storage is full. */ }
   }, [key]);
   return { draft, setDraft, ready: ready && loadedKey === key };
 }

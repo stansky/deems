@@ -1,11 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { authEnabled, getAuthEnvironment, getCookie, getEffectiveRequestOrigin, isSafeNextPath, verifyIdToken } from "@/domains/auth/server";
+import { workspaceSchema } from "@/domains/auth/workspace-key";
 
 const publicAuthPaths = new Set([
   "/api/auth/login",
   "/api/auth/challenge",
   "/api/auth/session",
   "/api/auth/logout",
+  "/api/auth/register",
 ]);
 
 function setupResponse(message: string, status: number) {
@@ -37,13 +39,17 @@ export async function proxy(request: NextRequest) {
   if (authEnv instanceof NextResponse) return authEnv;
 
   const path = request.nextUrl.pathname;
-  if (path === "/login" || publicAuthPaths.has(path)) return NextResponse.next();
+  if (path === "/login" || path === "/signup" || publicAuthPaths.has(path)) return NextResponse.next();
 
   const token = getCookie(request, "deems_session");
   if (token) {
     try {
-      await verifyIdToken(token, authEnv);
-      return NextResponse.next();
+      const claims = await verifyIdToken(token, authEnv);
+      const expected = request.headers.get("x-deems-workspace");
+      if (expected && expected !== workspaceSchema(claims.sub!)) return NextResponse.json({ error: "Your account changed. Reopen your workspace.", code: "workspace_changed" }, { status: 409, headers: { "Cache-Control": "no-store" } });
+      const response = NextResponse.next();
+      response.headers.set("Cache-Control", "private, no-store");
+      return response;
     } catch {
       // A rejected or expired token must never grant access.
     }

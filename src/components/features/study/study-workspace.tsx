@@ -1,5 +1,7 @@
 "use client";
 
+import { workspaceSessionStorage } from "@/components/workspace-client";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Dispatch, RefObject, SetStateAction } from "react";
 import {
@@ -85,7 +87,7 @@ export default function StudyWorkspace({ state, tab, setTab, selected, setSelect
 
   useEffect(() => {
     try {
-      const saved = sessionStorage.getItem(routeStorageKey);
+      const saved = workspaceSessionStorage.getItem(routeStorageKey);
       const route: unknown = saved ? JSON.parse(saved) : null;
       if (route && typeof route === "object") {
         const { courseId, lessonId } = route as { courseId?: unknown; lessonId?: unknown };
@@ -114,9 +116,9 @@ export default function StudyWorkspace({ state, tab, setTab, selected, setSelect
     if (!routeReady) return;
     try {
       if (!openCourseId) {
-        sessionStorage.removeItem(routeStorageKey);
+        workspaceSessionStorage.removeItem(routeStorageKey);
       } else {
-        sessionStorage.setItem(routeStorageKey, JSON.stringify({ courseId: openCourseId, lessonId: activeLessonId || null, mode: activeLessonId ? lessonLaunchMode : "course" }));
+        workspaceSessionStorage.setItem(routeStorageKey, JSON.stringify({ courseId: openCourseId, lessonId: activeLessonId || null, mode: activeLessonId ? lessonLaunchMode : "course" }));
       }
     } catch {
       // Course navigation remains usable without session storage.
@@ -128,7 +130,7 @@ export default function StudyWorkspace({ state, tab, setTab, selected, setSelect
     setDraftReadyFor("");
     setSaveError("");
     try {
-      const saved = sessionStorage.getItem(draftStorageKey(activeLessonId, lessonLaunchMode));
+      const saved = workspaceSessionStorage.getItem(draftStorageKey(activeLessonId, lessonLaunchMode));
       const guide = cheatSheets.find(item => item.id === activeLesson.guideId);
       const sectionCount = guide?.sections.length ?? 1;
       const startQuizDraft: LessonDraft = {
@@ -162,7 +164,7 @@ export default function StudyWorkspace({ state, tab, setTab, selected, setSelect
   useEffect(() => {
     if (!activeLessonId || draftReadyFor !== activeLessonId) return;
     try {
-      sessionStorage.setItem(draftStorageKey(activeLessonId, lessonLaunchMode), JSON.stringify(draft));
+      workspaceSessionStorage.setItem(draftStorageKey(activeLessonId, lessonLaunchMode), JSON.stringify(draft));
     } catch {
       // Keep the lesson usable if this browser cannot store a same-tab draft.
     }
@@ -271,7 +273,7 @@ export default function StudyWorkspace({ state, tab, setTab, selected, setSelect
       value: JSON.stringify(progress),
     });
     if (saved) {
-      try { sessionStorage.removeItem(draftStorageKey(activeLesson.id, lessonLaunchMode)); } catch { /* Saved server state remains authoritative. */ }
+      try { workspaceSessionStorage.removeItem(draftStorageKey(activeLesson.id, lessonLaunchMode)); } catch { /* Saved server state remains authoritative. */ }
       setActiveLessonId("");
       setLessonLaunchMode("course");
       setDraftReadyFor("");

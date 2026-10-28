@@ -13,6 +13,6 @@ export async function POST(request:Request) {
   if(!parsed.success) return Response.json({error:"Invalid match request",details:parsed.error.flatten()},{status:400});
   active++;
   try {return Response.json(await matchQuestion(parsed.data,request.signal),{headers:{"Cache-Control":"no-store"}});}
-  catch {return Response.json({error:"Question matching is unavailable. Check the local database and retry."},{status:503});}
+  catch {return Response.json({error:"Question matching is unavailable. Please try again shortly."},{status:503});}
   finally {active--;}
 }

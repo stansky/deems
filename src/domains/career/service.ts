@@ -247,7 +247,7 @@ export async function executeCareerCommand(pool: Pool, mutation: { action: strin
   } catch (error) {
     await client.query("ROLLBACK");
     if (error instanceof CareerError) throw error;
-    throw new CareerError("Your change has not been confirmed. Retry with the same command key when the local database is available.", 503, "save_unconfirmed");
+    throw new CareerError("Your change has not been confirmed. Retry with the same command key when your workspace is available.", 503, "save_unconfirmed");
   } finally { client.release(); }
 }
 

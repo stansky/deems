@@ -20,7 +20,7 @@ async function readBody(request:Request):Promise<unknown> {
 }
 export async function GET() {
   try {await ensureDb();return Response.json(researchStateSchema.parse(await getResearchState()),{headers});}
-  catch {return Response.json({error:"Company research is unavailable. Check the local database and retry."},{status:503,headers});}
+  catch {return Response.json({error:"Company research is unavailable. Please try again shortly."},{status:503,headers});}
 }
 export async function POST(request:Request) {
   if(!sameOrigin(request)||request.headers.get("sec-fetch-site")==="cross-site")return Response.json({error:"Origin is not allowed."},{status:403,headers});
@@ -31,6 +31,6 @@ export async function POST(request:Request) {
   try {await ensureDb();return Response.json(researchStateSchema.parse(await executeResearchCommand(parsed.data)),{headers});}
   catch(error) {
     if(error instanceof CompanyResearchError)return Response.json({error:error.message,code:error.code},{status:error.status,headers});
-    return Response.json({error:"Your research change has not been confirmed. Retry when the local database is available."},{status:503,headers});
+    return Response.json({error:"Your research change has not been confirmed. Retry when your workspace is available."},{status:503,headers});
   }
 }

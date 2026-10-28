@@ -1,5 +1,7 @@
 "use client";
 
+import { workspaceFetch, workspaceSessionStorage } from "@/components/workspace-client";
+
 import { useEffect, useState } from "react";
 import { ArrowRight, BookOpen, CalendarDays, Check, CheckCircle2, ChevronDown, ChevronRight, Circle, Clock3, ExternalLink, FileText, Loader2, Plus, RotateCcw, X } from "lucide-react";
 import { Badge, Button } from "@/components/ui";
@@ -67,22 +69,22 @@ export default function TargetWorkspace({ workspace, onResource, onApplication, 
   const [saved, setSaved] = useState(false);
   async function load(): Promise<TargetsState | null> {
     setError("");
-    try { const response = await fetch("/api/targets", { cache: "no-store" }); if (!response.ok) throw new Error("Could not load your target plans. Retry when the local database is available."); const next = targetStateSchema.parse(await response.json()); setData(next); return next; }
+    try { const response = await workspaceFetch("/api/targets", { cache: "no-store" }); if (!response.ok) throw new Error("Could not load your target plans. Retry when your workspace is available."); const next = targetStateSchema.parse(await response.json()); setData(next); return next; }
     catch (e) { setError(e instanceof Error ? e.message : "Could not load targets."); return null; }
   }
   useEffect(() => { void load().then(next => {
     const params=new URLSearchParams(window.location.search);
     const requested=next?.roles.find(item=>item.id===params.get("role"));
     if(requested) {setRoleId(requested.id);setCompanyId(requested.companyId);setOverview(false);setTab("Plan");setReturnStep(params.get("step")??"");}
-  }); try { const stored = JSON.parse(sessionStorage.getItem("interview-target-selection") || "null"); if (stored) { setCompanyId(stored.companyId || "sycamore"); setRoleId(stored.roleId || "sycamore-fde"); setOverview(stored.overview !== false); if (["Company","Plan","Requirements","Research","Interviews","Sources"].includes(stored.tab)) setTab(stored.tab); } } catch {} setSelectionReady(true); }, []);
-  useEffect(() => { if (selectionReady) try { sessionStorage.setItem("interview-target-selection",JSON.stringify({companyId,roleId,overview,tab})); } catch {} }, [companyId,roleId,overview,tab,selectionReady]);
+  }); try { const stored = JSON.parse(workspaceSessionStorage.getItem("interview-target-selection") || "null"); if (stored) { setCompanyId(stored.companyId || "sycamore"); setRoleId(stored.roleId || "sycamore-fde"); setOverview(stored.overview !== false); if (["Company","Plan","Requirements","Research","Interviews","Sources"].includes(stored.tab)) setTab(stored.tab); } } catch {} setSelectionReady(true); }, []);
+  useEffect(() => { if (selectionReady) try { workspaceSessionStorage.setItem("interview-target-selection",JSON.stringify({companyId,roleId,overview,tab})); } catch {} }, [companyId,roleId,overview,tab,selectionReady]);
   async function save(mutation: TargetMutation, command?: UseCommandDraftResult) {
     setSaving(true); setSaved(false); setError("");
     try {
       if (isProtected(mutation.action) && !command) throw new Error("Reload this record before saving. Revision information is missing.");
       const meta = isProtected(mutation.action) ? command!.meta(mutation.action, mutation.data) : undefined;
       const payload = meta ? { ...mutation, meta } : mutation;
-      const response = await fetch("/api/targets", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(targetMutationSchema.parse(payload)) });
+      const response = await workspaceFetch("/api/targets", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(targetMutationSchema.parse(payload)) });
       const body = await response.json();
       if (!response.ok) {
         if (response.status === 409 && body.code === "revision_conflict") {
@@ -316,7 +318,7 @@ function CompanyHome({company,data,workspace,onRole,onApplication,onResearch}:{c
   const activity=workspace.activities.filter(item=>applications.some(app=>app.id===item.applicationId)).sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
   const rounds=data.interviews.filter(item=>item.companyId===company.id);
   const [profile,setProfile]=useState<ReturnType<typeof researchStateSchema.parse>["profiles"][number]|null>(null);
-  useEffect(()=>{let cancelled=false;fetch("/api/company-research",{cache:"no-store"}).then(async r=>r.ok?researchStateSchema.parse(await r.json()):null).then(state=>{if(!cancelled)setProfile(state?.profiles.find(p=>p.companyId===company.id)??null);}).catch(()=>{});return()=>{cancelled=true;};},[company.id]);
+  useEffect(()=>{let cancelled=false;workspaceFetch("/api/company-research",{cache:"no-store"}).then(async r=>r.ok?researchStateSchema.parse(await r.json()):null).then(state=>{if(!cancelled)setProfile(state?.profiles.find(p=>p.companyId===company.id)??null);}).catch(()=>{});return()=>{cancelled=true;};},[company.id]);
   return <>
     <header className="company-home-heading"><span className="company-home-logo" style={companySurface(brand?.accent)}>{brand?.logoPath?<img src={brand.logoPath} alt=""/>:<strong>{company.name.slice(0,1)}</strong>}</span><div><h1>{company.name}</h1><p>{profile?.overview||brand?.overview||company.summary||company.focus}</p></div></header>
     {(profile?.pitch||brand?.pitch)&&<section className="company-home-pitch"><h2>Elevator pitch</h2><p>{profile?.pitch||brand?.pitch}</p></section>}

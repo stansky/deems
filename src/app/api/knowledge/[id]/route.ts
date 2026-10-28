@@ -15,6 +15,6 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     if (!entry) return Response.json({ error: "Reference entry not found." }, { status: 404, headers });
     return Response.json({ entry }, { headers });
   } catch {
-    return Response.json({ error: "The reference library is unavailable. Check the local database and retry." }, { status: 503, headers });
+    return Response.json({ error: "The reference library is unavailable. Please try again shortly." }, { status: 503, headers });
   }
 }

@@ -1,0 +1,2 @@
+.workspace-boot { min-height: 100dvh; display: grid; place-items: center; padding: 24px; color: var(--text, #f5f5f5); background: var(--bg, #131616); }
+.workspace-boot button { color: inherit; text-decoration: underline; padding: 12px; }

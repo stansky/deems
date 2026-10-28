@@ -9,6 +9,8 @@ import {
 } from "../src/domains/auth/server";
 import { POST as loginPost } from "../src/app/api/auth/login/route";
 import { POST as challengePost } from "../src/app/api/auth/challenge/route";
+import { POST as registerPost } from "../src/app/api/auth/register/route";
+import { workspaceSchema } from "../src/domains/auth/workspace-key";
 import { proxy } from "../src/proxy";
 
 const issuer = "https://cognito-idp.us-west-1.amazonaws.com/us-west-1_testPool";
@@ -16,6 +18,7 @@ const keyId = "test-key";
 const authEnvironmentKeys = [
   "DEEMS_AUTH_ENABLED", "DEEMS_HOSTED_READY", "VERCEL", "DEEMS_COGNITO_REGION",
   "DEEMS_COGNITO_USER_POOL_ID", "DEEMS_COGNITO_CLIENT_ID", "DEEMS_COGNITO_ALLOWED_SUBS", "DEEMS_AUTH_SECRET",
+  "DEEMS_MULTIUSER",
 ] as const;
 
 function testEnvironment(overrides: Record<string, string> = {}) {
@@ -149,6 +152,20 @@ test("Cognito ID token verifies signature, issuer, client, token use, expiry, an
     };
 
     assert.equal((await verifyIdToken(await makeToken(), env)).sub, "allowed-user");
+    const multiUser = { ...env, multiUser: true, allowedSubjects: new Set<string>() };
+    const verifiedAccount = await makeToken({ sub: "new-account", claims: { token_use: "id", email: "account@example.com", email_verified: true } });
+    assert.equal((await verifyIdToken(verifiedAccount, multiUser)).sub, "new-account");
+    await assert.rejects(async () => verifyIdToken(await makeToken({ claims: { token_use: "id", email: "account@example.com", email_verified: false } }), multiUser), AuthSubjectDeniedError);
+    await assert.rejects(async () => verifyIdToken(await makeToken(), multiUser), AuthSubjectDeniedError);
+    await withProxyAuthEnvironment(async () => {
+      const token = await makeToken();
+      const stale = await proxy(new NextRequest("https://deems.dev/api/workspace", { headers: { cookie: `deems_session=${token}`, "x-deems-workspace": workspaceSchema("different-account") } }));
+      assert.equal(stale.status, 409);
+      assert.equal((await stale.json()).code, "workspace_changed");
+      const own = await proxy(new NextRequest("https://deems.dev/api/workspace", { headers: { cookie: `deems_session=${token}`, "x-deems-workspace": workspaceSchema("allowed-user") } }));
+      assert.equal(own.status, 200);
+      assert.equal(own.headers.get("cache-control"), "private, no-store");
+    }, true);
     await assert.rejects(async () => verifyIdToken(await makeToken({ claims: { token_use: "access" } }), env));
     await assert.rejects(async () => verifyIdToken(await makeToken({ exp: Math.floor(Date.now() / 1000) - 60 }), env));
     await assert.rejects(async () => verifyIdToken(await makeToken({ includeExp: false }), env));
@@ -266,4 +283,36 @@ test("proxy allows static assets without auth configuration", async () => {
     assert.equal(image.status, 200);
     assert.equal(image.headers.get("location"), null);
   }, false);
+});
+
+test("registration requires same-origin bounded inputs, verified codes and an enabled account mode", async () => {
+  const request = (body: unknown, origin = "https://deems.dev") => new Request("https://deems.dev/api/auth/register", { method: "POST", headers: { origin, "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  assert.equal((await registerPost(request({ action: "signup", email: "test@example.com", password: "a valid long password" }, "https://other.example"))).status, 403);
+  assert.equal((await registerPost(request({ action: "signup", email: "test@example.com", password: "short" }))).status, 400);
+  assert.equal((await registerPost(request({ action: "confirm", email: "test@example.com", code: "123", workspaceId: "another-user" }))).status, 400);
+  await withProxyAuthEnvironment(async () => {
+    assert.equal((await registerPost(request({ action: "recover", email: "test@example.com" }))).status, 403);
+    process.env.DEEMS_MULTIUSER = "true";
+    const oldFetch = globalThis.fetch;
+    const calls: string[] = [];
+    globalThis.fetch = async (_input, init) => {
+      const target = new Headers(init?.headers).get("X-Amz-Target") ?? "";
+      calls.push(target.split(".").pop()!);
+      return new Response("{}", { status: 200 });
+    };
+    try {
+      for (const body of [
+        { action: "signup", email: "test@example.com", password: "a valid long password" },
+        { action: "confirm", email: "test@example.com", code: "123456" },
+        { action: "resend", email: "test@example.com" },
+        { action: "recover", email: "test@example.com" },
+        { action: "reset", email: "test@example.com", code: "123456", password: "another valid password" },
+      ]) assert.equal((await registerPost(request(body))).status, 200);
+      assert.deepEqual(calls, ["SignUp", "ConfirmSignUp", "ResendConfirmationCode", "ForgotPassword", "ConfirmForgotPassword"]);
+      globalThis.fetch = async () => new Response(JSON.stringify({ __type: "UsernameExistsException" }), { status: 400 });
+      const exists = await registerPost(request({ action: "signup", email: "test@example.com", password: "a valid long password" }));
+      assert.equal(exists.status, 200);
+      assert.deepEqual(await exists.json(), { accepted: true, confirmationRequired: true });
+    } finally { globalThis.fetch = oldFetch; }
+  }, true);
 });

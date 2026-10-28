@@ -1,4 +1,8 @@
 "use client";
+import { WorkspaceSession } from "@/components/workspace-session";
+import { notifyAccountChange } from "@/components/workspace-client";
+
+import { workspaceFetch } from "@/components/workspace-client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Activity as ActivityIcon, ArrowDown, ArrowLeft, ArrowRight, BookOpen, Brain, BriefcaseBusiness, Check, CheckCircle2, ChevronRight, Circle, Clock3, Code2, ExternalLink, FileText, Flag, Layers3, Lightbulb, Loader2, Menu, MessageSquare, MoreHorizontal, Pause, Play, Plus, Printer, RotateCcw, Search, Sparkles, Target, Timer, UserRound, X } from "lucide-react";
@@ -35,7 +39,7 @@ const blank: WorkspaceState = { applications: [], reviews: [], sessions: [], act
 function newId() { const bytes = new Uint8Array(16); crypto.getRandomValues(bytes); return Array.from(bytes, b => b.toString(16).padStart(2, "0")).join(""); }
 const stages = careerStages;
 
-export default function InterviewDesk() {
+function InterviewDesk() {
   const [view, setView] = useState<View>("Interviews");
   const [prepCategory, setPrepCategory] = useState<PrepCategory>("Coding");
   const [state, setState] = useState<WorkspaceState>(blank);
@@ -44,12 +48,12 @@ export default function InterviewDesk() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState("");
   const [authenticated, setAuthenticated] = useState(false);
-  useEffect(()=>{void fetch("/api/auth/session",{cache:"no-store"}).then(response=>response.json()).then(data=>setAuthenticated(data.authenticated===true)).catch(()=>{});},[]);
+  useEffect(()=>{void workspaceFetch("/api/auth/session",{cache:"no-store"}).then(response=>response.json()).then(data=>setAuthenticated(data.authenticated===true)).catch(()=>{});},[]);
   async function signOut() {
     try {
-      const response=await fetch("/api/auth/logout",{method:"POST"});
+      const response=await workspaceFetch("/api/auth/logout",{method:"POST"});
       if(!response.ok) throw new Error("Could not sign out. Please retry.");
-      window.location.assign("/login");
+      notifyAccountChange(); window.location.assign("/login");
     } catch(error) {setError(error instanceof Error?error.message:"Could not sign out.");}
   }
   const [mobileMenu, setMobileMenu] = useState(false);
@@ -103,7 +107,7 @@ export default function InterviewDesk() {
 
   const load = useCallback(async () => {
     setLoading(true); setError("");
-    try { const response = await fetch("/api/workspace", { cache: "no-store" }); if (!response.ok) throw new Error("The local database could not be reached. Your saved data has not been changed."); setState(workspaceStateSchema.parse(await response.json())); return true; }
+    try { const response = await workspaceFetch("/api/workspace", { cache: "no-store" }); if (!response.ok) throw new Error("Your workspace could not be reached. Your saved data has not been changed."); setState(workspaceStateSchema.parse(await response.json())); return true; }
     catch (e) { setError(e instanceof Error ? e.message : "Could not load your workspace."); return false; }
     finally { setLoading(false); }
   }, []);
@@ -113,10 +117,10 @@ export default function InterviewDesk() {
   async function mutate(action: string, data: unknown, meta?: CommandMeta) {
     setSaving(true); setError(""); setSaved("");
     try {
-      const response = await fetch("/api/workspace", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(workspaceMutationSchema.parse({ action, data, meta })) });
-      if (!response.ok) { const problem = await response.json().catch(() => ({})); if(response.status===409 || response.status===428) { const fresh=await fetch("/api/workspace",{cache:"no-store"}); if(fresh.ok)setState(workspaceStateSchema.parse(await fresh.json())); } throw new Error(problem.error || "Could not save to the local database. Please try again."); }
+      const response = await workspaceFetch("/api/workspace", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(workspaceMutationSchema.parse({ action, data, meta })) });
+      if (!response.ok) { const problem = await response.json().catch(() => ({})); if(response.status===409 || response.status===428) { const fresh=await workspaceFetch("/api/workspace",{cache:"no-store"}); if(fresh.ok)setState(workspaceStateSchema.parse(await fresh.json())); } throw new Error(problem.error || "Could not save your changes. Please try again."); }
       const next = workspaceStateSchema.parse(await response.json());
-      if (next.applications && next.sessions) setState(next); else { const refresh = await fetch("/api/workspace", { cache: "no-store" }); if (!refresh.ok) throw new Error("Saved, but could not refresh the workspace. Reload to verify."); setState(workspaceStateSchema.parse(await refresh.json())); }
+      if (next.applications && next.sessions) setState(next); else { const refresh = await workspaceFetch("/api/workspace", { cache: "no-store" }); if (!refresh.ok) throw new Error("Saved, but could not refresh the workspace. Reload to verify."); setState(workspaceStateSchema.parse(await refresh.json())); }
       setSaved("Saved locally"); return true;
     } catch (e) { setError(e instanceof Error ? e.message : "Save failed."); return false; }
     finally { setSaving(false); }
@@ -155,7 +159,7 @@ export default function InterviewDesk() {
   async function practiceCommand(command: PracticeCommand): Promise<PracticeAttempt | null> {
     setSaving(true);setError("");
     try {
-      const response = await fetch("/api/practice",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(practiceCommandSchema.parse(command))});
+      const response = await workspaceFetch("/api/practice",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(practiceCommandSchema.parse(command))});
       if (!response.ok) {
         const problem=await response.json().catch(()=>({}));
         if(response.status===409) await load();
@@ -219,7 +223,7 @@ function Today({ state, onPractice, onStudy, onNavigate, onApplication, onReview
   const [scheduleError,setScheduleError]=useState("");
   const [now,setNow]=useState(()=>Date.now());
   useEffect(()=>{ let cancelled=false;
-    async function refresh(){ try {const response=await fetch("/api/targets",{cache:"no-store"});if(!response.ok)throw new Error("Schedule unavailable. Retry by reopening Today.");const data=targetStateSchema.parse(await response.json());if(!cancelled){setSchedule(data);setScheduleError("");setNow(Date.now());}}catch(error){if(!cancelled)setScheduleError(error instanceof Error?error.message:"Schedule unavailable.");}}
+    async function refresh(){ try {const response=await workspaceFetch("/api/targets",{cache:"no-store"});if(!response.ok)throw new Error("Schedule unavailable. Retry by reopening Today.");const data=targetStateSchema.parse(await response.json());if(!cancelled){setSchedule(data);setScheduleError("");setNow(Date.now());}}catch(error){if(!cancelled)setScheduleError(error instanceof Error?error.message:"Schedule unavailable.");}}
     void refresh();window.addEventListener("focus",refresh);const timer=window.setInterval(()=>setNow(Date.now()),60000);
     return()=>{cancelled=true;window.removeEventListener("focus",refresh);window.clearInterval(timer);};
   },[]);
@@ -256,7 +260,7 @@ function Applications({ state, selected, select, mutate, saving, loading }: { st
   async function addApplication(e: React.FormEvent) { e.preventDefault(); if (!company.trim() || !title.trim()) return; const id = newApplicationId; const data={ id, roleId: id, company: company.trim(), title: title.trim(), stage: "Interested", nextAction: "Review the role and decide next steps", notes: "" }; if (await mutate("application", data, createCommand.meta("application",data))) { createCommand.commit(1);setNewApplicationId(newId());setAdding(false); setCompany(""); setTitle(""); select(id); } }
   const [search, setSearch] = useState("");
   const filtered = state.applications.filter(a => (filter === "All stages" || a.stage === filter) && `${a.title} ${a.company}`.toLowerCase().includes(search.toLowerCase()));
-  return <><PageHeading title="Applications" action={<Button onClick={() => setAdding(!adding)}><Plus size={15} />Add a role</Button>} />{adding && <form className="add-application-form" onSubmit={addApplication}><label className="field-label">Company<input required autoFocus value={company} onChange={e => setCompany(e.target.value)} placeholder="Company name" /></label><label className="field-label">Role<input required value={title} onChange={e => setTitle(e.target.value)} placeholder="Role title" /></label><Button disabled={saving} type="submit">Save role<Check size={15} /></Button><Button variant="ghost" type="button" onClick={() => setAdding(false)}>Cancel</Button></form>}<div className="tab-bar" role="tablist" aria-label="Application views">{(["Roles", "Role library"] as const).map(tab => <button key={tab} role="tab" aria-selected={applicationTab === tab} className={applicationTab === tab ? "selected" : ""} onClick={() => setApplicationTab(tab)}>{tab === "Roles" ? <BriefcaseBusiness size={16} /> : <BookOpen size={16} />}{tab}<span>{tab === "Roles" ? state.applications.length : state.documents?.length ?? 0}</span></button>)}</div>{applicationTab === "Role library" ? <RoleLibrary state={state} mutate={mutate} saving={saving} /> : <><div className="list-toolbar"><label className="search-input"><Search size={16} /><input aria-label="Search applications" value={search} onChange={e => setSearch(e.target.value)} placeholder="Find a company or role..." /></label><select aria-label="Filter by application stage" value={filter} onChange={e => setFilter(e.target.value)}><option>All stages</option>{stages.map(s => <option key={s}>{s}</option>)}</select></div><div className="application-table"><div className="table-heading"><span>ROLE / COMPANY</span><span>STAGE</span><span>NEXT ACTION</span><span /></div>{filtered.map(a => <button key={a.id} className="application-row" onClick={() => select(a.id)}><span className="application-role"><span className="company-avatar">{a.company.slice(0, 1)}</span><span><strong>{a.title}</strong><span>{a.company}</span></span></span><span><Badge tone={a.stage === "Interviewing" ? "blue" : a.stage === "Offer" ? "green" : "neutral"}>{a.stage}</Badge></span><span className="next-action">{a.nextAction || "Choose your next action"}</span><ChevronRight size={16} /></button>)}{!filtered.length && <Empty title={loading ? "Loading your workspace" : "No roles match"}>{loading ? "Connecting to your local database." : "Try another search or stage."}</Empty>}</div></>}{selected && <ApplicationDetail key={selected.id} application={selected} state={state} close={() => select(null)} mutate={mutate} saving={saving} />}</>;
+  return <><PageHeading title="Applications" action={<Button onClick={() => setAdding(!adding)}><Plus size={15} />Add a role</Button>} />{adding && <form className="add-application-form" onSubmit={addApplication}><label className="field-label">Company<input required autoFocus value={company} onChange={e => setCompany(e.target.value)} placeholder="Company name" /></label><label className="field-label">Role<input required value={title} onChange={e => setTitle(e.target.value)} placeholder="Role title" /></label><Button disabled={saving} type="submit">Save role<Check size={15} /></Button><Button variant="ghost" type="button" onClick={() => setAdding(false)}>Cancel</Button></form>}<div className="tab-bar" role="tablist" aria-label="Application views">{(["Roles", "Role library"] as const).map(tab => <button key={tab} role="tab" aria-selected={applicationTab === tab} className={applicationTab === tab ? "selected" : ""} onClick={() => setApplicationTab(tab)}>{tab === "Roles" ? <BriefcaseBusiness size={16} /> : <BookOpen size={16} />}{tab}<span>{tab === "Roles" ? state.applications.length : state.documents?.length ?? 0}</span></button>)}</div>{applicationTab === "Role library" ? <RoleLibrary state={state} mutate={mutate} saving={saving} /> : <><div className="list-toolbar"><label className="search-input"><Search size={16} /><input aria-label="Search applications" value={search} onChange={e => setSearch(e.target.value)} placeholder="Find a company or role..." /></label><select aria-label="Filter by application stage" value={filter} onChange={e => setFilter(e.target.value)}><option>All stages</option>{stages.map(s => <option key={s}>{s}</option>)}</select></div><div className="application-table"><div className="table-heading"><span>ROLE / COMPANY</span><span>STAGE</span><span>NEXT ACTION</span><span /></div>{filtered.map(a => <button key={a.id} className="application-row" onClick={() => select(a.id)}><span className="application-role"><span className="company-avatar">{a.company.slice(0, 1)}</span><span><strong>{a.title}</strong><span>{a.company}</span></span></span><span><Badge tone={a.stage === "Interviewing" ? "blue" : a.stage === "Offer" ? "green" : "neutral"}>{a.stage}</Badge></span><span className="next-action">{a.nextAction || "Choose your next action"}</span><ChevronRight size={16} /></button>)}{!filtered.length && <Empty title={loading ? "Loading your workspace" : "No roles match"}>{loading ? "Opening your workspace." : "Try another search or stage."}</Empty>}</div></>}{selected && <ApplicationDetail key={selected.id} application={selected} state={state} close={() => select(null)} mutate={mutate} saving={saving} />}</>;
 }
 
 function ApplicationDetail({ application, state, close, mutate, saving }: { application: Application; state: WorkspaceState; close: () => void; mutate: (a: string, d: unknown, meta?: CommandMeta) => Promise<boolean>; saving: boolean }) {
@@ -283,7 +287,7 @@ function Background({ state, mutate, saving }: { state: WorkspaceState; mutate: 
   const [selected, setSelected] = useState(stories[0]?.id ?? "");
   useEffect(() => {
     let active = true;
-    void fetch("/api/personal-prep")
+    void workspaceFetch("/api/personal-prep")
       .then(response => response.ok ? response.json() : null)
       .then(payload => {
         if (!active || payload === null) return;
@@ -296,3 +300,5 @@ function Background({ state, mutate, saving }: { state: WorkspaceState; mutate: 
   const story = personalStories.find(s => s.id === selected) ?? personalStories[0];
   return <><PageHeading title="Experience" action={<div className="background-links"><a className="button button-secondary" href="/api/resume" target="_blank" rel="noreferrer"><FileText size={15} />Original resume</a></div>} /><div className="background-layout"><aside className="story-index">{personalStories.map(s => <button key={s.id} className={selected === s.id ? "selected" : ""} onClick={() => setSelected(s.id)}><span>{s.company}</span><strong>{s.title}</strong><ChevronRight size={15} /></button>)}</aside>{story && <article className="story-article"><Badge tone="blue">{story.company}</Badge><h2>{story.title}</h2><p className="story-summary">{story.summary}</p><h3>Talking points</h3><ul className="story-points">{story.talkingPoints.map((p, i) => <li key={p}><span>{i + 1}</span>{p}</li>)}</ul><div className="followup-block"><h3>Follow-up questions</h3>{story.followUps.map(f => <p key={f}><ChevronRight size={14} />{f}</p>)}</div><RevisionNote key={story.id} noteKey={`story:${story.id}`} value={state.notes[`story:${story.id}`]??""} revision={state.noteRevisions?.[`story:${story.id}`]??0} revisions={state.careerRevisions??[]} saving={saving} mutate={mutate}/><p className="story-source"><FileText size={13} />Source: {story.source}</p></article>}</div></>;
 }
+
+export default function Page() { return <WorkspaceSession><InterviewDesk /></WorkspaceSession>; }

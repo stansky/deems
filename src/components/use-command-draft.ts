@@ -1,5 +1,7 @@
 "use client";
 
+import { workspaceSessionStorage } from "@/components/workspace-client";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import { commandMetaSchema } from "@/lib/command-validation";
 import type { CommandMeta } from "@/domains/career/contracts";
@@ -74,7 +76,7 @@ function readStoredState(key: string, currentRevision: number): CommandDraftStat
 
   let sawCompanion = false;
   try {
-    const raw = window.sessionStorage.getItem(companionPrefix + key);
+    const raw = workspaceSessionStorage.getItem(companionPrefix + key);
     sawCompanion = raw !== null;
     if (raw !== null) {
       const stored: unknown = JSON.parse(raw);
@@ -96,7 +98,7 @@ function readStoredState(key: string, currentRevision: number): CommandDraftStat
             const pendingRecord = pendingValue as Record<string, unknown>;
             pending = { serialized: pendingRecord.serialized as string, meta: pendingRecord.meta as CommandMeta };
           }
-          const hasDraft = window.sessionStorage.getItem(legacyDraftPrefix + key) !== null;
+          const hasDraft = workspaceSessionStorage.getItem(legacyDraftPrefix + key) !== null;
           // A newly opened clean form uses the record it actually loaded.
           if (!hasDraft && !pending && !value.reviewRequired) return fallback;
           return {
@@ -112,7 +114,7 @@ function readStoredState(key: string, currentRevision: number): CommandDraftStat
       return { ...fallback, reviewRequired: true };
     }
 
-    const hasLegacyDraft = window.sessionStorage.getItem(legacyDraftPrefix + key) !== null;
+    const hasLegacyDraft = workspaceSessionStorage.getItem(legacyDraftPrefix + key) !== null;
     return { ...fallback, reviewRequired: hasLegacyDraft };
   } catch {
     // Invalid stored metadata must not upgrade an older draft to the current revision.
@@ -123,7 +125,7 @@ function readStoredState(key: string, currentRevision: number): CommandDraftStat
 function persistState(state: CommandDraftState): void {
   if (typeof window === "undefined") return;
   try {
-    window.sessionStorage.setItem(companionPrefix + state.key, JSON.stringify({
+    workspaceSessionStorage.setItem(companionPrefix + state.key, JSON.stringify({
       version: 1,
       baseRevision: state.baseRevision,
       reviewRequired: state.reviewRequired,

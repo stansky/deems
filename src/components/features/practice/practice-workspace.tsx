@@ -1,4 +1,6 @@
 "use client";
+
+import { workspaceFetch, workspaceLocalStorage } from "@/components/workspace-client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BookOpen, CheckCircle2, ChevronRight, Circle, Clock3, Code2, Layers3, Lightbulb, Loader2, Pause, Play, RotateCcw, Target } from "lucide-react";
 import { exercises } from "@/data/prep";
@@ -60,7 +62,7 @@ export default function Practice({ exerciseId, select, state, saving, onCommand,
   const loadTargets = useCallback(async () => {
     setTargetLoading(true); setTargetError("");
     try {
-      const response = await fetch("/api/targets", { cache: "no-store" });
+      const response = await workspaceFetch("/api/targets", { cache: "no-store" });
       if (!response.ok) throw new Error("Target roles could not be loaded.");
       const parsed = targetStateSchema.safeParse(await response.json());
       if (!parsed.success) throw new Error("Target roles could not be read.");
@@ -108,7 +110,7 @@ export default function Practice({ exerciseId, select, state, saving, onCommand,
       };
       command = { action: "save", data, meta: { expectedRevision: 0, producer: "deems-practice", key: crypto.randomUUID() } };
       update({ pendingSave: command });
-      try { localStorage.setItem(draftKey, JSON.stringify({ ...draft, pendingSave: command })); } catch { /* Preserve the command in memory for this page session. */ }
+      try { workspaceLocalStorage.setItem(draftKey, JSON.stringify({ ...draft, pendingSave: command })); } catch { /* Preserve the command in memory for this page session. */ }
     }
     try {
       const result = await onCommand(command);
@@ -130,7 +132,7 @@ export default function Practice({ exerciseId, select, state, saving, onCommand,
         meta: { expectedRevision: attempt.revision, producer: "deems-practice", key: crypto.randomUUID() },
       };
       update({ pendingAttachments: { ...draft.pendingAttachments, [attempt.sessionId]: command } });
-      try { localStorage.setItem(draftKey, JSON.stringify({ ...draft, pendingAttachments: { ...draft.pendingAttachments, [attempt.sessionId]: command } })); } catch { /* Keep this retry available in memory. */ }
+      try { workspaceLocalStorage.setItem(draftKey, JSON.stringify({ ...draft, pendingAttachments: { ...draft.pendingAttachments, [attempt.sessionId]: command } })); } catch { /* Keep this retry available in memory. */ }
       const result = await onCommand(command);
       if (!result) return false;
       const pendingAttachments = { ...draft.pendingAttachments }; delete pendingAttachments[attempt.sessionId];
@@ -144,7 +146,7 @@ export default function Practice({ exerciseId, select, state, saving, onCommand,
     if (draft.pendingSave) return;
     const next = emptyPracticeDraft(starter, draft.origin);
     setDraft(next); setRunning(false); setSolution(false); setSaveError("");
-    try { localStorage.setItem(draftKey, JSON.stringify(next)); } catch { /* Keep the fresh attempt in memory. */ }
+    try { workspaceLocalStorage.setItem(draftKey, JSON.stringify(next)); } catch { /* Keep the fresh attempt in memory. */ }
   }
 
   const launchDiffers = Boolean(origin && !sameOrigin(draft.origin, origin) && !hasSaved);

@@ -1,5 +1,7 @@
 "use client";
 
+import { workspaceFetch } from "@/components/workspace-client";
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, Check, ExternalLink, Loader2, Plus, RefreshCw, X } from "lucide-react";
 import { companyBranding } from "@/data/company-branding";
@@ -35,7 +37,7 @@ export default function CompanyResearch({ companies, initialCompanyId, compact =
 
   const load = useCallback(async () => {
     try {
-      const response = await fetch("/api/company-research", { cache: "no-store" });
+      const response = await workspaceFetch("/api/company-research", { cache: "no-store" });
       if (!response.ok) throw new Error("Company research is unavailable. Try again when the workspace is connected.");
       const next = researchStateSchema.parse(await response.json());
       setState(next);
@@ -71,7 +73,7 @@ export default function CompanyResearch({ companies, initialCompanyId, compact =
     setBusy(true); setError("");
     try {
       const command = researchCommandSchema.parse(body);
-      const response = await fetch("/api/company-research", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(command) });
+      const response = await workspaceFetch("/api/company-research", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(command) });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || "Could not save this research action.");
       const next = researchStateSchema.parse(payload);

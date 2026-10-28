@@ -10,7 +10,7 @@ Career preparation and learning workspace. Production: https://deems.app. Hosted
 - Run typecheck, contract validation, meaningful tests and production build for code changes.
 - After UI changes, inspect settled real-page desktop and mobile screenshots. Use real icon packs.
 - No shell polling loops. Use bounded commands.
-- Hosted access remains private. Enable Vercel Authentication for All Deployments before setting DEEMS_HOSTED_READY=true.
+- Hosted workspace data requires verified account authentication. Keep Vercel All Deployments protection during rollout. Public production signup requires tested account isolation and an explicit change to Standard Protection; staging stays protected.
 - Separate production and staging databases, keys and Vercel projects. Never copy the local personal database to either automatically.
 - Research worker requires a persistent container; do not run its browser in a Vercel function.
 - Native identifier is deems; intended Apple bundle ID is app.deems. No native app is implemented yet.

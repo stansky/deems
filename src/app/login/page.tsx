@@ -3,14 +3,18 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Brain, Eye, EyeOff, LoaderCircle, ShieldCheck } from "lucide-react";
 import "./login.css";
+import { Registration } from "./registration";
+import { notifyAccountChange } from "@/components/workspace-client";
 
 type Challenge = "SOFTWARE_TOKEN_MFA" | "SMS_MFA" | "NEW_PASSWORD_REQUIRED";
 type LoginResponse = {
   authenticated?: boolean;
   challenge?: Challenge;
   error?: string;
+  code?: string;
+  registrationEnabled?: boolean;
 };
-type Screen = "signin" | "challenge";
+type Screen = "signin" | "challenge" | "signup" | "confirm" | "recover";
 
 function safeNext(value: string | null): string {
   if (!value || !value.startsWith("/") || value.startsWith("//") || value.includes("\\") || /[\u0000-\u001f\u007f]/.test(value)) return "/";
@@ -53,16 +57,19 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [sessionChecked, setSessionChecked] = useState(false);
+  const [registrationEnabled, setRegistrationEnabled] = useState(false);
   const nextPath = useRef("/");
 
   useEffect(() => {
     let active = true;
     nextPath.current = safeNext(new URLSearchParams(window.location.search).get("next"));
+    if (new URLSearchParams(window.location.search).get("mode") === "signup") setScreen("signup");
     async function checkSession() {
       try {
         const response = await fetch("/api/auth/session", { method: "GET", cache: "no-store", credentials: "same-origin" });
         const body = await readResponse(response);
         if (!active) return;
+        setRegistrationEnabled(body.registrationEnabled === true);
         if (response.ok && body.authenticated) {
           window.location.replace(nextPath.current);
           return;
@@ -79,6 +86,7 @@ export default function LoginPage() {
   }, []);
 
   function finishSignIn() {
+    notifyAccountChange();
     window.location.replace(nextPath.current);
   }
 
@@ -94,6 +102,9 @@ export default function LoginPage() {
         body: JSON.stringify(data),
       });
       const body = await readResponse(response);
+      if (body.code === "verification_required") {
+        setScreen("confirm"); setPassword(""); return;
+      }
       if (response.status === 200 && body.authenticated) {
         finishSignIn();
         return;
@@ -134,6 +145,7 @@ export default function LoginPage() {
   }
 
   function returnToSignIn() {
+    setPassword("");
     setScreen("signin");
     setChallenge(null);
     setError("");
@@ -158,6 +170,7 @@ export default function LoginPage() {
         <span className="deems-login-wordmark">Deems</span>
       </header>
 
+      {screen === "signup" || screen === "confirm" || screen === "recover" ? <Registration key={screen} initialMode={screen} initialEmail={email} onBack={returnToSignIn} onComplete={(address, message) => { setEmail(address); returnToSignIn(); setNotice(message); }} /> : <>
       <div className="deems-login-heading">
         <span className="deems-login-kicker"><ShieldCheck size={13} aria-hidden="true" /> PRIVATE WORKSPACE</span>
         <h1 id="login-title">{title}</h1>
@@ -188,6 +201,10 @@ export default function LoginPage() {
         <button className="deems-login-submit" type="submit" disabled={busy}>
           {busy ? <><LoaderCircle size={16} className="deems-login-spinner" aria-hidden="true" /> Signing in</> : "Sign in"}
         </button>
+        {registrationEnabled && <>
+          <button className="deems-login-back" type="button" onClick={() => { setError(""); setScreen("signup"); }} disabled={busy}>Create an account</button>
+          <button className="deems-login-back" type="button" onClick={() => { setError(""); setScreen("recover"); }} disabled={busy}>Forgot password?</button>
+        </>}
       </form> : <form className="deems-login-form" onSubmit={submitChallenge}>
         {challenge === "NEW_PASSWORD_REQUIRED" ? <>
           <div className="deems-login-field">
@@ -217,9 +234,10 @@ export default function LoginPage() {
         </button>
         <button className="deems-login-back" type="button" onClick={returnToSignIn} disabled={busy}>Back to sign in</button>
       </form>}
+      </>}
 
       <footer className="deems-login-footer">
-        <span>{sessionChecked ? "Access for authorized workspace members" : "Checking sign-in session"}</span>
+        <span>{sessionChecked ? "Your workspace is private to your account" : "Checking sign-in session"}</span>
       </footer>
     </section>
   </main>;
