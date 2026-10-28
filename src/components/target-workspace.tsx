@@ -22,6 +22,7 @@ import type { TargetAssessment, TargetDebrief, TargetInterview, TargetMutation, 
 import "./target-workspace.css";
 import type { PracticeOrigin, PracticeAttempt } from "@/contracts/practice";
 import { RequirementEvidenceEntry } from "@/components/features/practice/evidence";
+import { BrandState } from "@/components/brand";
 
 type Props = { workspace: WorkspaceState; onResource: (resource: TargetResource, origin?:PracticeOrigin) => void; onViewAttempt:(attempt:PracticeAttempt)=>void; onApplication: (id: string) => void };
 type Save = (mutation: TargetMutation, command?: UseCommandDraftResult) => Promise<boolean>;
@@ -107,7 +108,7 @@ export default function TargetWorkspace({ workspace, onResource, onApplication, 
     } catch (e) { setError(e instanceof Error ? e.message : "Could not save. Your draft is still here."); return false; }
     finally { setSaving(false); }
   }
-  if (!data) return <section className="targets-workspace"><div className="page-heading"><h1>Interviews</h1></div>{error ? <div className="notice notice-error" role="alert">{error}<Button variant="secondary" onClick={load}>Retry</Button></div> : <p className="target-loading"><Loader2 className="spin" size={16} />Loading company plans...</p>}</section>;
+  if (!data) return <section className="targets-workspace"><BrandState kind={error ? "error" : "loading"} title={error ? "Company plans could not load" : "Loading company plans"} description={error || "Your interview plans are on their way."} action={error ? <Button variant="secondary" onClick={() => void load()}>Retry</Button> : undefined} compact /></section>;
   const company = data.companies.find(item => item.id === companyId) ?? data.companies[0];
   const companyRoles = data.roles.filter(item => item.companyId === company?.id).sort((a,b)=>rolePriority(a)-rolePriority(b));
   const role = companyRoles.find(item => item.id === roleId) ?? companyRoles[0];
@@ -278,6 +279,7 @@ function Pipeline({ data, onOpen, onOpenCompany, onCompanyCreated }: { data: Tar
     {id:"prospects",title:"Prospects",companyIds:prospectCompanies,empty:"No prospects yet. Add a company to get started."},
     {id:"past",title:"Past interviews",companyIds:pastCompanies,empty:"Completed rounds and closed applications will appear here."},
   ];
+  const hasCompanies = data.companies.some(company => company.id !== "general");
   return <div className="target-pipeline target-pipeline-grid">
     <PageActions className="company-board-actions">
       <Select value={companyFilter} onValueChange={setCompanyFilter}>
@@ -287,7 +289,7 @@ function Pipeline({ data, onOpen, onOpenCompany, onCompanyCreated }: { data: Tar
       <ActionButton aria-expanded={showResearch} onClick={() => setShowResearch(value => !value)}>{showResearch ? <X /> : <Plus />}{showResearch ? "Close research" : "Add company"}</ActionButton>
     </PageActions>
     {showResearch && <CompanyResearch companies={data.companies.filter(company => company.id !== "general")} onCompanyCreated={onCompanyCreated} />}
-    {sections.map(section => {
+    {hasCompanies ? sections.map(section => {
       const uniqueCompanyIds = [...section.companyIds].filter(id => id !== "general" && (companyFilter === "all" || id === companyFilter)).sort((a,b) => Number(b === "sycamore") - Number(a === "sycamore") || (companies.get(a)?.name ?? a).localeCompare(companies.get(b)?.name ?? b));
       return <section className="target-pipeline-section" key={section.id} aria-labelledby={`pipeline-${section.id}`}>
       <header className="target-pipeline-section-heading"><h2 id={`pipeline-${section.id}`}>{section.title}</h2><span>{uniqueCompanyIds.length}</span></header>
@@ -305,7 +307,7 @@ function Pipeline({ data, onOpen, onOpenCompany, onCompanyCreated }: { data: Tar
     })}</div>
     {!uniqueCompanyIds.length && <p className="target-section-empty">{companyFilter === "all" ? section.empty : "No matching companies in this section."}</p>}
     </section>;
-    })}
+    }) : <BrandState kind="empty" title="No companies yet" description="Add a company to organize interview roles and preparation." action={<ActionButton onClick={() => setShowResearch(true)}><Plus />Add company</ActionButton>} />}
     {data.roles.find(role => role.companyId === "general") && <button className="target-general-link" onClick={() => onOpen(data.roles.find(role => role.companyId === "general")!.id)}><BookOpen size={17} /><span><strong>General preparation</strong><small>Shared foundations across every company</small></span><ArrowRight size={14} /></button>}
   </div>;
 }

@@ -1,12 +1,12 @@
 .deems-login-page {
-  --login-bg: #141618;
-  --login-surface: #1d2125;
-  --login-surface-raised: #272c30;
-  --login-line: #343a40;
-  --login-ink: #f5f7f8;
-  --login-muted: #a5adb3;
-  --login-dim: #8b949b;
-  --login-lime: #c7ff69;
+  --login-bg: #101c2b;
+  --login-surface: #182638;
+  --login-surface-raised: #25364a;
+  --login-line: #3c5067;
+  --login-ink: #fff9f2;
+  --login-muted: #b8c4d1;
+  --login-dim: #a0b0c1;
+  --login-lime: #ff7a3d;
   --login-error: #ff817a;
   display: grid;
   min-height: 100svh;
@@ -102,7 +102,7 @@
 
 .deems-login-notice {
   color: var(--login-muted);
-  background: #20241f;
+  background: #203047;
 }
 
 .deems-login-error {
@@ -120,7 +120,7 @@
   display: grid;
   min-width: 0;
   gap: 7px;
-  color: #c3cbc3;
+  color: #d6deea;
   font-size: 11px;
   font-weight: 550;
 }
@@ -134,7 +134,7 @@
   border: 1px solid var(--login-line);
   border-radius: 5px;
   outline: none;
-  background: #141618;
+  background: #101c2b;
   color: var(--login-ink);
   font-family: inherit;
   font-size: 13px;
@@ -148,7 +148,7 @@
 .deems-login-field > input:focus,
 .deems-login-password-wrap > input:focus {
   border-color: var(--login-lime);
-  box-shadow: 0 0 0 3px #c7ff6922;
+  box-shadow: 0 0 0 3px #ff7a3d33;
 }
 
 .deems-login-password-wrap {
@@ -198,7 +198,7 @@
   border: 1px solid var(--login-lime);
   border-radius: 5px;
   background: var(--login-lime);
-  color: #151a12;
+  color: #101c2b;
   cursor: pointer;
   font-size: 12px;
   font-weight: 700;
@@ -249,7 +249,7 @@
 .deems-login-footer {
   margin: 22px -30px 0;
   padding: 13px 18px;
-  border-top: 1px solid #2a312b;
+  border-top: 1px solid #3c5067;
   color: var(--login-dim);
   font-size: 10px;
   text-align: center;
@@ -279,7 +279,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .deems-login-spinner {
-    animation-duration: 1.8s;
+    animation: none;
   }
 
   .deems-login-field > input,
@@ -288,3 +288,7 @@
     transition: none;
   }
 }
+
+.deems-login-brand .deems-brand { justify-content: center; }
+.deems-login-brand { margin-bottom: 24px; }
+.deems-login-card { border-radius: 14px; box-shadow: 0 16px 48px #060e1a33; }

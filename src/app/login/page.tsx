@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { Brain, Eye, EyeOff, LoaderCircle } from "lucide-react";
+import { Eye, EyeOff, LoaderCircle } from "lucide-react";
 import "./login.css";
+import { DeemsBrand } from "@/components/brand";
 import { Registration } from "./registration";
 import { notifyAccountChange } from "@/components/workspace-client";
 
@@ -168,8 +169,7 @@ export default function LoginPage() {
   return <main className="deems-login-page">
     <section className={`deems-login-card${accountForm ? " deems-login-card-registration" : ""}`} aria-labelledby="login-title">
       <header className="deems-login-brand">
-        <span className="deems-login-mark"><Brain size={25} strokeWidth={1.8} aria-hidden="true" /></span>
-        <span className="deems-login-wordmark">Deems</span>
+        <DeemsBrand />
       </header>
 
       {screen === "signup" || screen === "confirm" || screen === "recover" ? <Registration key={screen} initialMode={screen} initialEmail={email} onBack={returnToSignIn} onComplete={(address, message) => { setEmail(address); returnToSignIn(); setNotice(message); }} /> : <>

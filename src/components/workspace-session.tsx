@@ -3,6 +3,8 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { authResponseSchema } from "@/contracts/auth";
 import { setBrowserWorkspace } from "./workspace-client";
+import { BrandState } from "./brand";
+import { Button } from "./ui";
 import "./workspace-session.css";
 
 export function WorkspaceSession({ children }: { children: ReactNode }) {
@@ -25,6 +27,6 @@ export function WorkspaceSession({ children }: { children: ReactNode }) {
     window.addEventListener("pageshow", restored);
     return () => { active = false; channel?.close(); window.removeEventListener("pageshow", restored); };
   }, []);
-  if (!ready) return <main className="workspace-boot"><div role="status">{error ? <>Could not open your workspace. <button type="button" onClick={() => window.location.reload()}>Retry</button></> : "Opening your workspace…"}</div></main>;
+  if (!ready) return <main className="workspace-boot"><BrandState kind={error ? "error" : "loading"} title={error ? "Could not open your workspace" : "Opening your workspace"} description={error ? "Your saved work is unchanged. Check your connection and try again." : "Checking your private workspace…"} action={error ? <Button variant="secondary" onClick={() => window.location.reload()}>Retry</Button> : undefined} /></main>;
   return children;
 }

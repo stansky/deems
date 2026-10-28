@@ -18,6 +18,7 @@ import type { WorkspaceState } from "@/lib/types";
 import type { CommandMeta } from "@/domains/career/contracts";
 import "./study-workspace.css";
 import "./study-night.css";
+import { BrandState } from "@/components/brand";
 
 type Props = {
   state: WorkspaceState;
@@ -365,7 +366,7 @@ export default function StudyWorkspace({ state, tab, setTab, selected, setSelect
       <button type="button" className="sw-back-link" onClick={() => { setOpenCourseId(""); setActiveLessonId(""); }}><ArrowLeft size={16} />All courses</button>
       <div className="sw-course-layout">
         <div className="sw-course-overview">
-          <div className={`sw-course-art sw-theme-${currentCourse.theme}`} style={{ backgroundPosition: illustrationPosition(currentCourse.illustration) }} role="img" aria-label={`${themeLabels[currentCourse.theme]} course illustration`} />
+          <div className={`sw-course-art sw-theme-${currentCourse.theme}`} style={courseArt(currentCourse.illustration)} role="img" aria-label={`${themeLabels[currentCourse.theme]} course illustration`} />
           <div className="sw-course-copy">
             <p className="sw-eyebrow">{themeLabels[currentCourse.theme]} course</p>
             <h1 ref={headingRef} tabIndex={-1}>{currentCourse.title}</h1>
@@ -406,7 +407,7 @@ export default function StudyWorkspace({ state, tab, setTab, selected, setSelect
         const done = course.lessons.filter(lesson => progressByLesson.get(lesson.id)).length;
         const percent = course.lessons.length ? (done / course.lessons.length) * 100 : 0;
         return <article key={course.id} className={`sw-course-tile sw-theme-${course.theme}`}>
-          <div className="sw-tile-art" style={{ backgroundPosition: illustrationPosition(course.illustration) }} role="img" aria-label={`${themeLabels[course.theme]} course illustration`} />
+          <div className="sw-tile-art" style={courseArt(course.illustration)} role="img" aria-label={`${themeLabels[course.theme]} course illustration`} />
           <div className="sw-tile-copy"><span className="sw-tile-topic">{themeLabels[course.theme]}</span><h3>{course.title}</h3><span className="sw-tile-description">{course.description}</span>
             <span className="sw-tile-count">{course.lessons.length} {courseCountLabel(course.lessons.length)}</span>
             <span className="sw-tile-progress" role="progressbar" aria-label={`${course.title} progress`} aria-valuemin={0} aria-valuemax={course.lessons.length} aria-valuenow={done}><span style={{ width: `${percent}%` }} /></span>
@@ -617,7 +618,7 @@ function FlashcardStudy({ state, setTab, dueCount, topic, setTopic, dueOnly, set
     <div className="sw-card-toolbar"><label>Topic<select value={topic} onChange={event => changeTopic(event.target.value)}>{["All topics", ...topics].map(item => <option key={item}>{item}</option>)}</select></label><div className="sw-filter-toggle" role="group" aria-label="Flashcard set"><button type="button" className={dueOnly ? "is-selected" : ""} aria-pressed={dueOnly} onClick={() => changeDueFilter(true)}>Due now</button><button type="button" className={!dueOnly ? "is-selected" : ""} aria-pressed={!dueOnly} onClick={() => changeDueFilter(false)}>All cards</button></div></div>
     {lastReviewedCard && reviews.get(lastReviewedCard) && <p className="sw-review-saved" role="status">Review saved. Next due {new Date(reviews.get(lastReviewedCard)!.dueAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}.</p>}
     {reviewError && <p className="sw-save-error" role="alert">{reviewError}</p>}
-    {card ? <article className="sw-flashcard">
+    {dueOnly && topic === "All topics" && dueCount === 0 && lastReviewedCard && reviews.has(lastReviewedCard) ? <BrandState kind="success" title="Reviews are caught up" description="You reviewed every card that was due. More cards will return when they are ready." compact /> : card ? <article className="sw-flashcard">
       <div className="sw-flashcard-meta"><span>{card.category}</span><span>{cardIndex + 1} of {cards.length} · {card.difficulty}</span></div>
       <h2>{card.question}</h2>
       <label className="sw-recall-field"><span>Your answer <small>(optional)</small></span><textarea value={recallAnswer} onChange={event => setRecallAnswer(event.target.value)} placeholder="A few words or steps, in your own words…" /></label>
@@ -642,8 +643,9 @@ function replaceAt<T>(items: T[], index: number, value: T): T[] {
   return next;
 }
 
-function illustrationPosition(index: number) {
-  return `${index % 2 ? "100%" : "0%"} ${index > 1 ? "100%" : "0%"}`;
+function courseArt(index: number) {
+  const pose = ["presenting", "research", "notes", "coding"][index] ?? "coding";
+  return { backgroundImage: `url("/brand/pose-${pose}.svg")`, backgroundPosition: "center", backgroundSize: "contain" };
 }
 
 function isLessonDraft(value: unknown, courseId: string, lesson: StudyLesson, sectionCount: number): value is LessonDraft {

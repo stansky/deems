@@ -5,7 +5,7 @@ import { notifyAccountChange } from "@/components/workspace-client";
 import { workspaceFetch } from "@/components/workspace-client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Activity as ActivityIcon, ArrowDown, ArrowLeft, ArrowRight, BookOpen, Brain, BriefcaseBusiness, Check, CheckCircle2, ChevronRight, Circle, Clock3, Code2, ExternalLink, FileText, Flag, Layers3, Lightbulb, Loader2, Menu, MessageSquare, MoreHorizontal, Pause, Play, Plus, Printer, RotateCcw, Search, Sparkles, Target, Timer, UserRound, X } from "lucide-react";
+import { Activity as ActivityIcon, ArrowDown, ArrowLeft, ArrowRight, BookOpen, BriefcaseBusiness, Check, CheckCircle2, ChevronRight, Circle, Clock3, Code2, ExternalLink, FileText, Flag, Layers3, Lightbulb, Loader2, Menu, MessageSquare, MoreHorizontal, Pause, Play, Plus, Printer, RotateCcw, Search, Sparkles, Target, Timer, UserRound, X } from "lucide-react";
 import { roles, cheatSheets, flashcards, exercises, stories } from "@/data/prep";
 import type { Application, Exercise, WorkspaceState } from "@/lib/types";
 import { Badge, Button, Empty } from "@/components/ui";
@@ -17,6 +17,7 @@ import { ApplicationDocuments, RoleLibrary } from "@/components/documents";
 import AlgorithmLab from "@/components/algorithm-lab";
 import KnowledgeLibrary from "@/components/knowledge-library";
 import StudyWorkspace from "@/components/features/study/study-workspace";
+import { DeemsBrand, BrandState } from "@/components/brand";
 import "./learning-shell.css";
 import "./desk-navigation.css";
 import PrepLibrary, { type PrepCategory } from "@/components/features/prep/prep-library";
@@ -121,7 +122,7 @@ function InterviewDesk() {
       if (!response.ok) { const problem = await response.json().catch(() => ({})); if(response.status===409 || response.status===428) { const fresh=await workspaceFetch("/api/workspace",{cache:"no-store"}); if(fresh.ok)setState(workspaceStateSchema.parse(await fresh.json())); } throw new Error(problem.error || "Could not save your changes. Please try again."); }
       const next = workspaceStateSchema.parse(await response.json());
       if (next.applications && next.sessions) setState(next); else { const refresh = await workspaceFetch("/api/workspace", { cache: "no-store" }); if (!refresh.ok) throw new Error("Saved, but could not refresh the workspace. Reload to verify."); setState(workspaceStateSchema.parse(await refresh.json())); }
-      setSaved("Saved locally"); return true;
+      setSaved("Saved"); return true;
     } catch (e) { setError(e instanceof Error ? e.message : "Save failed."); return false; }
     finally { setSaving(false); }
   }
@@ -184,14 +185,14 @@ function InterviewDesk() {
 
   return <div className={`app-shell desk-shell ${focused ? "learning-shell" : ""}`}>
     <aside className={`sidebar ${mobileMenu ? "sidebar-open" : ""}`}>
-      <a className="brand" href="#" onClick={e => { e.preventDefault(); navigate("Interviews"); }}><span className="brand-icon"><Brain size={22} strokeWidth={1.65} /></span><span>Deems</span></a>
+      <a className="brand" href="#" onClick={e => { e.preventDefault(); navigate("Interviews"); }}><DeemsBrand /></a>
       <nav aria-label="Main navigation">{navigation.map(({ name, icon: Icon }) => <button key={name} className={`nav-item ${view === name ? "active" : ""}`} onClick={() => navigate(name)} aria-current={view === name ? "page" : undefined}><Icon size={18} /><span>{name}</span>{name === "Applications" && <span className="nav-count">{state.applications.length || roles.length}</span>}</button>)}</nav>
       <div className="sidebar-bottom"><a className="export-link" href="/api/export" download><ArrowDown size={14} />Export workspace</a><div className="profile"><span className="profile-avatar">D</span><div><strong>Your workspace</strong><span>Personal workspace</span></div></div></div>
     </aside>
     {mobileMenu && <button aria-label="Close navigation" className="sidebar-scrim" onClick={() => setMobileMenu(false)} />}
     <div className="main-shell">
       <header className="learning-header desk-header">
-        <button className="learning-brand" onClick={() => navigate("Interviews")}><Brain size={27} strokeWidth={1.8} /><strong>Deems</strong></button>
+        <button className="learning-brand" aria-label="Deems home" onClick={() => navigate("Interviews")}><DeemsBrand /></button>
         <nav className="desk-navigation" aria-label="Workspace sections">
           <button className={view === "Interviews" ? "desk-primary is-active" : "desk-primary"} aria-current={view === "Interviews" ? "page" : undefined} onClick={() => navigate("Interviews")}>Interview Prep</button>
           <details><summary className={view === "Preparation" || view === "Practice" || view === "Algorithms" ? "is-active" : ""}>Prepare<ChevronRight size={13}/></summary><div className="desk-menu">{(["Coding", "System design", "Behavioral", "Management"] as PrepCategory[]).map(category => <button key={category} onClick={event => {closeNavigation(event);openCategory(category);}}>{category === "Management" ? "Management & communication" : category}</button>)}</div></details>
@@ -205,7 +206,7 @@ function InterviewDesk() {
         {view === "Preparation" && <PrepLibrary category={prepCategory} onGuide={openStudy} onPractice={openPractice} onAlgorithms={()=>navigate("Algorithms")} onStories={()=>navigate("Experience")} onStudy={()=>library("Courses")} onReference={()=>navigate("Reference")}/>}
         {view === "Interviews" && <TargetWorkspace workspace={state} onApplication={id => { setSelectedApplication(id); navigate("Applications"); }} onViewAttempt={attempt => openExercise(attempt.exerciseId,attempt.origin,attempt.sessionId)} onResource={(resource, origin) => { if (resource.kind === "guide") openStudy(resource.id); else if (resource.kind === "exercise") { openExercise(resource.id, origin ?? null); } else if (resource.kind === "algorithm") { setSelectedAlgorithm(resource.id); navigate("Algorithms"); } else if (resource.kind === "reference") { setSelectedReference(resource.id); navigate("Reference"); } }} />}
         {view === "Today" && <Today state={state} onPractice={openPractice} onStudy={openStudy} onNavigate={navigate} onApplication={id => { setSelectedApplication(id); navigate("Applications"); }} onReview={() => { setStudyTab("Flashcards"); navigate("Study"); }} />}
-        {view === "Study" && (state === blank ? <p className="learning-loading" role="status">{loading ? "Loading your learning progress…" : "Connect to your workspace to load saved progress."}</p> : <StudyWorkspace state={state} tab={studyTab} setTab={setStudyTab} selected={selectedGuide} setSelected={setSelectedGuide} mutate={mutate} saving={saving} />)}
+        {view === "Study" && (state === blank ? <BrandState kind={loading ? "loading" : "error"} title={loading ? "Loading your learning progress" : "Could not load your progress"} action={!loading ? <Button onClick={load}>Try again</Button> : undefined} /> : <StudyWorkspace state={state} tab={studyTab} setTab={setStudyTab} selected={selectedGuide} setSelected={setSelectedGuide} mutate={mutate} saving={saving} />)}
         {view === "Practice" && <Practice key={selectedExercise} exerciseId={selectedExercise} select={id=>openExercise(id)} state={state} onCommand={practiceCommand} saving={saving} origin={practiceOrigin} onReturn={returnToPlan} selectedAttemptId={selectedAttemptId} />}
         {view === "Algorithms" && <AlgorithmLab initialSelectedId={selectedAlgorithm} state={state} mutate={mutate} saving={saving} />}
         {view === "Reference" && <KnowledgeLibrary initialSelectedId={selectedReference} />}

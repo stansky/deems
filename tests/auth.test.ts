@@ -280,6 +280,8 @@ test("proxy allows static assets without auth configuration", async () => {
     const asset = await proxy(new NextRequest("https://deems.dev/_next/static/chunks/app.js"));
     assert.equal(asset.status, 200);
     assert.equal(asset.headers.get("location"), null);
+    const brand = await proxy(new NextRequest("https://deems.dev/brand/deems-mark.svg"));
+    assert.equal(brand.status, 200);
     const image = await proxy(new NextRequest("https://deems.dev/_next/image?url=%2Flogo.png"));
     assert.equal(image.status, 200);
     assert.equal(image.headers.get("location"), null);

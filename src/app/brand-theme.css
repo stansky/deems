@@ -1,0 +1,184 @@
+:root {
+  --brand-cream: #fff9f2;
+  --brand-ink: #101c2b;
+  --brand-orange: #ff7a3d;
+  --brand-sage: #6b8f7a;
+  --brand-sky: #6ca8ff;
+  --brand-lavender: #c4a5fd;
+  --brand-mint: #a9e9d0;
+  --brand-coral: #ffc8ae;
+  --brand-canvas-dark: #101c2b;
+  --brand-surface-dark: #192638;
+  --brand-line-dark: #405064;
+}
+
+/* Apply the character palette to Deems-owned shells and controls. */
+.desk-shell {
+  --desk-background: var(--brand-canvas-dark);
+  --desk-primary: var(--brand-orange);
+  --desk-foreground: #fff9f2;
+  --color-primary-foreground: var(--brand-ink);
+  --color-ring: var(--brand-sky);
+  background-color: var(--brand-canvas-dark);
+}
+
+.desk-shell .desk-header {
+  background: var(--brand-ink);
+  border-color: #35475a;
+}
+
+.desk-shell .learning-header .learning-brand > svg {
+  color: var(--brand-orange);
+}
+
+.desk-shell .desk-navigation .is-active {
+  color: #ffb491;
+  background: #34261f;
+}
+
+.desk-shell .desk-header :is(button, a, summary):focus-visible,
+.desk-shell :is(button, a, input, textarea, select):focus-visible {
+  outline-color: var(--brand-sky);
+}
+
+.desk-shell :is(.button-primary, [data-slot="button"][data-variant="default"]) {
+  background-color: var(--brand-orange);
+  border-color: var(--brand-orange);
+  color: var(--brand-ink);
+}
+
+.desk-shell :is(.button-primary, [data-slot="button"][data-variant="default"]):hover:not(:disabled) {
+  background-color: #ff9568;
+  border-color: #ff9568;
+}
+
+.desk-shell .save-status.is-visible {
+  border-color: #8b4a2d;
+  background: #35251d;
+  color: #ffb491;
+}
+
+.desk-shell .company-tile,
+.desk-shell .sw-course-tile {
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.desk-shell .company-tile:hover,
+.desk-shell .sw-course-tile:hover {
+  transform: translateY(-2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desk-shell *,
+  .desk-shell *::before,
+  .desk-shell *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+.desk-shell:not(.learning-shell) {
+  color-scheme: light;
+  color: var(--brand-ink);
+  background: var(--brand-cream);
+}
+
+.desk-shell:not(.learning-shell) > .main-shell,
+.desk-shell:not(.learning-shell) .main-content {
+  background-color: var(--brand-cream);
+  color: var(--brand-ink);
+}
+
+.desk-shell:not(.learning-shell) .learning-header {
+  background: var(--brand-cream);
+  color: var(--brand-ink);
+  border-color: #e4d9cd;
+}
+
+.desk-shell:not(.learning-shell) .learning-brand,
+.desk-shell:not(.learning-shell) .desk-navigation :is(button, summary) {
+  color: var(--brand-ink);
+}
+
+.desk-shell:not(.learning-shell) .desk-navigation .is-active {
+  color: #8c3e1d;
+  background: #ffe0ce;
+}
+
+.desk-shell:not(.learning-shell) .desk-menu {
+  border-color: #d7c9bb;
+  background: #fffdfb;
+}
+
+.desk-shell:not(.learning-shell) .desk-menu :is(button, a) {
+  color: var(--brand-ink);
+}
+
+.desk-shell:not(.learning-shell) .desk-menu :is(button, a):hover {
+  color: #8c3e1d;
+  background: #fff0e6;
+}
+
+.desk-shell:not(.learning-shell) :is(input, textarea, select) {
+  border-color: #c9bcae;
+  background-color: #fffdfb;
+  color: var(--brand-ink);
+}
+
+.desk-shell:not(.learning-shell) :is(a, .text-button) {
+  color: #8c3e1d;
+}
+
+.desk-shell:not(.learning-shell) .company-tile:hover {
+  box-shadow: 0 10px 24px #101c2b18;
+}
+
+/* Wordmark variants follow the surface behind them. */
+.learning-shell .deems-brand-wordmark-ink,
+.deems-login-page .deems-brand-wordmark-ink,
+.workspace-boot .deems-brand-wordmark-ink {
+  display: none;
+}
+
+.learning-shell .deems-brand-wordmark-light,
+.deems-login-page .deems-brand-wordmark-light,
+.workspace-boot .deems-brand-wordmark-light {
+  display: block;
+}
+
+.workspace-boot .deems-brand-state,
+.learning-shell .deems-brand-state {
+  border-color: #405064;
+  background: var(--brand-surface-dark);
+  color: var(--brand-cream);
+}
+
+.workspace-boot .deems-brand-state p,
+.learning-shell .deems-brand-state p {
+  color: #c3ced9;
+}
+
+.desk-shell:not(.learning-shell) .deems-brand-state {
+  border-color: #e4d9cd;
+  background: #fffdfb;
+  color: var(--brand-ink);
+}
+
+.desk-shell:not(.learning-shell) .deems-brand-state p {
+  color: #526174;
+}
+
+
+.desk-shell.learning-shell .desk-header {
+  background: var(--brand-ink);
+  border-color: #35475a;
+}
+
+.desk-shell .learning-brand > .deems-brand {
+  display: inline-flex;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}

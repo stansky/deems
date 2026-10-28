@@ -18,7 +18,7 @@ function setupResponse(message: string, status: number) {
 }
 
 function isStaticAssetPath(path: string): boolean {
-  return path.startsWith("/_next/static/") || path === "/_next/image" ||
+  return path.startsWith("/brand/") || path.startsWith("/_next/static/") || path === "/_next/image" ||
     path === "/favicon.ico" || path === "/icon.svg";
 }
 

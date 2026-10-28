@@ -8,7 +8,7 @@
   --color-background: var(--desk-background);
   --color-foreground: var(--desk-foreground);
   --color-primary: var(--desk-primary);
-  --color-primary-foreground: #17200c;
+  --color-primary-foreground: var(--brand-ink);
   --color-secondary: #252c32;
   --color-secondary-foreground: #eef1f3;
   --color-muted-foreground: #aab4bf;
@@ -18,14 +18,14 @@
   --color-popover-foreground: #eef1f3;
   --color-input: #414b55;
   --color-border: #414b55;
-  --color-ring: #c7ff69;
+  --color-ring: var(--brand-sky);
   --color-destructive: #f87171;
 }
 
 .shadcn-theme {
   --desk-background: #141618;
   --desk-foreground: #eef1f3;
-  --desk-primary: #c7ff69;
+  --desk-primary: var(--brand-orange);
   color: var(--desk-foreground);
 }
 [data-slot="select-content"] { border: 1px solid #414b55; }
