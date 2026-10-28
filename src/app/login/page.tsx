@@ -200,10 +200,8 @@ export default function LoginPage() {
         <button className="deems-login-submit" type="submit" disabled={busy}>
           {busy ? <><LoaderCircle size={16} className="deems-login-spinner" aria-hidden="true" /> Signing in</> : "Sign in"}
         </button>
-        {registrationEnabled && <>
-          <button className="deems-login-back" type="button" onClick={() => { setError(""); setScreen("signup"); }} disabled={busy}>Create an account</button>
+        {registrationEnabled && <button className="deems-login-back" type="button" onClick={() => { setError(""); setScreen("signup"); }} disabled={busy}>Create an account</button>}
           <button className="deems-login-back" type="button" onClick={() => { setError(""); setScreen("recover"); }} disabled={busy}>Forgot password?</button>
-        </>}
       </form> : <form className="deems-login-form" onSubmit={submitChallenge}>
         {challenge === "NEW_PASSWORD_REQUIRED" ? <>
           <div className="deems-login-field">
