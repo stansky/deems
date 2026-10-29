@@ -45,6 +45,12 @@
 .deems-login-notice { background: #edf4f1; border-color: #b6d1c6; color: #28564b; }
 .deems-login-error { background: #fff0ec; border-color: #e6b2a1; color: #89341d; }
 .deems-login-footer { color: var(--login-muted); font-size: 12px; line-height: 1.6; text-align: center; }
+.deems-login-credits { position:relative; margin-top:5px; font-size:10px; }
+.deems-login-credits summary { display:inline-block; min-height:24px; padding:4px 8px; color:var(--login-muted); cursor:pointer; text-decoration:underline; text-underline-offset:3px; list-style:none; }
+.deems-login-credits summary::-webkit-details-marker { display:none; }
+.deems-login-credits p { position:absolute; z-index:5; bottom:calc(100% + 8px); left:50%; width:min(340px,calc(100vw - 48px)); margin:0; padding:14px 16px; transform:translateX(-50%); border:1px solid #cdd3d5; border-radius:9px; background:#fffefa; color:#52616d; text-align:left; font-size:11px; line-height:1.7; box-shadow:0 4px 18px #17233112; }
+.deems-login-credits a { color:#253b88; text-decoration:underline; text-underline-offset:3px; }
+.deems-login-credits :is(summary,a):focus-visible { outline:3px solid #6b9b98; outline-offset:3px; }
 .deems-login-art-panel { position: relative; min-width: 0; min-height: 620px; margin: 20px 20px 20px 0; overflow: hidden; border-radius: 24px; background: #1b454b; isolation: isolate; }
 .deems-login-scene-copy { position: relative; padding: clamp(30px, 4vw, 64px); color: #fff9f2; }
 .deems-login-scene-copy p { margin: 0 0 14px; color: #d3e7e1; font-size: 13px; font-weight: 500; letter-spacing: .025em; }

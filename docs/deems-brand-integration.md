@@ -44,15 +44,15 @@ Course buttons open the exact selected course, and the welcome action resumes a 
 
 ## Weather and time scenes
 
-The login artwork has 12 saved variants in `public/brand/scenes/`: dawn, day, dusk and night, each with clear, cloudy/foggy and rainy conditions. The approved daytime illustration is the clear-day anchor; 11 matching variants preserve the room, character and camera. All are 1024 by 1536 WebP images, roughly 115 to 155 KB each. The complete set is about 1.66 MB, but a visit loads only the initial and selected scene.
+The login artwork has 12 saved variants in `public/brand/scenes/`: dawn, day, dusk and night, each with clear, cloudy/foggy and rainy conditions. The approved daytime illustration is the clear-day anchor; 11 matching variants preserve the room, character and camera. All are 1024 by 1536 WebP images, roughly 100 to 146 KB each. The complete set is about 1.51 MB, but a visit loads only the initial and selected scene.
 
 `SceneArt` selects assets with deterministic rules, with no LLM calls. It uses San Francisco weather and Pacific time, regardless of the visitor's location. It never requests browser geolocation. Current weather model data, sunrise and sunset come from [Open-Meteo](https://open-meteo.com/en/docs), via the public, fixed-location, read-only `/api/scene-weather` endpoint. Other account and workspace routes remain gated. The response has shared Zod/TypeScript and OpenAPI contracts.
 
 The upstream fetch is cached for 15 minutes and has a 3.5-second timeout. The client refreshes weather every 15 minutes while visible and checks the clock each minute. Dawn spans 45 minutes before sunrise to 75 minutes after; dusk spans 75 minutes before sunset to 45 minutes after. Cloudy and fog codes share the cloudy scene, and precipitation codes use the rain scene. The visible condition label retains the provider's actual condition, including uncommon snow or thunderstorms. Weather data older than 90 minutes or for a different local day is not used. Without weather, Pacific clock hours select a clear time-of-day illustration and no weather condition is claimed.
 
-Scene changes preload the new image and crossfade briefly. Reduced-motion preferences disable the fade. An image load failure keeps the previous valid image. A small caption identifies San Francisco, the time period and available weather, with an Open-Meteo attribution link. The illustration is representative, not a live camera or exact solar-position simulation.
+Scene changes preload the new image and crossfade briefly. Reduced-motion preferences disable the fade. An image load failure keeps the previous valid image. The artwork changes silently, without a weather or time caption. An expandable Credits section below the form provides Open-Meteo and CC BY 4.0 attribution. The illustration is representative, not a live camera or exact solar-position simulation.
 
-Review a specific variant with `/login?scene=night-rain`, substituting any combination of `dawn`, `day`, `dusk`, `night` and `clear`, `cloudy`, `rain`. Preview labels are explicit and previews do not fetch weather. The default login always selects automatically.
+Review a specific variant with `/login?scene=night-rain`, substituting any combination of `dawn`, `day`, `dusk`, `night` and `clear`, `cloudy`, `rain`. Preview scene IDs and source remain available in data attributes; previews do not fetch weather or display a caption. The default login always selects automatically.
 
 ## Earlier reference lock
 
@@ -92,3 +92,9 @@ The authenticated GreatFrontEnd dashboard was reviewed through Safari MCP on Oct
 The owner supplied updated character, animation and environment sheets and requested a model-generated replacement rather than the rough SVG. These are the primary visual target: rounded balanced body, two natural book-holding arms, twin oval eyes, navy outlines and restrained cream shading. The owner allowed a minimal background and specified Presidio, San Francisco. One muted cypress silhouette, small eucalyptus accents, faint bay-blue wash and pale ground shadow provide context without a room, skyline or detailed landscape.
 
 Generated with the built-in image generation tool using the supplied character and animation sheets as references. No model identifier is claimed because the tool does not expose one. The original transparent PNG is retained in the local generation archive. The served asset is a 512 by 512 WebP with alpha, optimized once; no generation or model calls happen at runtime. The existing dashboard layout, wordmark-only header and login scene remain in place.
+
+## Login character and silent scene revision
+
+The owner requested matching the updated character shape in every login weather/time scene and removing the visible weather badge. Keep the existing approved modest Presidio apartment composition and login form. Regenerate the daytime anchor with a rounded cream torso, two natural keyboard-side arms, twin oval eyes and subtle warm shading from the new character sheets. All other variants must preserve that exact new character and room geometry, changing lighting, sky, fog and rain only. No text is baked into assets. Save all 12 variants locally and select deterministically at runtime.
+
+Remove the image metadata overlay entirely. Current San Francisco weather and Pacific clock continue selecting the image silently, with existing cached fetching and offline fallback. Provider and CC BY 4.0 attribution move to an expandable Credits section below the sign-in form, leaving the art clear. Desktop is the requested visual review target for this revision.

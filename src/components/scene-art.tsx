@@ -3,7 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import "./scene-art.css";
 import { sceneWeatherSchema, type SceneWeather } from "@/contracts/scene-weather";
-import { conditionLabels, hasCurrentWeather, parseSceneId, periodLabels, sceneImage, selectScene, weatherLabel, type SceneId, type ScenePeriod, type SceneCondition } from "@/lib/login-scene";
+import { hasCurrentWeather, parseSceneId, sceneImage, selectScene, type SceneId } from "@/lib/login-scene";
 
 export function SceneArt({ className = "", children }: { className?: string; children?: ReactNode }) {
   const [now, setNow] = useState<Date | null>(null);
@@ -57,14 +57,11 @@ export function SceneArt({ className = "", children }: { className?: string; chi
     return () => window.clearTimeout(timer);
   }, [outgoing, visible]);
 
-  const [period, condition] = visible.split("-") as [ScenePeriod, SceneCondition];
   const currentWeather = now && hasCurrentWeather(weather, now) ? weather : null;
-  const label = preview ? `Preview · ${periodLabels[period]} · ${conditionLabels[condition]}` : `San Francisco · ${periodLabels[period]}${currentWeather ? ` · ${weatherLabel(currentWeather.weatherCode)}` : ""}`;
 
   return <aside className={`scene-art ${className}`} aria-label="An illustrated San Francisco apartment study space" data-scene={visible} data-weather-source={preview ? "preview" : currentWeather ? "open-meteo" : "time-only"}>
     {outgoing && <img className="scene-art-image" src={sceneImage(outgoing)} alt="" aria-hidden="true" width="1024" height="1536" />}
     <img key={visible} className={`scene-art-image${outgoing ? " scene-art-image-enter" : ""}`} src={sceneImage(visible)} alt="" aria-hidden="true" width="1024" height="1536" fetchPriority="high" />
     {children}
-    <div className="scene-art-meta"><span>{label}</span>{!preview && currentWeather && <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer" title={`Weather model valid at ${new Date(currentWeather.validAt).toLocaleTimeString("en-US", { timeZone: "America/Los_Angeles", hour: "numeric", minute: "2-digit" })} Pacific time`}>Weather: Open-Meteo</a>}</div>
   </aside>;
 }

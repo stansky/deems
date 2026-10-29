@@ -233,9 +233,10 @@ export default function LoginPage() {
       </>}
       </div>
 
-      {!accountForm && <footer className="deems-login-footer">
-        <span>{sessionChecked ? "Your workspace is private to your account" : "Checking sign-in session"}</span>
-      </footer>}
+      <footer className="deems-login-footer">
+        {!accountForm && <span>{sessionChecked ? "Your workspace is private to your account" : "Checking sign-in session"}</span>}
+        <details className="deems-login-credits"><summary>Credits</summary><p>Scene weather from <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a>, used under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a> to select illustrations.</p></details>
+      </footer>
     </section>
     <LoginScene />
   </main>;
