@@ -57,7 +57,12 @@
 
 /* Study catalog, lesson, quiz, recall, and feedback. */
 .desk-shell.light-lms.learning-shell { --learn-canvas: #f6f7f9; --learn-panel: #fff; --learn-raised: #f0f3f6; --learn-line: #e0e5eb; --learn-ink: #172331; --learn-muted: #596576; --learn-action: #ff7a3d; --learn-selection: #fff0e8; --sw-ink: #172331; --sw-muted: #596576; --sw-line: #e0e5eb; --sw-soft: #fff; --sw-green: #286348; --sw-green-soft: #e8f4ec; }
-.desk-shell.light-lms.learning-shell .study-workspace { color: #172331 !important; }
+.desk-shell.light-lms.learning-shell .study-workspace { --sw-canvas:#fff8ee; --sw-panel:#fff; --sw-ink:#172331; --sw-muted:#596576; --sw-line:#c7d0da; --sw-focus:#4a87c5; color:#172331!important; }
+.desk-shell.light-lms.learning-shell :is(.sw-lesson-content h1,.sw-guide-article h1,.sw-catalog-toolbar h1,.sw-quiz-heading h1) { color:#172331!important; }
+.desk-shell.light-lms.learning-shell :is(.sw-lesson-topline,.sw-close-lesson,.sw-lesson-name) { color:#52616c!important; }
+.desk-shell.light-lms.learning-shell .sw-lesson-topline { font-size:13px; }
+.desk-shell.light-lms:has(.sw-lesson-screen) .save-status { display:none; }
+.desk-shell.light-lms.learning-shell .sw-lesson-content { padding:28px!important; border:1px solid #c7d0da; }
 .desk-shell.light-lms.learning-shell :is(.sw-review-nudge,.sw-progress-overview,.sw-course-overview,.sw-lesson-path,.sw-quiz-picker,.sw-lesson-content,.sw-flashcard,.sw-caught-up,.sw-guide-list>button,.sw-map-label,.sw-check-summary>span) { border-color: #e0e5eb !important; background: #fff !important; color: #172331 !important; box-shadow: 0 1px 3px #1723310a; }
 .desk-shell.light-lms.learning-shell :is(.sw-review-nudge,.sw-guide-list>button):hover { background: #f7f9fb !important; }
 .desk-shell.light-lms.learning-shell :is(.sw-eyebrow,.sw-tile-count,.sw-tile-footer,.sw-lesson-description,.sw-check-source,.sw-answer-options legend,.sw-completion-copy,.sw-check-summary>span small,.sw-reset-selection,.sw-map-label small,.sw-guide-subtitle,.sw-guide-list>button>span,.sw-guide-sections h2>span,.sw-guide-sources h2,.sw-card-toolbar>label,.sw-flashcard-meta,.sw-recall-field small,.sw-flashcard-actions>span,.sw-caught-up p) { color: #596576 !important; }
@@ -84,6 +89,10 @@
 .desk-shell.light-lms.learning-shell .sw-course-art,.desk-shell.light-lms.learning-shell .sw-tile-art { background-color:transparent !important; }
 
 /* Company and role study details inherit the same calm light surfaces. */
+.desk-shell.light-lms .targets-workspace.company-board { background:transparent!important; color:#172331!important; }
+.desk-shell.light-lms .company-board .target-pipeline-section-heading h2 { color:#172331!important; font-size:20px; }
+.desk-shell.light-lms .company-board .target-pipeline-section-heading>span { color:#596576!important; font-size:13px; }
+.desk-shell.light-lms .company-board [role="combobox"] { background:#fffefa!important; color:#172331!important; border-color:#89929a!important; }
 .desk-shell.light-lms.learning-shell :is(.target-detail-workspace,.company-home) { background:#f6f7f9 !important; color:#172331 !important; }
 .desk-shell.light-lms.learning-shell :is(.company-home-overview,.company-home-section,.target-detail-workspace .target-plan-aside,.target-detail-workspace .target-upcoming,.target-detail-workspace .target-requirement,.target-detail-workspace .target-debrief,.target-detail-workspace .target-interview-record,.target-detail-workspace .target-source-reader,.target-detail-workspace .target-source-index,.target-detail-workspace .target-source-provenance,.target-detail-workspace .target-related,.target-detail-workspace .target-explainer,.target-detail-workspace .target-evidence-context,.target-detail-workspace .target-gap-focus,.target-detail-workspace .target-linked-requirements,.target-detail-workspace .target-requirement-feedback,.target-detail-workspace .target-next-actions,.target-detail-workspace .target-pipeline-notes,.target-detail-workspace .target-pipeline-edit,.target-detail-workspace .target-form,.target-detail-workspace .career-conflict-review) { border-color:#e0e5eb !important; background:#fff !important; color:#172331 !important; }
 .desk-shell.light-lms.learning-shell :is(.company-home-heading h1,.company-home-section h2,.company-careers td,.company-careers button,.company-track-grid strong,.company-activity-copy strong,.target-detail-workspace h1,.target-detail-workspace h2,.target-detail-workspace h3,.target-detail-workspace h4,.target-detail-workspace strong,.target-detail-workspace .target-step-summary strong) { color:#172331 !important; }

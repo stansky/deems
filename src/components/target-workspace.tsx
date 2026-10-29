@@ -51,6 +51,16 @@ function newId() { return Array.from(crypto.getRandomValues(new Uint8Array(16)),
 function localDate() { const date = new Date(); return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`; }
 function localTime(iso: string | null) { if (!iso) return ""; const d = new Date(iso); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}T${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`; }
 function external(url: string) { return /^https?:\/\//.test(url); }
+function targetLocation(companyId?: string, roleId?: string) {
+  const url = new URL(window.location.href);
+  for (const key of ["company", "role", "step", "overview"]) url.searchParams.delete(key);
+  url.searchParams.set("view", "interviews");
+  if (roleId) url.searchParams.set("role", roleId);
+  else if (companyId) url.searchParams.set("company", companyId);
+  else url.searchParams.set("overview", "companies");
+  window.history.replaceState(null, "", url);
+}
+
 function rolePriority(role: TargetRole) { return role.id === "sycamore-products" ? 1 : ({ Primary: 0, Adjacent: 2, Stretch: 3, Explore: 4 })[role.priority]; }
 function LinkedSourceText({body}:{body:string}) {
   const parts=body.split(/(https?:\/\/[^\s<>]+)/g);
@@ -130,14 +140,14 @@ export default function TargetWorkspace({ workspace, onResource, onApplication, 
   const done = role?.steps.filter(step => progress.some(item => item.itemId === step.id && item.status === "done")).length ?? 0;
   const scheduled = data.interviews.filter(item => item.companyId === company?.id && item.status === "scheduled" && item.scheduledAt && new Date(item.scheduledAt).getTime() >= Date.now()).sort((a,b) => a.scheduledAt!.localeCompare(b.scheduledAt!));
   function resourceOpen(resource: TargetResource) { if (resource.kind === "source") { setSourceId(resource.id); setTab(resource.id.startsWith("research-") ? "Research" : "Sources"); } else onResource(resource); }
-  function openRole(id: string) { const target=data!.roles.find(item=>item.id===id); if (target?.companyId === "general") { onGeneralPreparation(); return; } if(target){setCompanyId(target.companyId);setRoleId(target.id);setOverview(false);setTab("Plan");window.scrollTo({top:0,behavior:"instant"});} }
-  if(overview) return <section className="targets-workspace company-board" aria-label="Interview preparation">{error&&<div className="notice notice-error" role="alert">{error}</div>}<Pipeline data={data} onOpen={openRole} onOpenCompany={id => { setCompanyId(id); setRoleId(data.roles.find(item => item.companyId === id)?.id ?? ""); setOverview(false); setTab("Company");window.scrollTo({top:0,behavior:"instant"}); }} onCompanyCreated={async id => { const refreshed = await load(); if (refreshed) { const firstRole = refreshed.roles.find(item => item.companyId === id); setCompanyId(id); setRoleId(firstRole?.id ?? ""); setOverview(false); setTab(firstRole ? "Plan" : "Research"); } }}/></section>;
+  function openRole(id: string) { const target=data!.roles.find(item=>item.id===id); if (target?.companyId === "general") { onGeneralPreparation(); return; } if(target){targetLocation(target.companyId,target.id);setCompanyId(target.companyId);setRoleId(target.id);setOverview(false);setTab("Plan");window.scrollTo({top:0,behavior:"instant"});} }
+  if(overview) return <section className="targets-workspace company-board" aria-label="Career companies">{error&&<div className="notice notice-error" role="alert">{error}</div>}<Pipeline data={data} onOpen={openRole} onOpenCompany={id => { targetLocation(id); setCompanyId(id); setRoleId(data.roles.find(item => item.companyId === id)?.id ?? ""); setOverview(false); setTab("Company");window.scrollTo({top:0,behavior:"instant"}); }} onCompanyCreated={async id => { const refreshed = await load(); if (refreshed) { const firstRole = refreshed.roles.find(item => item.companyId === id); setCompanyId(id); setRoleId(firstRole?.id ?? ""); setOverview(false); setTab(firstRole ? "Plan" : "Research"); } }}/></section>;
   if (tab === "Company" && company) return <section className="targets-workspace company-home">
-    <button className="text-button target-back" onClick={()=>setOverview(true)}>All companies<ChevronRight size={13}/>{company.name}</button>
+    <button className="text-button target-back" onClick={()=>{targetLocation();setOverview(true);}}>All companies<ChevronRight size={13}/>{company.name}</button>
     <CompanyHome company={company} data={data} workspace={workspace} onRole={openRole} onApplication={onApplication} onResearch={()=>setTab("Research")} onGeneralPreparation={onGeneralPreparation} />
   </section>;
   return <section className={`targets-workspace target-detail-workspace ${!role || tab === "Research" ? "target-research-workspace" : ""}`}>
-    <button className="text-button target-back" onClick={()=>setOverview(true)}>All interviews<ChevronRight size={13}/>{company?.name}</button>
+    <button className="text-button target-back" onClick={()=>{targetLocation();setOverview(true);}}>All companies<ChevronRight size={13}/>{company?.name}</button>
     {error && <div className="notice notice-error" role="alert">{error}</div>}
     <nav className="target-company-nav" aria-label="Target company">{data.companies.map(item => <button key={item.id} className={company?.id === item.id ? "selected" : ""} aria-current={company?.id === item.id ? "true" : undefined} onClick={() => { if(item.id === "general") { onGeneralPreparation(); return; } setCompanyId(item.id); setRoleId(data.roles.find(r => r.companyId === item.id)?.id ?? ""); setSourceId(""); setSaved(false); }}><span className="target-company-mark">{item.id === "general" ? <BookOpen size={14} /> : item.name.slice(0,1)}</span>{item.name}</button>)}</nav>
     {company && <><div className="target-company-heading"><CompanyIdentity companyId={company.id} name={company.name} level="h1" /><span className="target-save-status" role="status">{saving ? <><Loader2 size={13} className="spin" />Saving...</> : saved ? <><Check size={13} />Saved</> : null}</span>{external(company.careersUrl) && <a href={company.careersUrl} target="_blank" rel="noreferrer">Careers<ExternalLink size={13}/></a>}</div>
@@ -281,9 +291,9 @@ function Pipeline({ data, onOpen, onOpenCompany, onCompanyCreated }: { data: Tar
   const prospectCompanies = new Set([...prospectRoles.map(role => role.companyId), ...data.companies.filter(company => company.id !== "general" && !data.roles.some(role => role.companyId === company.id)).map(company => company.id)].filter(id => !currentCompanies.has(id)));
   const pastCompanies = new Set([...pastRoles.map(role => role.companyId), ...pastRounds.map(round => round.companyId)].filter(id => !currentCompanies.has(id) && !prospectCompanies.has(id)));
   const sections = [
-    {id:"current",title:"Current interviews",companyIds:currentCompanies,empty:"No active interviews or scheduled rounds."},
+    {id:"current",title:"Active plans",companyIds:currentCompanies,empty:"No active interviews or scheduled rounds."},
     {id:"prospects",title:"Prospects",companyIds:prospectCompanies,empty:"No prospects yet. Add a company to get started."},
-    {id:"past",title:"Past interviews",companyIds:pastCompanies,empty:"Completed rounds and closed applications will appear here."},
+    {id:"past",title:"Archived plans",companyIds:pastCompanies,empty:"Completed rounds and closed applications will appear here."},
   ];
   const hasCompanies = data.companies.some(company => company.id !== "general");
   return <div className="target-pipeline target-pipeline-grid">
@@ -297,7 +307,7 @@ function Pipeline({ data, onOpen, onOpenCompany, onCompanyCreated }: { data: Tar
     {showResearch && <CompanyResearch companies={data.companies.filter(company => company.id !== "general")} onCompanyCreated={onCompanyCreated} />}
     {hasCompanies ? sections.map(section => {
       const uniqueCompanyIds = [...section.companyIds].filter(id => id !== "general" && (companyFilter === "all" || id === companyFilter)).sort((a,b) => Number(b === "sycamore") - Number(a === "sycamore") || (companies.get(a)?.name ?? a).localeCompare(companies.get(b)?.name ?? b));
-      const emptyText = companyFilter === "all" ? section.empty : "No matching companies in this section.";
+      if (!uniqueCompanyIds.length) return null;
       return <section className={`target-pipeline-section${uniqueCompanyIds.length ? "" : " is-empty"}`} key={section.id} aria-labelledby={`pipeline-${section.id}`}>
       <header className="target-pipeline-section-heading"><h2 id={`pipeline-${section.id}`}>{section.title}</h2><span>{uniqueCompanyIds.length}</span></header>
     {uniqueCompanyIds.length > 0 && <div className="target-company-groups" aria-label={section.title}>{uniqueCompanyIds.map(companyId => {
@@ -306,16 +316,16 @@ function Pipeline({ data, onOpen, onOpenCompany, onCompanyCreated }: { data: Tar
       const roles = data.roles.filter(role => role.companyId === companyId);
       const rounds = pastRounds.filter(round => round.companyId === companyId);
       const brand = companyBranding[companyId];
+      const steps = roles.flatMap(role => role.steps);
+      const completed = roles.reduce((sum, role) => sum + role.steps.filter(step => data.progress.some(item => item.roleId === role.id && item.itemId === step.id && item.status === "done")).length, 0);
       return <button className="company-tile" key={companyId} style={companySurface(brand?.accent)} onClick={()=>onOpenCompany(companyId)} aria-label={`Open ${company.name} company details`}>
-        <span className="company-tile-logo">{brand?.logoPath ? <img src={brand.logoPath} alt=""/> : <span>{company.name.slice(0,1)}</span>}</span>
+        <span className="company-tile-logo">{brand?.logoPath ? <><img src={brand.logoPath} alt="" onError={event => { event.currentTarget.hidden = true; event.currentTarget.parentElement?.classList.add("logo-missing"); }}/><span className="company-logo-fallback" aria-hidden="true">{company.name.slice(0,1)}</span></> : <span>{company.name.slice(0,1)}</span>}</span>
         <strong>{company.name}</strong>
-        <span className="company-tile-count">{roles.length ? `${roles.length} ${roles.length === 1 ? "role" : "roles"}` : rounds.length ? `${rounds.length} past rounds` : "Company prospect"}</span>
+        <span className="company-tile-count">{completed > 0 && steps.length ? `${completed}/${steps.length} preparation steps` : roles.length ? `${roles.length} ${roles.length === 1 ? "role" : "roles"}` : rounds.length ? `${rounds.length} past rounds` : "Company prospect"}</span>
       </button>;
     })}</div>}
-    {!uniqueCompanyIds.length && <p className="target-section-empty">{emptyText}</p>}
     </section>;
     }) : <BrandState kind="empty" title="No companies yet" description="Add a company to organize interview roles and preparation." compact />}
-    {data.roles.find(role => role.companyId === "general") && <button className="target-general-link" onClick={() => onOpen(data.roles.find(role => role.companyId === "general")!.id)}><BookOpen size={17} /><span><strong>General preparation</strong></span><ArrowRight size={14} /></button>}
   </div>;
 }
 
@@ -330,9 +340,11 @@ function CompanyHome({company,data,workspace,onRole,onApplication,onResearch,onG
   useEffect(()=>{let cancelled=false;workspaceFetch("/api/company-research",{cache:"no-store"}).then(async r=>r.ok?researchStateSchema.parse(await r.json()):null).then(state=>{if(!cancelled)setProfile(state?.profiles.find(p=>p.companyId===company.id)??null);}).catch(()=>{});return()=>{cancelled=true;};},[company.id]);
   const overview=profile?.overview||brand?.overview||company.summary||company.focus;
   const pitch=profile?.pitch||brand?.pitch;
+  const stepTotal=roles.reduce((sum,role)=>sum+role.steps.length,0);
+  const stepDone=roles.reduce((sum,role)=>sum+role.steps.filter(step=>data.progress.some(item=>item.roleId===role.id&&item.itemId===step.id&&item.status==="done")).length,0);
   return <div className="company-home-content">
     <section className="company-home-overview" aria-label={`${company.name} overview`}>
-      <header className="company-home-heading"><span className="company-home-logo" style={companySurface(brand?.accent)}>{brand?.logoPath?<img src={brand.logoPath} alt=""/>:<strong>{company.name.slice(0,1)}</strong>}</span><div><h1>{company.name}</h1>{overview&&<p>{overview}</p>}</div></header>
+      <header className="company-home-heading"><span className="company-home-logo" style={companySurface(brand?.accent)}>{brand?.logoPath?<><img src={brand.logoPath} alt="" onError={event=>{event.currentTarget.hidden=true;event.currentTarget.parentElement?.classList.add("logo-missing");}}/><strong className="company-logo-fallback" aria-hidden="true">{company.name.slice(0,1)}</strong></>:<strong>{company.name.slice(0,1)}</strong>}</span><div><h1>{company.name}</h1>{stepTotal>0&&<p className="company-step-progress">{stepDone} of {stepTotal} preparation steps complete</p>}{overview&&<p>{overview}</p>}</div></header>
       {pitch&&<div className="company-home-pitch"><h2>Elevator pitch</h2><p>{pitch}</p></div>}
     </section>
     <div className="company-home-grid">
@@ -352,7 +364,7 @@ function CompanyHome({company,data,workspace,onRole,onApplication,onResearch,onG
 function CompanyIdentity({ companyId, name, level = "h2" }: { companyId: string; name: string; level?: "h1" | "h2" | "h3" }) {
   const brand = companyBranding[companyId];
   const Heading = level;
-  return <div className="target-company-identity"><span className="target-company-logo">{brand?.logoPath ? <img src={brand.logoPath} alt="" /> : <span>{name.slice(0, 1)}</span>}</span><Heading>{name}</Heading></div>;
+  return <div className="target-company-identity"><span className="target-company-logo">{brand?.logoPath ? <><img src={brand.logoPath} alt="" onError={event=>{event.currentTarget.hidden=true;event.currentTarget.parentElement?.classList.add("logo-missing");}}/><span className="company-logo-fallback" aria-hidden="true">{name.slice(0,1)}</span></> : <span>{name.slice(0, 1)}</span>}</span><Heading>{name}</Heading></div>;
 }
 
 function CompanySummary({ companyId, summary, focus }: { companyId: string; summary: string; focus: string }) {

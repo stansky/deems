@@ -1,27 +1,40 @@
 "use client";
 
-import { ArrowRight, BookOpenCheck, Check, CheckCircle2, Code2, LockKeyhole, Trophy } from "lucide-react";
+import { ArrowRight, BookOpenCheck, Check, CheckCircle2, Code2, Trophy } from "lucide-react";
+import { readLearningSelection } from "@/contracts/study";
+import { studyCourses } from "@/data/study-courses";
 import type { WorkspaceState } from "@/lib/types";
 import { learningSnapshot } from "@/lib/learning-catalog";
 import "./learning-overview.css";
 
-export function LearningOverview({ state, loading, unavailable, onLearning, onArea }: { state: WorkspaceState; loading: boolean; unavailable: boolean; onLearning: () => void; onArea: (area: string) => void }) {
+type Props = { state: WorkspaceState; loading: boolean; unavailable: boolean; onLearning: () => void; onArea: (area: string) => void; onCourses?: () => void; onReview?: () => void; compact?: boolean };
+
+export function LearningOverview({ state, loading, unavailable, onLearning, onArea, onCourses, onReview, compact = false }: Props) {
   const snapshot = learningSnapshot(state.settings);
-  const earned = snapshot.milestones.filter(item => item.earned).length;
-  return <section className="learning-overview" aria-labelledby="learning-overview-title">
-    <div className="overview-body">
-      <header className="overview-heading"><h1 id="learning-overview-title">Welcome back</h1><button onClick={onLearning} className="overview-learning-link">My learning<ArrowRight size={16} /></button></header>
-      {loading ? <div className="overview-pending" aria-busy="true" aria-label="Loading learning summary"><span /><span /><span /><p>Loading your progress</p></div> : unavailable ? <div className="overview-unavailable"><h2>Your progress is unavailable</h2><p>Reload your learning below to bring it back.</p></div> : <>
-        <dl className="overview-stats">
-          <div><dt><CheckCircle2 size={17} />Modules completed</dt><dd>{snapshot.completedModules}</dd></div>
-          <div><dt><BookOpenCheck size={17} />Courses completed</dt><dd>{snapshot.completedCourses}</dd></div>
-          <div><dt><Code2 size={17} />Practice sessions</dt><dd>{state.sessions.length}</dd></div>
-        </dl>
-        <div className="overview-progress"><div><span>Selected learning</span><strong>{snapshot.selectedModules ? `${snapshot.completedModules} / ${snapshot.selectedModules} modules` : "No course selected"}</strong></div><progress value={snapshot.completedModules} max={snapshot.selectedModules || 1} aria-label={snapshot.selectedModules ? `${snapshot.completedModules} of ${snapshot.selectedModules} selected modules completed` : "No learning selected yet"} />{!snapshot.selectedModules && <p>Start a course below to build your progress.</p>}</div>
-        <div className="overview-skills"><span>{snapshot.skills.length ? "Skills in focus" : "Skills to explore"}</span><div>{snapshot.skills.length ? snapshot.skills.map(skill => <button key={skill.topic} onClick={() => onArea(skill.topic)} title={`${skill.done} of ${skill.total} selected modules completed. Content coverage, not a skill rating.`}>{skill.topic}<span>{skill.done}/{skill.total}</span></button>) : ["Coding", "AI & systems", "Team management"].map(topic => <button key={topic} onClick={() => onArea(topic)}>{topic}<ArrowRight size={12} /></button>)}</div></div>
-        <details className="overview-trophies"><summary><span><Trophy size={18} /><strong>{earned} / {snapshot.milestones.length} trophies</strong></span><span>{earned === snapshot.milestones.length ? "All milestones reached" : `Next: ${snapshot.milestones.find(item => !item.earned)?.title}`}<ArrowRight size={14} /></span></summary><ul>{snapshot.milestones.map(item => <li key={item.id} className={item.earned ? "is-earned" : ""}>{item.earned ? <Check size={17} /> : <LockKeyhole size={16} />}<span><strong>{item.title}{item.earned ? " · Earned" : " · Not earned"}</strong><small>{item.detail}</small></span></li>)}</ul></details>
-      </>}
-    </div>
-    <div className="overview-art"><img src="/brand/presidio-reading.webp" alt="" width={512} height={512} /></div>
+  const earned = snapshot.milestones.filter(item => item.earned);
+  const hasProgress = snapshot.completedModules > 0;
+  const steps = [
+    { label: "Save a course", complete: studyCourses.some(course => readLearningSelection(state.settings, "course", course.id)?.saved), action: onCourses },
+    { label: "Finish a module", complete: snapshot.completedModules > 0 },
+    { label: "Try a review", complete: state.reviews.length > 0, action: onReview },
+  ];
+  if (loading || unavailable) return null;
+  if (compact) return <aside className="overview-compact" aria-label="Learning progress summary">
+    <div className="overview-compact-counts">{snapshot.completedModules > 0 && <div><strong>{snapshot.completedModules}</strong><span>Modules</span></div>}{snapshot.completedCourses > 0 && <div><strong>{snapshot.completedCourses}</strong><span>Courses</span></div>}{state.sessions.length > 0 && <div><strong>{state.sessions.length}</strong><span>Practice</span></div>}</div>
+    {snapshot.skills.length > 0 && <div className="overview-compact-skills"><span>Coverage</span><div>{snapshot.skills.map(skill => <button key={skill.topic} onClick={() => onArea(skill.topic)} title={`${skill.done} of ${skill.total} selected modules completed`}>{skill.topic}<small>{skill.done}/{skill.total}</small></button>)}</div></div>}
+    {earned.length > 0 && <details className="overview-compact-milestones"><summary><Trophy size={15} /><span>{earned.length} earned milestone{earned.length === 1 ? "" : "s"}</span><ArrowRight size={13} /></summary><ul>{earned.map(item => <li key={item.id}><Check size={14} /><span>{item.title}{item.earnedAt ? <small>{new Date(item.earnedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</small> : null}</span></li>)}</ul></details>}
+  </aside>;
+
+  if (!hasProgress) return <section className="learning-overview overview-new" aria-labelledby="learning-overview-title">
+    <div className="overview-new-copy"><p className="overview-kicker">Welcome to Deems</p><h1 id="learning-overview-title">Your next skill starts here</h1><ol aria-label="First steps">{steps.map((step, index) => <li key={step.label} className={step.complete ? "is-done" : ""}>{step.action ? <button type="button" onClick={step.action} aria-label={step.label}>{step.complete ? <Check size={15} /> : index + 1}</button> : <span>{step.complete ? <Check size={15} /> : index + 1}</span>}<strong>{step.label}</strong></li>)}</ol><button className="overview-browse" onClick={onCourses}>Browse courses<ArrowRight size={16} /></button></div>
+    <img className="overview-new-mascot" src="/brand/presidio-reading.webp" alt="" width={512} height={512} />
+  </section>;
+
+  return <section className="learning-overview overview-completed" aria-labelledby="learning-overview-title">
+    <div className="overview-body"><header className="overview-heading"><div><p className="overview-kicker">Your learning</p><h1 id="learning-overview-title">Look how far you’ve come</h1></div><button onClick={onLearning} className="overview-learning-link">My learning<ArrowRight size={16} /></button></header>
+      <dl className="overview-stats"><div><dd>{snapshot.completedModules}</dd><dt><CheckCircle2 size={16} />Modules complete</dt></div>{snapshot.completedCourses > 0 && <div><dd>{snapshot.completedCourses}</dd><dt><BookOpenCheck size={16} />Courses complete</dt></div>}{state.sessions.length > 0 && <div><dd>{state.sessions.length}</dd><dt><Code2 size={16} />Practice sessions</dt></div>}</dl>
+      {snapshot.skills.length > 0 && <div className="overview-skills"><span>Topic coverage</span><div>{snapshot.skills.map(skill => <button key={skill.topic} onClick={() => onArea(skill.topic)} title={`${skill.done} of ${skill.total} selected modules completed. Content coverage, not a skill rating.`}>{skill.topic}<span>{skill.done}/{skill.total}</span></button>)}</div></div>}
+      {earned.length > 0 && <details className="overview-trophies"><summary><span><Trophy size={17} /><strong>{earned.length} milestone{earned.length === 1 ? "" : "s"} earned</strong></span><span>See your progress<ArrowRight size={14} /></span></summary><ul>{earned.map(item => <li key={item.id}><Check size={16} /><span><strong>{item.title}</strong>{item.earnedAt && <small>Earned {new Date(item.earnedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</small>}</span></li>)}</ul></details>}
+    </div><img className="overview-completed-mascot" src="/brand/presidio-reading.webp" alt="" width={512} height={512} />
   </section>;
 }

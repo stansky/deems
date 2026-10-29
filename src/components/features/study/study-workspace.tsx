@@ -343,7 +343,7 @@ export default function StudyWorkspace({ initialRoute, state, tab, setTab, selec
   if (tab === "Guides") {
     const guide = guideList.find(item => item.id === selected) ?? guideList[0];
     return <div className="study-workspace study-workspace-guides">
-      <StudyTabs tab={tab} setTab={setTab} dueCount={dueCount} />
+
       <div className="sw-guide-toolbar">
         <label className="sw-search"><Search size={17} /><input aria-label="Search guides" placeholder="Search guides" value={query} onChange={event => setQuery(event.target.value)} /></label>
         <span>{guideList.length} {guideList.length === 1 ? "guide" : "guides"}</span><button type="button" className="sw-print-button" onClick={() => window.print()}><Printer size={15} />Print guide</button>
@@ -427,13 +427,6 @@ export default function StudyWorkspace({ initialRoute, state, tab, setTab, selec
     onResume={(courseId, lessonId, mode) => { const course = studyCourses.find(item => item.id === courseId); const lesson = course?.lessons.find(item => item.id === lessonId); if (course && lesson) void openLesson(course, lesson, mode === "quiz"); }} />;
 }
 
-function StudyTabs({ tab, setTab, dueCount }: { tab: StudyTab; setTab: (tab: StudyTab) => void; dueCount: number }) {
-  return <nav className="sw-tabs" aria-label="Study formats">
-    {(["My learning", "Courses", "Quizzes", "Guides", "Flashcards"] as const).map(item => <button type="button" key={item} className={tab === item ? "is-selected" : ""} aria-current={tab === item ? "page" : undefined} onClick={() => setTab(item)}>
-      {item === "Courses" ? <BookOpen size={16} /> : item === "Quizzes" ? <ListChecks size={16} /> : item === "Guides" ? <Circle size={15} /> : <Layers3 size={16} />}{item}{item === "Flashcards" && dueCount > 0 && tab !== "Flashcards" ? <span>{dueCount}</span> : null}
-    </button>)}
-  </nav>;
-}
 
 function QuizHub({ courses, progressByLesson, courseId, lessonId, onCourseChange, onLessonChange, onStart, onOpenCourse, dueCount, setTab }: {
   courses: StudyCourse[];
@@ -451,7 +444,7 @@ function QuizHub({ courses, progressByLesson, courseId, lessonId, onCourseChange
   const lesson = course?.lessons.find(item => item.id === lessonId) ?? course?.lessons[0];
   const guide = lesson && cheatSheets.find(item => item.id === lesson.guideId);
   return <div className="study-workspace sw-quiz-hub">
-    <StudyTabs tab="Quizzes" setTab={setTab} dueCount={dueCount} />
+
     <header className="sw-quiz-heading"><div><h1>Quizzes</h1></div></header>
     <section className="sw-quiz-picker" aria-labelledby="sw-quiz-picker-title">
       <div className="sw-quiz-picker-heading"><p className="sw-eyebrow">Choose a concept</p><h2 id="sw-quiz-picker-title">Practice a concept</h2></div>
@@ -484,6 +477,8 @@ function LessonStudy({ course, lesson, draft, setDraft, headingRef, onBack, onSt
   saveError: string;
   saving: boolean;
 }) {
+  const [showWhy, setShowWhy] = useState(false);
+  useEffect(() => { setShowWhy(false); }, [draft.checkIndex, draft.feedback]);
   const guide = cheatSheets.find(item => item.id === lesson.guideId);
   const quizOnly = draft.quizOnly === true;
   useEffect(() => {
@@ -529,10 +524,10 @@ function LessonStudy({ course, lesson, draft, setDraft, headingRef, onBack, onSt
           </label>)}
         </fieldset>
         {draft.feedback === "incorrect" && <div className="sw-feedback sw-feedback-incorrect" role="status"><strong><X size={17} />Not quite. Try another answer, or review the explanation.</strong><div><button type="button" onClick={onRetry}><RotateCcw size={15} />Try again</button><button type="button" onClick={onReveal}>See explanation<ArrowRight size={15} /></button></div></div>}
-        {draft.feedback === "correct" && <div className="sw-feedback sw-feedback-correct" role="status"><strong><CheckCircle2 size={18} />Correct</strong><p>{check.explanation}</p></div>}
+        {draft.feedback === "correct" && <div className="sw-feedback sw-feedback-correct" role="status"><div className="sw-feedback-copy"><strong><CheckCircle2 size={18} />Correct</strong>{showWhy && <p>{check.explanation}</p>}</div><div className="sw-feedback-actions"><button type="button" className="sw-why-button" aria-expanded={showWhy} onClick={() => setShowWhy(value => !value)}>{showWhy ? "Hide why" : "Why?"}</button><button type="button" className="sw-continue-button" onClick={onContinue}>Continue<ArrowRight size={17} /></button></div></div>}
         {draft.feedback === "revealed" && <div className="sw-feedback sw-feedback-revealed" role="status"><strong><BookOpen size={17} />Answer revealed</strong><p>{check.options.find(option => option.id === check.answerId)?.text} {check.explanation}</p></div>}
         <div className="sw-lesson-actions">
-          {draft.feedback === "idle" ? <><button type="button" className="sw-check-button" onClick={onSubmit} disabled={!draft.selectedOptionId}>Check answer<Check size={16} /></button><button type="button" className="sw-reset-selection" onClick={onRetry} disabled={!draft.selectedOptionId}>Reset selection</button></> : draft.feedback === "incorrect" ? null : <button type="button" className="sw-continue-button" onClick={onContinue}>Continue<ArrowRight size={17} /></button>}
+          {draft.feedback === "idle" ? <><button type="button" className="sw-check-button" onClick={onSubmit} disabled={!draft.selectedOptionId}>Check answer<Check size={16} /></button><button type="button" className="sw-reset-selection" onClick={onRetry} disabled={!draft.selectedOptionId}>Reset selection</button></> : draft.feedback === "incorrect" || draft.feedback === "correct" ? null : <button type="button" className="sw-continue-button" onClick={onContinue}>Continue<ArrowRight size={17} /></button>}
         </div>
       </>}
       {checksComplete && <>
@@ -620,7 +615,7 @@ function FlashcardStudy({ state, setTab, dueCount, topic, setTopic, dueOnly, set
   }
 
   return <div className="study-workspace sw-flashcards">
-    <StudyTabs tab="Flashcards" setTab={setTab} dueCount={dueCount} />
+
     <header className="sw-catalog-heading sw-flashcard-heading"><div><h1>Review</h1></div><span className="sw-due-count"><strong>{dueCount}</strong><small>due now</small></span></header>
     <div className="sw-card-toolbar"><label>Topic<select value={topic} onChange={event => changeTopic(event.target.value)}>{["All topics", ...topics].map(item => <option key={item}>{item}</option>)}</select></label><div className="sw-filter-toggle" role="group" aria-label="Flashcard set"><button type="button" className={dueOnly ? "is-selected" : ""} aria-pressed={dueOnly} onClick={() => changeDueFilter(true)}>Due now</button><button type="button" className={!dueOnly ? "is-selected" : ""} aria-pressed={!dueOnly} onClick={() => changeDueFilter(false)}>All cards</button></div></div>
     {lastReviewedCard && reviews.get(lastReviewedCard) && <p className="sw-review-saved" role="status">Review saved. Next due {new Date(reviews.get(lastReviewedCard)!.dueAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}.</p>}

@@ -57,6 +57,7 @@
 .company-tile:hover{transform:translateY(-3px);border-color:#ffffff80}
 .company-tile-logo{display:grid;place-items:center;width:88px;height:88px;margin-bottom:12px;font-size:55px;font-weight:700}
 .company-tile-logo img{width:100%;height:100%;object-fit:contain;color-scheme:light}
+.company-logo-fallback{display:none}.logo-missing .company-logo-fallback{display:block}
 .company-tile-logo img[src$="crunchyroll.png"],.company-home-logo img[src$="crunchyroll.png"]{filter:brightness(0) invert(1)}
 .company-tile strong{font-size:20px;font-weight:650;letter-spacing:-.025em;line-height:1.2}
 .company-tile-count{font-size:12px}
@@ -66,6 +67,7 @@
 .company-home-logo{display:grid;place-items:center;flex:0 0 110px;width:110px;height:110px;padding:16px;border-radius:18px;font-size:44px}
 .company-home-logo img{width:100%;height:100%;object-fit:contain;color-scheme:light}
 .company-home-heading h1{font-size:34px;letter-spacing:-.04em;margin-bottom:10px}
+.company-home-heading .company-step-progress{margin:0 0 7px;color:#f2f5f7;font-size:12px;font-weight:600;line-height:1.45}
 .company-home-heading p,.company-home-pitch p{font-size:14px;line-height:1.75;color:#bdc7d0;max-width:800px}
 .company-home-pitch{border-left:3px solid #ff7a3d;padding:3px 0 3px 18px;margin-bottom:32px}
 .company-home-pitch h2{font-size:12px;color:#ff7a3d;margin-bottom:7px}
@@ -108,3 +110,4 @@
   .company-board .company-tile{padding:14px}
   .company-board .company-tile-logo{width:64px;height:64px;margin-bottom:6px}
 }
+.company-tile-logo img[hidden],.company-home-logo img[hidden],.target-company-logo img[hidden] { display:none!important; }

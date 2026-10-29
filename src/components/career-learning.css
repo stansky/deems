@@ -4,21 +4,24 @@
 .career-learning-heading>button { display:inline-flex; flex:none; gap:8px; align-items:center; min-height:44px; padding:0; background:transparent; color:#253b88; font-size:12px; font-weight:650; }
 .career-learning-description { margin:2px 0 18px; color:#5c6671; font-size:12px; line-height:1.6; }
 .career-track-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:18px; }
-.career-track-card { display:flex; min-width:0; flex-direction:column; align-items:flex-start; min-height:235px; padding:22px; border:1.5px solid #263443; border-radius:10px; text-align:left; transition:transform .15s,box-shadow .15s; }
+.career-track-card { display:flex; min-width:0; aspect-ratio:1; flex-direction:column; align-items:flex-start; min-height:0; padding:18px; border:1.5px solid #263443; border-radius:10px; text-align:left; transition:transform .15s,box-shadow .15s; }
 .career-track-card:hover { transform:translateY(-3px); box-shadow:3px 4px 0 #263443; }
-.career-track-logo { display:grid; flex:none; place-items:center; width:64px; height:64px; margin-bottom:18px; }
+.career-track-logo { position:relative; display:grid; flex:none; place-items:center; width:64px; height:64px; margin-bottom:14px; font-size:42px; font-weight:700; }
 .career-track-logo img { display:block; width:100%; height:100%; object-fit:contain; }
+.career-track-logo img[hidden] { display:none!important; }
+.career-logo-fallback { display:none; }.career-track-logo.logo-missing .career-logo-fallback { display:block; }
 .career-logo-backed { padding:9px; border:1px solid #fff9f2; border-radius:10px; background:#fff9f2; }
 .career-track-card h3 { margin:0; font-size:22px; line-height:1.2; font-weight:720; letter-spacing:-.04em; }
-.career-track-card>p { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; min-height:34px; margin:8px 0 15px; font-size:11px; line-height:1.5; opacity:.85; }
+.career-track-card>p { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; min-height:34px; margin:8px 0 15px; font-size:11px; line-height:1.5; }
 .career-track-footer { display:flex; justify-content:space-between; align-items:center; width:100%; gap:10px; margin-top:auto; font-size:11px; font-weight:600; }
 .career-track-card progress { display:block; appearance:none; width:100%; height:6px; overflow:hidden; margin-top:12px; border:1px solid currentColor; border-radius:10px; background:transparent; accent-color:currentColor; }
 .career-track-card progress::-webkit-progress-bar { background:transparent; }.career-track-card progress::-webkit-progress-value { background:currentColor; }.career-track-card progress::-moz-progress-bar { background:currentColor; }
-.career-learning-state { display:flex; align-items:center; gap:16px; padding:22px; border:1.5px dashed #7c8790; border-radius:10px; background:#fffefa; font-size:12px; line-height:1.6; }
+.career-learning-state { display:flex; align-items:center; gap:16px; padding:12px 0; font-size:12px; line-height:1.6; }
+.career-learning-state>button { display:inline-flex; align-items:center; gap:7px; min-height:36px; padding:0; background:transparent; color:#253b88; font-size:12px; font-weight:650; }
 .career-learning-state>svg { flex:none; }.career-learning-state h3 { margin:0 0 4px; font-size:16px; }.career-learning-state p { color:#5c6671; }.career-learning-state>span { flex:1; }.career-learning-state>button { display:flex; align-items:center; gap:8px; min-height:44px; background:transparent; color:#253b88; font-size:12px; font-weight:650; }
 .career-learning-pending { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; }.career-learning-pending>span { display:block; min-height:150px; border:1px solid #b6bcb7; border-radius:10px; background:#e8eade; }
 .career-resume { display:flex; align-items:center; gap:12px; width:100%; min-height:66px; margin-bottom:16px; padding:14px 18px; border:1.5px solid #263443; border-radius:9px; background:#e4f0e4; color:#172331; text-align:left; }.career-resume>span { flex:1; }.career-resume small { display:block; margin-bottom:5px; font-size:10px; color:#4b5a62; }.career-resume strong { font-size:13px; }
 .career-learning :is(button,a):focus-visible { outline:3px solid #3949d8; outline-offset:4px; }
 @media(max-width:1000px) { .career-track-card { padding:18px; }.career-track-card h3 { font-size:20px; }.career-track-grid { gap:14px; } }
-@media(max-width:700px) { .career-learning { margin-top:24px; }.career-learning-heading h2 { font-size:20px; }.career-learning-heading>button { font-size:10px; gap:5px; }.career-learning-description { font-size:11px; }.career-track-grid,.career-learning-pending { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }.career-track-card { min-height:220px; padding:17px; }.career-track-logo { width:54px; height:54px; margin-bottom:14px; }.career-track-card h3 { font-size:20px; }.career-track-card>p { font-size:10px; }.career-track-footer { font-size:10px; }.career-learning-state { flex-wrap:wrap; padding:18px; gap:12px; }.career-learning-state>span { flex-basis:calc(100% - 50px); }.career-learning-state>button { margin-left:35px; } }
+@media(max-width:700px) { .career-learning { margin-top:24px; }.career-learning-heading h2 { font-size:20px; }.career-learning-heading>button { font-size:10px; gap:5px; }.career-learning-description { font-size:11px; }.career-track-grid,.career-learning-pending { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }.career-track-card { padding:14px; }.career-track-logo { width:54px; height:54px; margin-bottom:14px; }.career-track-card h3 { font-size:20px; }.career-track-card>p { font-size:10px; }.career-track-footer { font-size:10px; }.career-learning-state { flex-wrap:wrap; gap:12px; } }
 @media(prefers-reduced-motion:reduce) { .career-track-card { transition:none; }.career-track-card:hover { transform:none; } }

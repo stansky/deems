@@ -189,6 +189,24 @@
 @media(max-width:850px){.sw-course-layout{grid-template-columns:1fr;gap:27px}.sw-course-overview{display:grid;grid-template-columns:minmax(120px,172px) minmax(0,1fr);gap:20px;align-items:center;margin:0}.sw-course-art{align-self:start;width:min(100%,172px);min-height:0}.sw-course-copy h1{font-size:27px}.sw-course-copy>p:not(.sw-eyebrow):not(.sw-progress-copy){font-size:13px}}
 @media(max-width:620px){.sw-course-overview{grid-template-columns:1fr;gap:16px}.sw-course-art{width:min(100%,172px);min-height:0;justify-self:start}.sw-course-copy h1{font-size:25px}}
 
+/* Answer feedback bar */
+.sw-feedback { display:flex; align-items:center; justify-content:space-between; gap:18px; margin-top:20px; padding:16px 18px; border:1px solid; border-radius:12px; }
+.sw-feedback-correct { border-color:#b5d6bf; background:#e8f4eb; color:#285c38; }
+.sw-feedback-incorrect,.sw-feedback-revealed { border-color:#e2c27a; background:#fbf3df; color:#624b1d; }
+.sw-feedback-copy { min-width:0; }
+.sw-feedback>strong,.sw-feedback-copy>strong { display:flex; align-items:center; gap:8px; font-size:15px; }
+.sw-feedback p { margin:8px 0 0; color:inherit; font-size:13px; line-height:1.6; }
+.sw-feedback-actions { display:flex; flex:none; align-items:center; gap:9px; }
+.sw-feedback-actions .sw-continue-button { min-width:112px; margin:0; background:#e77742; color:#172331; }
+.sw-feedback-actions .sw-continue-button:hover { background:#f29466; }
+.sw-why-button { min-height:44px; padding:0 17px; border:1px solid #b5c9b9; border-radius:999px; background:#f8fcf8; color:#285c38; font-size:13px; font-weight:620; }
+.sw-why-button:hover { background:#fff; }
+.sw-feedback-correct + .sw-lesson-actions,.sw-feedback-incorrect + .sw-lesson-actions { display:none; }
+@media(max-width:620px) {
+  .sw-feedback { align-items:flex-start; flex-direction:column; }
+  .sw-feedback-actions { width:100%; justify-content:flex-end; }
+}
+
 /* Brilliant-inspired course, quiz and progress revision. */
 .study-workspace{font-size:16px}
 .sw-tabs{gap:28px;margin-bottom:34px}

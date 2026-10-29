@@ -9,7 +9,6 @@ import { catalogItems, courseProgress, isInLearning, itemCourses, itemProgress, 
 import { readStudyProgress } from "@/contracts/study";
 import type { WorkspaceState } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { CareerLearning } from "@/components/career-learning";
 import "./learning-library.css";
 
 const courseIcons = { blue: Network, purple: ShieldCheck, green: CheckCircle2, gold: Code2 };
@@ -37,7 +36,7 @@ export function LearningCard({ entry, settings, onOpen, onToggle, saving = false
         <span className="lc-card-metadata">{entry.kind === "path" ? `${entry.item.courseIds.length} courses` : `${progress.total} ${progress.total === 1 ? "module" : "modules"}`}<span>{details.level}</span></span>
         {(saved || progress.done > 0) && <span className="lc-card-progress"><progress value={progress.done} max={progress.total} aria-label={`${item.title}: ${progress.done} of ${progress.total} modules completed`} /><span>{status}</span></span>}
         {saved && next && progress.done < progress.total && <span className="lc-card-next"><strong>Up next</strong>{next.lesson.title}</span>}
-        <span className="lc-card-action">{saved ? progress.done === progress.total ? "Review" : itemStarted(entry, settings) ? "Continue" : "Start" : "Explore"}<ArrowRight size={16} /></span>
+        {saved && <span className="lc-card-action">{progress.done === progress.total ? "Review" : itemStarted(entry, settings) ? "Continue" : "Start"}<ArrowRight size={16} /></span>}
       </span>
     </button>
     {onToggle && <button type="button" className="lc-card-save" disabled={saving} onClick={onToggle} aria-label={`${saved ? "Remove" : "Add"} ${item.title} ${saved ? "from" : "to"} My learning`} aria-pressed={saved}>{saved ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}</button>}
@@ -53,6 +52,7 @@ export function LearningCollection({ entries, settings, onOpenCourse, onOpenPath
   const paired = active.filter(entry => entry.kind === "course").length === 1 && active.filter(entry => entry.kind === "path").length === 1;
   return <div className="lc-learning-collection"><div className={`lc-learning-shelves ${paired ? "lc-learning-shelves-paired" : ""}`}>{(["course", "path"] as const).map(kind => {
     const items = active.filter(entry => entry.kind === kind);
+    if (!items.length && !suggestions) return null;
     const suggested = kind === "course" ? catalogItems.filter(entry => entry.kind === "course" && ["coding-reasoning", "reliable-systems"].includes(entry.item.id) && !isInLearning(entry, settings)).reverse() : catalogItems.filter(entry => entry.kind === "path" && !isInLearning(entry, settings));
     return <section key={kind} className="lc-learning-shelf" aria-label={kind === "course" ? "Active courses" : "Learning paths"}><header><h3>{kind === "course" ? "Active courses" : "Learning paths"}</h3><span>{items.length}</span></header>{items.length ? cards(items) : suggestions && suggested.length ? <><p className="lc-shelf-empty">{kind === "course" ? "No active courses. Start with one of these." : "No path selected. Build a sequence with one of these."}</p>{cards(suggested.slice(0, 2))}</> : <p className="lc-shelf-empty">{completed.some(entry => entry.kind === kind) ? "All selected learning is complete." : "Nothing here yet."}</p>}</section>;
   })}</div>{completed.length > 0 && <details className="lc-completed-learning"><summary><CheckCircle2 size={18} />Completed learning<span>{completed.length}</span><ChevronDown size={16} /></summary>{cards(completed)}</details>}</div>;
@@ -75,21 +75,21 @@ export function LearningLibrary({ mine, state, saving, onSave, onOpenCourse, onO
     const details = entry.kind === "course" ? courseDetails[entry.item.id] : entry.item;
     const progress = itemProgress(entry, state.settings);
     const started = itemStarted(entry, state.settings);
-    const matchesStatus = status === "All learning" || (status === "Completed" ? progress.done === progress.total : status === "In progress" ? progress.done < progress.total && started : !started);
+    const matchesStatus = status === "All learning" || (status === "Completed" ? progress.done === progress.total : status === "In progress" ? progress.done < progress.total && started : progress.done === 0 && !started);
     return (kind === "All types" || entry.kind === kind) && (topic === "All topics" || details.topic === topic) && matchesStatus && `${entry.item.title} ${entry.item.description} ${details.topic}`.toLowerCase().includes(query.trim().toLowerCase());
   });
   function clearFilters() { setQuery(""); setKind("All types"); setTopic("All topics"); setStatus("All learning"); }
   return <div className="learning-library">
-    <header className="lc-page-heading"><h1 ref={headingRef} tabIndex={-1}>{mine ? "My learning" : "Browse"}</h1><Button className="lc-action lc-action-outline" variant="learning-outline" onClick={mine ? onBrowse : onReview}>{mine ? "Browse learning" : "Spaced review"}<ArrowRight size={16} /></Button></header>
-    {next && <NextLearningStep {...next} settings={state.settings} onOpen={() => onResume(next.course.id, next.lesson.id, next.mode)} />}
+    <header className="lc-page-heading"><h1 ref={headingRef} tabIndex={-1}>{mine ? "My learning" : "Browse"}</h1>{mine && source.length > 0 && <Button className="lc-action lc-action-outline" variant="learning-outline" onClick={onBrowse}>Browse learning<ArrowRight size={16} /></Button>}</header>
+    {next && status !== "Completed" && status !== "Saved" && <NextLearningStep {...next} settings={state.settings} onOpen={() => onResume(next.course.id, next.lesson.id, next.mode)} />}
     {source.length > 0 && <div className="lc-toolbar">
       <label className="lc-search"><Search size={18} /><input aria-label={mine ? "Search My learning" : "Search learning catalog"} value={query} onChange={event => setQuery(event.target.value)} placeholder={mine ? "Search your learning" : "Find a course or path"} /></label>
       <label className="lc-select"><span>Type</span><select aria-label="Filter learning type" value={kind} onChange={event => setKind(event.target.value)}><option>All types</option><option value="path">Learning paths</option><option value="course">Courses</option></select></label>
-      <label className="lc-select"><span>{mine ? "Status" : "Topic"}</span>{mine ? <select aria-label="Filter learning status" value={status} onChange={event => setStatus(event.target.value)}>{["All learning", "Saved", "In progress", "Completed"].map(value => <option key={value}>{value}</option>)}</select> : <select aria-label="Filter learning topic" value={topic} onChange={event => setTopic(event.target.value)}><option>All topics</option>{learningTopics.map(value => <option key={value}>{value}</option>)}</select>}</label>
+      {!mine && <label className="lc-select"><span>Topic</span><select aria-label="Filter learning topic" value={topic} onChange={event => setTopic(event.target.value)}><option>All topics</option>{learningTopics.map(value => <option key={value}>{value}</option>)}</select></label>}
     </div>}
+    {mine && source.length > 0 && <div className="lc-status-tabs" role="group" aria-label="Filter My learning by status">{["All learning", "In progress", "Saved", "Completed"].map(value => <button type="button" key={value} className={status === value ? "is-selected" : ""} aria-pressed={status === value} onClick={() => setStatus(value)}>{value}</button>)}</div>}
     {source.length > 0 && <p className="lc-result-count" role="status">{entries.length} {entries.length === 1 ? "result" : "results"}</p>}
-    {mine && !query.trim() && kind === "All types" && status === "All learning" ? <LearningCollection entries={entries} settings={state.settings} saving={saving} onSave={onSave} onOpenCourse={onOpenCourse} onOpenPath={onOpenPath} /> : entries.length ? <div className="lc-card-grid">{entries.map(entry => <LearningCard key={`${entry.kind}-${entry.item.id}`} entry={entry} settings={state.settings} saving={saving} onOpen={() => entry.kind === "course" ? onOpenCourse(entry.item.id) : onOpenPath(entry.item.id)} onToggle={() => void onSave(entry.kind, entry.item.id, !isInLearning(entry, state.settings))} />)}</div> : <div className="lc-empty"><span className="lc-empty-icon"><Search size={26} /></span><div><h2>No matches</h2><p>Try another search or clear your filters.</p></div><Button variant="learning-outline" className="lc-action lc-action-outline" onClick={clearFilters}>Clear filters<ArrowRight size={16} /></Button></div>}
-    {mine && <CareerLearning onOpen={onCareer} />}
+    {mine && source.length === 0 ? <div className="lc-empty"><span className="lc-empty-icon"><BookOpen size={26} /></span><div><h2>Your learning starts here</h2><p>Save a course or path from Browse to keep it in this space.</p></div><Button variant="learning" className="lc-action" onClick={onBrowse}>Browse learning<ArrowRight size={16} /></Button></div> : mine && !query.trim() && kind === "All types" && status === "All learning" ? <LearningCollection entries={entries} settings={state.settings} saving={saving} onSave={onSave} onOpenCourse={onOpenCourse} onOpenPath={onOpenPath} suggestions={false} /> : entries.length ? <div className="lc-card-grid">{entries.map(entry => <LearningCard key={`${entry.kind}-${entry.item.id}`} entry={entry} settings={state.settings} saving={saving} onOpen={() => entry.kind === "course" ? onOpenCourse(entry.item.id) : onOpenPath(entry.item.id)} onToggle={() => void onSave(entry.kind, entry.item.id, !isInLearning(entry, state.settings))} />)}</div> : <div className="lc-empty"><span className="lc-empty-icon"><Search size={26} /></span><div><h2>No matches</h2><p>Try another search or clear your filters.</p></div><Button variant="learning-outline" className="lc-action lc-action-outline" onClick={clearFilters}>Clear filters<ArrowRight size={16} /></Button></div>}
   </div>;
 }
 

@@ -46,13 +46,24 @@ export function learningSelection(settings: Record<string, string>, kind: Learni
 
 export function learningSnapshot(settings: Record<string, string>) {
   const courses = studyCourses.map(course => ({ course, done: courseProgress(course, settings) }));
-  const selected = courses.filter(({ course, done }) => done > 0 || isInLearning({ kind: "course", item: course }, settings));
+  const selected = courses.filter(({ course, done }) => done > 0 || isInLearning({ kind: "course", item: course }, settings) || studyPaths.some(path => path.courseIds.includes(course.id) && readLearningSelection(settings, "path", path.id)?.saved));
   const completedModules = courses.reduce((sum, item) => sum + item.done, 0);
   const completedCourses = courses.filter(({ course, done }) => done === course.lessons.length).length;
   const completedPaths = studyPaths.filter(path => {
     const progress = itemProgress({ kind: "path", item: path }, settings);
     return progress.done === progress.total;
   }).length;
+  const completedLessons = courses.flatMap(({ course }) => course.lessons.flatMap(lesson => {
+    const progress = readStudyProgress(settings, lesson.id);
+    return progress?.courseId === course.id ? [{ course, lesson, completedAt: progress.completedAt }] : [];
+  }));
+  const firstCompletion = (predicate: (item: typeof completedLessons[number]) => boolean) => completedLessons.filter(predicate).sort((a, b) => Date.parse(a.completedAt) - Date.parse(b.completedAt))[0]?.completedAt;
+  const earliestCompletionAcross = (groups: StudyCourse[][]) => {
+    const completionDates = groups.map(group => Math.max(...group.flatMap(course => course.lessons.map(lesson => Date.parse(readStudyProgress(settings, lesson.id)?.completedAt ?? "") || 0)))).filter(value => value > 0);
+    return completionDates.length ? new Date(Math.min(...completionDates)).toISOString() : undefined;
+  };
+  const completedCourseGroups = studyCourses.filter(course => courseProgress(course, settings) === course.lessons.length).map(course => [course]);
+  const completedPathGroups = studyPaths.filter(path => itemProgress({ kind: "path", item: path }, settings).done === itemProgress({ kind: "path", item: path }, settings).total).map(path => itemCourses({ kind: "path", item: path }));
   return {
     completedModules, completedCourses, completedPaths,
     selectedModules: selected.reduce((sum, item) => sum + item.course.lessons.length, 0),
@@ -61,15 +72,18 @@ export function learningSnapshot(settings: Record<string, string>) {
       return { topic, done: related.reduce((sum, item) => sum + item.done, 0), total: related.reduce((sum, item) => sum + item.course.lessons.length, 0) };
     }),
     milestones: [
-      { id: "first-module", title: "First module", detail: "Complete one module’s knowledge checks.", earned: completedModules > 0 },
-      { id: "first-course", title: "First course", detail: "Complete every module in one course.", earned: completedCourses > 0 },
-      { id: "first-path", title: "First path", detail: "Complete every module in one learning path.", earned: completedPaths > 0 },
+      { id: "first-module", title: "First module", detail: "Complete one module’s knowledge checks.", earned: completedModules > 0, earnedAt: firstCompletion(() => true) },
+      { id: "first-course", title: "First course", detail: "Complete every module in one course.", earned: completedCourses > 0, earnedAt: earliestCompletionAcross(completedCourseGroups) },
+      { id: "first-path", title: "First path", detail: "Complete every module in one learning path.", earned: completedPaths > 0, earnedAt: earliestCompletionAcross(completedPathGroups) },
     ],
   };
 }
 
 export function nextLearning(settings: Record<string, string>) {
-  const entry = myLearning(settings).find(entry => entry.kind === "course" && courseProgress(entry.item, settings) < entry.item.lessons.length);
-  if (!entry || entry.kind !== "course") return null;
-  return { course: entry.item, ...nextCourseLesson(entry.item, settings), started: itemStarted(entry, settings) };
+  const mine = myLearning(settings);
+  const entry = mine.find(entry => entry.kind === "course" && courseProgress(entry.item, settings) < entry.item.lessons.length);
+  if (entry?.kind === "course") return { course: entry.item, ...nextCourseLesson(entry.item, settings), started: itemStarted(entry, settings) };
+  const path = mine.find(entry => entry.kind === "path" && itemProgress(entry, settings).done < itemProgress(entry, settings).total);
+  const course = path?.kind === "path" ? nextPathCourse(path.item, settings) : undefined;
+  return course ? { course, ...nextCourseLesson(course, settings), started: itemStarted({ kind: "course", item: course }, settings) } : null;
 }
