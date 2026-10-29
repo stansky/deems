@@ -22,6 +22,6 @@ export function LearningOverview({ state, loading, unavailable, onLearning, onAr
         <details className="overview-trophies"><summary><span><Trophy size={18} /><strong>{earned} / {snapshot.milestones.length} trophies</strong></span><span>{earned === snapshot.milestones.length ? "All milestones reached" : `Next: ${snapshot.milestones.find(item => !item.earned)?.title}`}<ArrowRight size={14} /></span></summary><ul>{snapshot.milestones.map(item => <li key={item.id} className={item.earned ? "is-earned" : ""}>{item.earned ? <Check size={17} /> : <LockKeyhole size={16} />}<span><strong>{item.title}{item.earned ? " · Earned" : " · Not earned"}</strong><small>{item.detail}</small></span></li>)}</ul></details>
       </>}
     </div>
-    <div className="overview-art"><img src="/brand/pose-reading.svg" alt="" width={250} height={210} /></div>
+    <div className="overview-art"><img src="/brand/presidio-reading.webp" alt="" width={512} height={512} /></div>
   </section>;
 }
