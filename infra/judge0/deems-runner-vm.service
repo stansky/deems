@@ -1,0 +1,25 @@
+[Unit]
+Description=Isolated Deems Judge0 VM
+After=network-online.target docker.service
+Wants=network-online.target
+[Service]
+User=deems-runner
+Group=deems-runner
+SupplementaryGroups=kvm
+ExecStart=/usr/bin/qemu-system-x86_64 -enable-kvm -machine q35 -cpu host -smp 2 -m 2048 -drive file=/srv/deems-runner-vm/disk.qcow2,if=virtio,format=qcow2 -drive file=/srv/deems-runner-vm/seed.iso,format=raw,media=cdrom,readonly=on -netdev user,id=net0,restrict=on,hostfwd=tcp:127.0.0.1:2229-:22,hostfwd=tcp:127.0.0.1:2359-:2358 -device virtio-net-pci,netdev=net0 -qmp unix:/srv/deems-runner-vm/qmp.sock,server=on,wait=off -display none -serial file:/srv/deems-runner-vm/console.log -monitor none -sandbox on,obsolete=deny,elevateprivileges=deny,spawn=deny,resourcecontrol=deny
+ExecStop=/usr/bin/python3 /srv/deems-runner-vm/shutdown_vm.py
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=35
+KillSignal=SIGTERM
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/srv/deems-runner-vm
+DevicePolicy=closed
+DeviceAllow=/dev/kvm rw
+MemoryMax=2800M
+CPUQuota=200%
+[Install]
+WantedBy=multi-user.target

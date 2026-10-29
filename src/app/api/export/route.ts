@@ -15,7 +15,7 @@ export async function GET() {
       research[table]=(await pool.query(`SELECT * FROM ${table}`)).rows;
     }
     const practice:Record<string,unknown[]>={};
-    for (const table of ["practice_attempts","practice_evidence_revisions","practice_command_receipts"]) practice[table]=(await pool.query(`SELECT * FROM ${table}`)).rows;
-    return Response.json({exportedAt:new Date().toISOString(),version:7,workspace,targets:await getTargets(),career,research,practice,algorithms:await db.select().from(algorithmBank),knowledge:await db.select().from(knowledgeBank),coaching:await db.select().from(coaching)},{headers:{"Content-Disposition":"attachment; filename=deems-export.json","Cache-Control":"no-store"}});
+    for (const table of ["practice_attempts","practice_evidence_revisions","practice_command_receipts","coding_attempts"]) practice[table]=(await pool.query(`SELECT * FROM ${table}`)).rows;
+    return Response.json({exportedAt:new Date().toISOString(),version:8,workspace,targets:await getTargets(),career,research,practice,algorithms:await db.select().from(algorithmBank),knowledge:await db.select().from(knowledgeBank),coaching:await db.select().from(coaching)},{headers:{"Content-Disposition":"attachment; filename=deems-export.json","Cache-Control":"no-store"}});
   } catch { return Response.json({error:"Export unavailable"},{status:503}); }
 }

@@ -4,6 +4,7 @@ import { ArrowRight, BookOpenCheck, Code2, Layers3, ListChecks, MessageSquare, N
 import type { WorkspaceState } from "@/lib/types";
 import { flashcards } from "@/data/prep";
 import { studyCourses } from "@/data/study-courses";
+import { runnableQuestionIds } from "@/data/coding-problems";
 import type { StudyTab } from "@/contracts/study";
 import type { PrepCategory } from "./features/prep/prep-library";
 import "./practice-hub.css";
@@ -15,7 +16,7 @@ export function PracticeHub({ state, loading, unavailable, onLibrary, onCategory
   const checks = studyCourses.reduce((sum, course) => sum + course.lessons.reduce((count, lesson) => count + lesson.checks.length, 0), 0);
   const items = [
     { title: "Coding exercises", copy: "Write, debug and explain a working approach.", icon: Code2, label: "Practical coding", action: () => onExercise("Live coding") },
-    { title: "Coding problems", copy: "Work through patterns with language solutions and hints.", icon: Layers3, label: "Algorithms", action: onAlgorithms },
+    { title: "Coding problems", copy: "Run JavaScript and Python solutions against fixed tests.", icon: Layers3, label: `${runnableQuestionIds.length} runnable`, action: onAlgorithms },
     { title: "System design", copy: "Reason about architecture, APIs and failure recovery.", icon: Network, label: "Design practice", action: () => onCategory("System design") },
     { title: "Knowledge checks", copy: "Check your understanding, then explore why an answer works.", icon: ListChecks, label: `${checks} questions`, action: () => onLibrary("Quizzes") },
     { title: "Team management", copy: "Practice feedback, delegation and difficult tradeoffs.", icon: Users, label: "People skills", action: () => onCategory("Management") },

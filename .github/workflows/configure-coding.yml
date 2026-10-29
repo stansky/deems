@@ -20,7 +20,6 @@ jobs:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       DEEMS_JUDGE0_URL: ${{ vars.DEEMS_JUDGE0_URL }}
       DEEMS_JUDGE0_TOKEN: ${{ secrets.DEEMS_JUDGE0_TOKEN }}
-      DEEMS_BACKUP_PUBLIC_KEY: ${{ vars.DEEMS_BACKUP_PUBLIC_KEY }}
     steps:
       - uses: actions/setup-node@v4
         with:
@@ -42,26 +41,6 @@ jobs:
             if (!response.ok) throw new Error(`Could not configure ${key}: HTTP ${response.status}`);
             console.log(`Configured ${key}. Value withheld.`);
           }
-          if (env.DEEMS_BACKUP_PUBLIC_KEY) {
-            const response = await fetch(`https://api.vercel.com/v10/projects/${env.VERCEL_PROJECT_ID}/env?decrypt=true&teamId=${env.VERCEL_ORG_ID}`, {headers:{Authorization:`Bearer ${env.VERCEL_TOKEN}`}});
-            if (!response.ok) throw new Error(`Could not read the database connection: HTTP ${response.status}`);
-            const data = await response.json();
-            let database;
-            for (const name of ['DATABASE_URL','DATABASE_URL_UNPOOLED','POSTGRES_URL_NON_POOLING','POSTGRES_URL']) {
-              const record = data.envs.find(item=>item.key===name && item.target.includes('production'));
-              if (!record) continue;
-              const decrypted = await fetch(`https://api.vercel.com/v1/projects/${env.VERCEL_PROJECT_ID}/env/${record.id}?teamId=${env.VERCEL_ORG_ID}`, {headers:{Authorization:`Bearer ${env.VERCEL_TOKEN}`}});
-              if (!decrypted.ok) continue;
-              const candidate = await decrypted.json();
-              if (candidate.value?.startsWith('postgres')) { database=candidate; break; }
-            }
-            if (!database) throw new Error('No exportable database connection found. Runner variables were configured.');
-            const crypto = await import('node:crypto');
-            const key = crypto.randomBytes(32), iv = crypto.randomBytes(12);
-            const cipher = crypto.createCipheriv('aes-256-gcm',key,iv);
-            const encrypted = Buffer.concat([cipher.update(database.value,'utf8'),cipher.final()]);
-            const wrapped = crypto.publicEncrypt({key:env.DEEMS_BACKUP_PUBLIC_KEY,oaepHash:'sha256'},key);
-            console.log('ENCRYPTED_DATABASE_BACKUP='+JSON.stringify({key:wrapped.toString('base64'),iv:iv.toString('base64'),tag:cipher.getAuthTag().toString('base64'),data:encrypted.toString('base64')}));
-          }
+
           }
           main().catch(error=>{console.error(error.message);process.exitCode=1;});

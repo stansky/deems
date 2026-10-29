@@ -1,0 +1,60 @@
+name: deems-runner
+x-judge: &judge
+  image: deems-judge0:20261029
+  restart: unless-stopped
+  privileged: true
+  volumes:
+    - ./judge0.conf:/judge0.conf:ro
+  depends_on:
+    db: { condition: service_healthy }
+    redis: { condition: service_healthy }
+  # The upstream startup script prints its environment. Do not retain those logs.
+  logging: { driver: none }
+services:
+  server:
+    <<: *judge
+    mem_limit: 384m
+    networks: [backend, edge]
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c '. /judge0.conf; curl -fsS -H \"X-Auth-Token:$$AUTHN_TOKEN\" http://127.0.0.1:2358/languages >/dev/null'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+  worker:
+    <<: *judge
+    command: ["./scripts/workers"]
+    mem_limit: 768m
+    networks: [backend]
+  db:
+    image: postgres:16-alpine@sha256:0cefaabd882e42bcb2a2f3dc56d3ce4770560ba62fd7f197f1a2e008fd5731ab
+    restart: unless-stopped
+    env_file: judge0.conf
+    mem_limit: 256m
+    networks: [backend]
+    volumes: ["runner-data:/var/lib/postgresql/data"]
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U judge0 -d judge0"], interval: 5s, timeout: 3s, retries: 30 }
+  redis:
+    image: redis:7-alpine@sha256:6ba19c50b56777f5c11c58eff8ddb69d0d5f27ba131cffb63f180ccfd43c66af
+    restart: unless-stopped
+    env_file: judge0.conf
+    command: ["sh", "-c", "exec redis-server --appendonly no --requirepass \"$$REDIS_PASSWORD\""]
+    mem_limit: 64m
+    networks: [backend]
+    healthcheck: { test: ["CMD-SHELL", "REDISCLI_AUTH=\"$$REDIS_PASSWORD\" redis-cli ping | head -c4 | grep -q PONG"], interval: 5s, timeout: 3s, retries: 30 }
+  proxy:
+    image: caddy:2-alpine@sha256:eb4d35b7452d1ab6171fbdbe8d9275b2301dad6dad92115d91e19fb9b24d510f
+    restart: unless-stopped
+    mem_limit: 64m
+    environment:
+      DEEMS_RUNNER_HOST: ${DEEMS_RUNNER_HOST:?Set the runner hostname}
+    ports: ["80:80", "443:443"]
+    networks: [edge]
+    volumes: ["./Caddyfile:/etc/caddy/Caddyfile:ro", "tls-data:/data", "tls-config:/config"]
+networks:
+  backend: { internal: true }
+  edge: {}
+volumes:
+  runner-data: {}
+  tls-data: {}
+  tls-config: {}

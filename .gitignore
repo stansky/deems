@@ -20,6 +20,7 @@ interview-desk-handoff.zip
 docs/*
 !docs/deployment.md
 !docs/practice-evidence.md
+!docs/coding-practice.md
 !docs/lms-dashboard-implementation-plan.md
 !docs/vendor/
 

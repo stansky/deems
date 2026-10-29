@@ -23,6 +23,8 @@ services:
       DATABASE_URL: postgres://interview:interview_local@db:5432/interview
       DATA_DIR: /app/private
       DEEMS_OPENAI_MODEL: ${DEEMS_OPENAI_MODEL:-gpt-6-luna}
+      DEEMS_JUDGE0_URL: ${DEEMS_JUDGE0_URL:-}
+      DEEMS_JUDGE0_TOKEN: ${DEEMS_JUDGE0_TOKEN:-}
     secrets:
       - deems_openai_key
       - deems_typesafe_key

@@ -1,0 +1,19 @@
+{$DEEMS_RUNNER_HOST} {
+  header {
+    X-Robots-Tag "noindex, nofollow, noarchive, noai, noimageai"
+    Cache-Control "no-store"
+  }
+  request_body {
+    max_size 160KB
+  }
+  @api {
+    method GET POST
+    path /languages /submissions /submissions/*
+  }
+  handle @api {
+    reverse_proxy server:2358
+  }
+  handle {
+    respond 404
+  }
+}

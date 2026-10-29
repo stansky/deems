@@ -1,0 +1,6 @@
+[Unit]
+Description=Expire finished Deems runner submissions
+After=docker.service
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/docker exec deems-runner-db-1 psql -U judge0 -d judge0 -v ON_ERROR_STOP=1 -c "DELETE FROM submissions WHERE finished_at < now() - interval '24 hours';"

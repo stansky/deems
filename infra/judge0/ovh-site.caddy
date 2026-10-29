@@ -1,0 +1,19 @@
+runner-deems.15.204.95.42.sslip.io {
+  header {
+    X-Robots-Tag "noindex, nofollow, noarchive, noai, noimageai"
+    Cache-Control "no-store"
+  }
+  request_body {
+    max_size 160KB
+  }
+  @api {
+    method GET POST
+    path /languages /submissions /submissions/*
+  }
+  handle @api {
+    reverse_proxy 127.0.0.1:2359
+  }
+  handle {
+    respond 404
+  }
+}

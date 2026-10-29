@@ -1,5 +1,6 @@
 import { authLoginSchema, authChallengeInputSchema, authResponseSchema, authRegistrationSchema, authRegistrationResponseSchema } from "@/contracts/auth";
 import { practiceAttemptSchema, practiceCommandSchema, practiceResponseSchema } from "@/contracts/practice";
+import { codingAttemptSchema, codingHistorySchema, codingRequestSchema, codingResponseSchema, codingProblemSchema } from "@/contracts/coding";
 import { z } from "zod";
 import { personalPrepResponseSchema } from "@/contracts/personal-prep";
 import { studyProgressSchema, learningSelectionSchema } from "@/contracts/study";
@@ -49,10 +50,18 @@ const exportResponseSchema = z.object({
   coaching: z.array(z.object({ id: z.string(), questionId: z.string(), language: z.string(), mode: z.string(), message: z.string(), model: z.string(), answer: z.unknown(), context: z.unknown(), createdAt: z.string() })),
 });
 
-function jsonSchema(schema: z.ZodType): Record<string, unknown> {
+function jsonSchema(schema: z.ZodType, name?: string): Record<string, unknown> {
   const converted = z.toJSONSchema(schema, { target: "draft-2020-12", io: "input", unrepresentable: "throw" }) as Record<string, unknown>;
   const { $schema: _schema, ...openApiSchema } = converted;
-  return openApiSchema;
+  // Zod's recursive JSON values use schema-local definitions. Components are
+  // nested inside OpenAPI, so their pointers must include the component path.
+  if (!name) return openApiSchema;
+  const relocate = (value: unknown): unknown => {
+    if (Array.isArray(value)) return value.map(relocate);
+    if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([key,item]) => [key, key === "$ref" && typeof item === "string" && item.startsWith("#/$defs/") ? `#/components/schemas/${name}/${item.slice(2)}` : relocate(item)]));
+    return value;
+  };
+  return relocate(openApiSchema) as Record<string,unknown>;
 }
 
 export const apiSchemas: Record<string, z.ZodType> = {
@@ -77,6 +86,11 @@ export const apiSchemas: Record<string, z.ZodType> = {
   PracticeAttempt: practiceAttemptSchema,
   PracticeCommand: practiceCommandSchema,
   PracticeResponse: practiceResponseSchema,
+  CodingRequest: codingRequestSchema,
+  CodingResponse: codingResponseSchema,
+  CodingAttempt: codingAttemptSchema,
+  CodingHistory: codingHistorySchema,
+  CodingProblem: codingProblemSchema,
   TargetsResponse: targetStateSchema,
   TargetMutation: targetMutationSchema,
   TargetError: targetErrorSchema,
@@ -120,6 +134,10 @@ const queryParameters = (schema: z.ZodObject) => Object.entries(schema.shape).ma
 });
 
 const paths = {
+  "/api/coding": {
+    get: { operationId:"getCodingPractice", summary:"Read a coding problem and your recent runs", parameters:[{name:"questionId",in:"query",required:true,schema:{type:"string",minLength:1,maxLength:120}}], responses:{"200":jsonResponse("Problem contract, runner configuration and up to 20 private attempts.","CodingHistory"),"400":errorResponse("Choose a problem."),"401":errorResponse("Authentication required."),"503":errorResponse("History unavailable.")} },
+    post: { operationId:"runCodingTests", summary:"Run JavaScript or Python tests in Judge0 and save the result", description:"Fixed server-owned suites. An attempt ID is idempotent for identical input. One active run and ten new runs per minute per account. Program execution is remote, with networking disabled and bounded CPU, wall time, memory and output. Passing means the submitted code passed this suite, not a mastery assessment. Results explicitly report whether saving succeeded.", requestBody:{required:true,content:{"application/json":{schema:ref("CodingRequest")}}}, responses:{"200":jsonResponse("Run result and persistence confirmation.","CodingResponse"),"400":errorResponse("Invalid fields or unsupported problem."),"401":errorResponse("Authentication required."),"403":errorResponse("Origin rejected."),"409":errorResponse("Attempt ID already used for different input."),"413":errorResponse("Input too large."),"429":errorResponse("Run in progress or rate limit reached."),"503":errorResponse("Runner or storage unavailable.")} },
+  },
   "/api/scene-weather": { get: { operationId: "getSceneWeather", summary: "Read cached San Francisco weather for login artwork", description: "Public fixed-location weather model data and sunrise/sunset times. No account or user location data. Returns time-only when the provider is unavailable or stale. Cached for 15 minutes; login never depends on this request.", responses: { "200": jsonResponse("Weather model data or an explicit time-only fallback.", "SceneWeather") } } },
   "/api/auth/register": {post:{operationId:"registerAccount",summary:"Register, verify email, resend a code, or recover an account",description:"Email verification is required before private workspace access. Registration and recovery responses do not disclose whether an email already has an account.",requestBody:{required:true,content:{"application/json":{schema:ref("AuthRegistration")}}},responses:{"200":jsonResponse("Account request accepted.","AuthRegistrationResponse"),"400":errorResponse("Invalid fields or verification code."),"403":errorResponse("Origin rejected or registration disabled."),"429":errorResponse("Try again later."),"502":errorResponse("Account provider unavailable."),"503":errorResponse("Account setup incomplete.")}}},
   "/api/auth/login": {post:{operationId:"signIn",summary:"Sign in with the configured Cognito client",requestBody:{required:true,content:{"application/json":{schema:ref("AuthLogin")}}},responses:{"200":jsonResponse("Signed in with a host-only HttpOnly session cookie.","AuthResponse"),"202":jsonResponse("Additional verification required.","AuthResponse"),"400":errorResponse("Invalid sign-in fields or unsupported challenge."),"401":errorResponse("Credentials not accepted."),"403":errorResponse("Origin or account not allowed."),"429":errorResponse("Try again later."),"502":errorResponse("Provider unavailable."),"503":errorResponse("Sign-in setup incomplete.")}}},
@@ -142,7 +160,7 @@ const paths = {
     get: { operationId: "getCompanyResearch", summary: "Read recent company research", description: "Returns tracked company research profiles and a bounded recent window of up to 100 runs, sources, and role suggestions. Full source captures remain internal and are included only in the local export.", responses: { "200": jsonResponse("Company research state.", "CompanyResearchResponse"), "503": errorResponse("Company research is unavailable.") } },
     post: { operationId: "mutateCompanyResearch", summary: "Create or refresh company research, or review a role suggestion", description: "Creates a company and queues public read-only research, updates a company's research profile and queues a refresh, or accepts/dismisses a suggested job. Accepting a suggestion creates a local prospect role and candidacy only after user action; it never applies to a job or changes another candidacy's stage. Browser same-origin checks apply.", requestBody: { required: true, content: { "application/json": { schema: ref("CompanyResearchCommand") } } }, responses: { "200": jsonResponse("Updated company research state.", "CompanyResearchResponse"), "400": errorResponse("Invalid research command."), "403": errorResponse("Origin is not allowed."), "404": errorResponse("Company or suggestion was not found."), "409": errorResponse("Duplicate company, stale suggestion, source, or review conflict."), "413": errorResponse("Body or research result is too large."), "503": errorResponse("Research command could not be confirmed.") } },
   },
-  "/api/export": { get: { operationId: "exportWorkspace", summary: "Export the authenticated workspace", description: "Returns a JSON attachment containing workspace, target, career history, all company research records and captures, algorithm, reference, and coaching data. Export version 7, including practice snapshots, evidence revisions and retry receipts.", responses: { "200": { description: "JSON export attachment.", content: { "application/json": { schema: ref("ExportResponse") } } }, "503": errorResponse("Export is unavailable.") } } },
+  "/api/export": { get: { operationId: "exportWorkspace", summary: "Export the authenticated workspace", description: "Returns a JSON attachment containing workspace, target, career history, all company research records and captures, algorithm, reference, and coaching data. Export version 8, including coding test attempts, practice snapshots, evidence revisions and retry receipts.", responses: { "200": { description: "JSON export attachment.", content: { "application/json": { schema: ref("ExportResponse") } } }, "503": errorResponse("Export is unavailable.") } } },
   "/api/algorithms": { get: { operationId: "listAlgorithms", summary: "List algorithm questions", responses: { "200": jsonResponse("Algorithm question bank.", "AlgorithmsResponse"), "503": errorResponse("Question library is unavailable.") } } },
   "/api/questions/{id}": { get: { operationId: "getQuestion", summary: "Read an algorithm question", parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }, ...queryParameters(questionDetailQuerySchema)], responses: { "200": jsonResponse("Question details and linked reference entries.", "QuestionDetailResponse"), "400": errorResponse("Invalid query parameters."), "404": errorResponse("Question was not found."), "503": errorResponse("Question library is unavailable.") } } },
   "/api/questions/match": { post: { operationId: "matchQuestion", summary: "Match submitted text to the local question bank", description: "Matching can use local or semantic mode. Submitted content is not saved by this endpoint. The requestId is correlation only.", requestBody: { required: true, content: { "application/json": { schema: ref("QuestionMatchRequest") } } }, responses: { "200": jsonResponse("Match result, including clarification or no-match status.", "QuestionMatchResponse"), "400": errorResponse("Invalid JSON or request."), "403": errorResponse("Origin is not allowed."), "413": errorResponse("Request body is too large."), "429": errorResponse("Matcher is busy."), "503": errorResponse("Question matching is unavailable.") } } },
@@ -158,7 +176,7 @@ const paths = {
 
 export function createOpenApiDocument() {
   const components: Record<string, Record<string, unknown>> = {};
-  for (const [name, schema] of Object.entries(apiSchemas)) components[name] = jsonSchema(schema);
+  for (const [name, schema] of Object.entries(apiSchemas)) components[name] = jsonSchema(schema, name);
   return {
     openapi: "3.1.0",
     info: {

@@ -1,3 +1,4 @@
+import { applyCodingMigration } from "./migrations/coding-v6";
 import { applyPracticeMigration } from "./migrations/practice-v5";
 import { applyCareerTypedMigration } from "./migrations/career-v2";
 import { applyStorageGuardsMigration } from "./migrations/storage-v3";
@@ -78,6 +79,7 @@ async function initialize() {
     await applyStorageGuardsMigration(client);
     await applyCompanyResearchMigration(client);
     await applyPracticeMigration(client);
+    await applyCodingMigration(client);
     await client.query("COMMIT");
   } catch (error) {
     await client.query("ROLLBACK");
