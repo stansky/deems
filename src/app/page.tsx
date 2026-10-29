@@ -1,6 +1,6 @@
 "use client";
 import LearningHome from "@/components/learning-home";
-import { WorkspaceHeader, WorkspaceFooter, WorkspaceSections, type WorkspaceView } from "@/components/workspace-chrome";
+import { WorkspaceHeader, WorkspaceSections, type WorkspaceView } from "@/components/workspace-chrome";
 import { PracticeHub } from "@/components/practice-hub";
 import { studyCourses } from "@/data/study-courses";
 import { studyPaths } from "@/data/study-catalog";
@@ -11,7 +11,7 @@ import { notifyAccountChange, workspaceSessionStorage } from "@/components/works
 import { workspaceFetch } from "@/components/workspace-client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Activity as ActivityIcon, ArrowDown, ArrowLeft, ArrowRight, BookOpen, BriefcaseBusiness, Check, CheckCircle2, ChevronRight, Circle, Clock3, Code2, ExternalLink, FileText, Flag, Layers3, Lightbulb, Loader2, Menu, MessageSquare, MoreHorizontal, Pause, Play, Plus, Printer, RotateCcw, Search, Sparkles, Target, Timer, UserRound, X } from "lucide-react";
+import { Activity as ActivityIcon, ArrowLeft, ArrowRight, BookOpen, BriefcaseBusiness, Check, CheckCircle2, ChevronRight, Circle, Clock3, Code2, ExternalLink, FileText, Flag, Layers3, Lightbulb, Loader2, Menu, MessageSquare, MoreHorizontal, Pause, Play, Plus, Printer, RotateCcw, Search, Sparkles, Target, Timer, UserRound, X } from "lucide-react";
 import { roles, cheatSheets, flashcards, exercises, stories } from "@/data/prep";
 import type { Application, Exercise, WorkspaceState } from "@/lib/types";
 import { Badge, Button, Empty } from "@/components/ui";
@@ -235,7 +235,7 @@ function InterviewDesk() {
     <aside className={`sidebar ${mobileMenu ? "sidebar-open" : ""}`}>
       <a className="brand" href="#" onClick={e => { e.preventDefault(); navigate("Home"); }}><DeemsBrand /></a>
       <nav aria-label="Main navigation">{navigation.map(({ name, icon: Icon }) => <button key={name} className={`nav-item ${view === name ? "active" : ""}`} onClick={() => navigate(name)} aria-current={view === name ? "page" : undefined}><Icon size={18} /><span>{name}</span>{name === "Applications" && <span className="nav-count">{state.applications.length || roles.length}</span>}</button>)}</nav>
-      <div className="sidebar-bottom"><a className="export-link" href="/api/export" download><ArrowDown size={14} />Export workspace</a><div className="profile"><span className="profile-avatar">D</span><div><strong>Your workspace</strong><span>Personal workspace</span></div></div></div>
+      <div className="sidebar-bottom"><div className="profile"><span className="profile-avatar">D</span><div><strong>Your workspace</strong><span>Personal workspace</span></div></div></div>
     </aside>
     {mobileMenu && <button aria-label="Close navigation" className="sidebar-scrim" onClick={() => setMobileMenu(false)} />}
     <div className="main-shell">
@@ -256,7 +256,6 @@ function InterviewDesk() {
         {view === "Applications" && <Applications state={state} selected={activeApplication} select={setSelectedApplication} mutate={mutate} saving={saving} loading={loading} />}
         {view === "Experience" && <Background state={state} mutate={mutate} saving={saving} />}
       </main>
-      <WorkspaceFooter />
     </div>
   </div>;
 }

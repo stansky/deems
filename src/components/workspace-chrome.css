@@ -11,11 +11,6 @@
 .workspace-sections>button:hover { color:#172331; }
 .workspace-sections>button:focus-visible { outline:3px solid #4a87c5; outline-offset:4px; }
 .desk-shell:has(.sw-lesson-screen) .workspace-sections { display:none; }
-.workspace-credits { position:relative; }
-.workspace-credits>summary { display:flex; align-items:center; min-height:44px; padding:0 6px; color:#52605f; cursor:pointer; font-size:13px; list-style:none; }
-.workspace-credits>summary::-webkit-details-marker { display:none; }
-.workspace-credits>p { position:absolute; right:0; bottom:100%; z-index:4; width:260px; padding:16px; border:1px solid #c7cec9; border-radius:8px; background:#fffefa; color:#52616c; font-size:13px; line-height:20px; }
-.workspace-credits>p a { min-height:0!important; padding:0!important; text-decoration:underline; }
 .desk-shell.light-lms .workspace-header { border-bottom:1.5px solid #263443!important; }
 .workspace-header .desk-navigation > button, .workspace-header .desk-navigation summary { position: relative; border-radius: 0; padding: 0 12px; }
 .desk-shell.light-lms .workspace-header .desk-navigation .is-active { background: transparent !important; color: #17232c !important; }
@@ -32,15 +27,6 @@
 .workspace-account-label { display: grid; gap: 4px; padding: 12px; margin-bottom: 4px; border-bottom: 1px solid #e5e2db; }
 .workspace-account-label strong { font-size: 13px; }
 .workspace-account-label span { font-size: 11px; color: #68716c; }
-.workspace-footer { margin-top: auto; border-top: 1px solid #e3e1da; background: #faf9f6; }
-.workspace-footer-inner { max-width: 1248px; padding: 24px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 24px; }
-.workspace-footer-brand { display: flex; align-items: baseline; gap: 12px; }
-.workspace-footer-brand strong { font-size: 14px; color: #273d43; }
-.workspace-footer-brand span { font-size: 12px; color: #717a78; }
-.workspace-footer nav { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.workspace-footer nav button, .workspace-footer nav a { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 6px; background: transparent; color: #52605f !important; font-size: 12px; }
-.workspace-footer nav button:hover, .workspace-footer nav a:hover { color: #8d3c18 !important; }
-.desk-shell:has(.sw-lesson-screen) .workspace-footer { display: none; }
 @media(max-width:850px) {
   .desk-shell .workspace-header { height: auto; min-height: 112px; grid-template-columns: 1fr auto; padding: 10px 18px 0; gap: 2px 16px; }
   .workspace-header .deems-brand-wordmark { width: 100px; }
@@ -50,9 +36,6 @@
   .workspace-header .desk-menu { top: calc(100% + 8px); }
   .workspace-header .desk-navigation details:first-of-type .desk-menu { left: auto; right: -70px; }
   .workspace-account { grid-column: 2; grid-row: 1; }
-  .workspace-footer-inner { flex-direction: column; align-items: flex-start; gap: 10px; padding: 20px 18px; }
-  .workspace-footer-brand { flex-wrap: wrap; gap: 6px 12px; }
-  .workspace-footer nav { gap: 6px 12px; }
 }
 @media(max-width:700px) {
   .workspace-header .desk-navigation .workspace-nav-home { display:none; }
@@ -61,4 +44,3 @@
 @media(max-width:380px) {
   .workspace-header .desk-navigation > button, .workspace-header .desk-navigation summary { padding:0 5px; }
 }
-@media print { .workspace-footer { display: none; } }

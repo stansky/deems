@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { ArrowDownToLine, ChevronDown, LogOut, UserRound } from "lucide-react";
+import { ChevronDown, LogOut, UserRound } from "lucide-react";
 import { DeemsBrand } from "./brand";
 import type { StudyTab } from "@/contracts/study";
 import type { PrepCategory } from "./features/prep/prep-library";
@@ -37,17 +37,9 @@ export function WorkspaceHeader({ view, studyTab, authenticated, onSignOut, onNa
     <nav className="desk-navigation" aria-label="Workspace sections">{items.map(item => <button key={item.id} className={active === item.id ? "is-active" : ""} aria-current={active === item.id ? "page" : undefined} onClick={() => go(item.action)}>{item.label}</button>)}</nav>
     <details className="workspace-account" name="deems-header-menu"><summary aria-label="Workspace menu"><UserRound size={19} /><ChevronDown size={12} /></summary><div className="desk-menu">
       <div className="workspace-account-label"><strong>Your workspace</strong><span>Personal learning space</span></div>
-      <a href="/api/export" download><ArrowDownToLine size={16} />Export your data</a>
       {authenticated && <button onClick={() => go(onSignOut)}><LogOut size={16} />Sign out</button>}
     </div></details>
   </header>;
-}
-
-export function WorkspaceFooter() {
-  return <footer className="workspace-footer"><div className="workspace-footer-inner">
-    <div className="workspace-footer-brand"><strong>Deems</strong><span>Your personal learning space</span></div>
-    <nav aria-label="Workspace utilities"><a href="/api/export" download><ArrowDownToLine size={14} />Export your data</a><details className="workspace-credits"><summary>Credits</summary><p>Original Deems artwork. Interface icons by <a href="https://lucide.dev/" target="_blank" rel="noopener noreferrer">Lucide</a>.</p></details></nav>
-  </div></footer>;
 }
 
 function workspaceSection(view: WorkspaceView, studyTab: StudyTab) {
