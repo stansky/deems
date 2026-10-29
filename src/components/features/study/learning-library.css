@@ -1,6 +1,7 @@
 .learning-library { --lc-ink:#172331; --lc-line:#263443; --lc-muted:#5c6671; max-width:1200px; margin-inline:auto; color:var(--lc-ink); }
 .lc-page-heading { display:flex; justify-content:space-between; align-items:center; gap:16px; margin:0 0 24px; }
 .lc-page-heading h1 { font-size:34px; line-height:1.2; font-weight:750; letter-spacing:-.045em; }
+.learning-library h1[tabindex="-1"]:focus { outline:none; }
 .desk-shell.light-lms :is(.learning-library,.learning-home) .lc-action[data-slot="button"] { display:inline-flex; align-items:center; gap:9px; min-height:44px; height:auto; padding:11px 16px; border:1.5px solid #172331!important; border-radius:8px; background:#ff874f!important; color:#172331!important; font-size:13px; font-weight:650; box-shadow:none; white-space:normal; }
 .desk-shell.light-lms :is(.learning-library,.learning-home) .lc-action[data-slot="button"]:hover:not(:disabled) { background:#ffa77c!important; }
 .desk-shell.light-lms :is(.learning-library,.learning-home) .lc-action-outline[data-slot="button"] { background:#fffefa!important; }
@@ -30,6 +31,24 @@
 .lc-card-progress progress,.lc-detail-progress progress { display:block; appearance:none; width:100%; height:7px; overflow:hidden; border:1px solid #263443; border-radius:4px; background:#eaece9; margin-bottom:7px; }
 .lc-card-progress progress::-webkit-progress-bar,.lc-detail-progress progress::-webkit-progress-bar { background:#eaece9; }.lc-card-progress progress::-webkit-progress-value,.lc-detail-progress progress::-webkit-progress-value { background:var(--lc-accent,#3949d8); }.lc-card-progress progress::-moz-progress-bar,.lc-detail-progress progress::-moz-progress-bar { background:var(--lc-accent,#3949d8); }
 .lc-card-action { display:flex; align-items:center; justify-content:space-between; gap:9px; margin-top:auto; padding-top:18px; font-size:12px; font-weight:650; }
+.lc-card-next { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden; margin-top:12px; font-size:11px; line-height:1.5; color:#43544a; }
+.lc-card-next strong { display:block; margin-bottom:3px; color:#253b88; font-size:9px; text-transform:uppercase; letter-spacing:.04em; }
+.lc-learning-shelves { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; }
+.lc-learning-shelf { min-width:0; }
+.lc-learning-shelf>header { display:flex; align-items:center; gap:8px; min-height:34px; margin-bottom:10px; }
+.lc-learning-shelf>header h3 { margin:0; font-size:16px; font-weight:650; }
+.lc-learning-shelf>header>span { display:grid; place-items:center; min-width:21px; height:21px; padding:2px 5px; border:1px solid #b1b9b2; border-radius:5px; color:#52605b; background:#eef0e8; font:10px ui-monospace,SFMono-Regular,monospace; }
+.lc-shelf-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.lc-shelf-empty { margin:0 0 14px; color:#5c6671; font-size:11px; line-height:1.6; }
+.lc-learning-shelf .lc-card-body { min-height:260px; padding:17px; }
+.lc-learning-shelf .lc-card-body h3 { min-height:64px; font-size:19px; }
+.lc-learning-shelf .lc-card-metadata { font-size:10px; }
+.lc-completed-learning { margin-top:20px; border:1.5px solid #a8b1a8; border-radius:9px; background:#f0f3e9; }
+.lc-completed-learning>summary { display:flex; align-items:center; gap:10px; min-height:54px; padding:12px 18px; font-size:13px; font-weight:650; cursor:pointer; list-style:none; }.lc-completed-learning>summary::-webkit-details-marker { display:none; }.lc-completed-learning>summary span { margin-left:auto; color:#5c6671; font-size:12px; }.lc-completed-learning>.lc-shelf-grid { padding:0 18px 18px; grid-template-columns:repeat(4,minmax(0,1fr)); }
+.lc-next-step { display:flex; align-items:center; gap:18px; margin-bottom:24px; padding:18px 22px; border:1.5px solid #263443; border-radius:10px; background:#f5e7ad; color:#172331; }.lc-next-number { display:flex; align-items:baseline; justify-content:center; flex:none; width:56px; height:56px; padding-top:12px; border:1.5px solid #263443; border-radius:10px; background:#fffefa; font-size:25px; font-weight:700; letter-spacing:-.04em; }.lc-next-number small { font-size:12px; color:#5c6671; }.lc-next-step>div { flex:1; min-width:0; }.lc-next-step .lc-eyebrow { font-size:10px; }.lc-next-step h3 { margin:5px 0 6px; font-size:19px; line-height:1.3; font-weight:700; letter-spacing:-.03em; }.lc-next-step p { font-size:11px; line-height:1.5; color:#5b5841; }.lc-next-step>.lc-action { flex:none; }
+@media(max-width:1000px) { .lc-learning-shelves { gap:18px; }.lc-shelf-grid { gap:12px; }.lc-learning-shelf .lc-card-body { padding:14px; }.lc-learning-shelf .lc-card-body h3 { font-size:17px; }.lc-learning-shelf .lc-card-body>p { font-size:11px; } }
+@media(max-width:800px) { .lc-learning-shelves { grid-template-columns:1fr; gap:24px; }.lc-learning-shelves-paired { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }.lc-learning-shelves-paired .lc-shelf-grid { grid-template-columns:1fr; }.lc-learning-shelf .lc-card-body { min-height:230px; }.lc-learning-shelf .lc-card-body h3 { min-height:44px; font-size:20px; }.lc-completed-learning>.lc-shelf-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:500px) { .lc-learning-shelf .lc-card-body { min-height:200px; padding:14px; }.lc-learning-shelf .lc-card-body h3 { min-height:58px; font-size:17px; }.lc-learning-shelf .lc-card-body>p { font-size:11px; }.lc-next-step { flex-wrap:wrap; padding:17px; gap:12px; }.lc-next-number { width:44px; height:48px; padding-top:10px; font-size:22px; }.lc-next-step h3 { font-size:16px; }.lc-next-step .lc-eyebrow { font-size:9px; }.lc-next-step p { font-size:10px; }.lc-next-step>.lc-action { margin-left:56px; }.lc-next-step>div { flex-basis:calc(100% - 60px); }.lc-card-next { font-size:10px; } }
 .lc-card-save { position:absolute; top:0; right:0; display:grid; place-items:center; width:44px; height:38px; border-left:1px solid #263443; border-radius:0; background:transparent; color:#172331; }
 .lc-kind-path .lc-card-save { color:white; border-left-color:#ffffff65; }.lc-card-save:hover { background:#17233118; }.lc-kind-path .lc-card-save:hover { background:#ffffff20; }
 .lc-empty { display:flex; align-items:center; gap:18px; padding:28px; border:1.5px dashed #76818b; border-radius:10px; background:#fffefa; }

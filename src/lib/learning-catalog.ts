@@ -1,6 +1,6 @@
 import { learningSelectionSchema, readLearningSelection, readStudyProgress, type LearningSelection, type StudyCourse } from "@/contracts/study";
 import { studyCourses } from "@/data/study-courses";
-import { studyPaths, type StudyPath } from "@/data/study-catalog";
+import { courseDetails, studyPaths, type StudyPath } from "@/data/study-catalog";
 
 export type LearningItem = { kind: "course"; item: StudyCourse } | { kind: "path"; item: StudyPath };
 export const catalogItems: LearningItem[] = [...studyPaths.map(item => ({ kind: "path" as const, item })), ...studyCourses.map(item => ({ kind: "course" as const, item }))];
@@ -16,7 +16,8 @@ export function itemProgress(entry: LearningItem, settings: Record<string, strin
 }
 export function isInLearning(entry: LearningItem, settings: Record<string, string>) {
   const selection = readLearningSelection(settings, entry.kind, entry.item.id);
-  return selection ? selection.saved : entry.kind === "course" && courseProgress(entry.item, settings) > 0;
+  if (selection) return selection.saved;
+  return entry.kind === "course" && (courseProgress(entry.item, settings) > 0 || studyPaths.some(path => path.courseIds.includes(entry.item.id) && readLearningSelection(settings, "path", path.id)?.saved));
 }
 export function itemLastActivity(entry: LearningItem, settings: Record<string, string>) {
   const selection = readLearningSelection(settings, entry.kind, entry.item.id);
@@ -41,4 +42,34 @@ export function learningSelection(settings: Record<string, string>, kind: Learni
   const previous = readLearningSelection(settings, kind, id);
   const now = new Date().toISOString();
   return learningSelectionSchema.parse({ version: 1, kind, id, saved, addedAt: previous?.addedAt ?? now, ...(previous?.lastOpenedAt ? { lastOpenedAt: previous.lastOpenedAt } : {}), ...(previous?.lessonId ? { lessonId: previous.lessonId, mode: previous.mode } : {}), ...(launch ? { lastOpenedAt: now, ...launch } : {}) });
+}
+
+export function learningSnapshot(settings: Record<string, string>) {
+  const courses = studyCourses.map(course => ({ course, done: courseProgress(course, settings) }));
+  const selected = courses.filter(({ course, done }) => done > 0 || isInLearning({ kind: "course", item: course }, settings));
+  const completedModules = courses.reduce((sum, item) => sum + item.done, 0);
+  const completedCourses = courses.filter(({ course, done }) => done === course.lessons.length).length;
+  const completedPaths = studyPaths.filter(path => {
+    const progress = itemProgress({ kind: "path", item: path }, settings);
+    return progress.done === progress.total;
+  }).length;
+  return {
+    completedModules, completedCourses, completedPaths,
+    selectedModules: selected.reduce((sum, item) => sum + item.course.lessons.length, 0),
+    skills: [...new Set(selected.map(({ course }) => courseDetails[course.id].topic))].map(topic => {
+      const related = selected.filter(({ course }) => courseDetails[course.id].topic === topic);
+      return { topic, done: related.reduce((sum, item) => sum + item.done, 0), total: related.reduce((sum, item) => sum + item.course.lessons.length, 0) };
+    }),
+    milestones: [
+      { id: "first-module", title: "First module", detail: "Complete one module’s knowledge checks.", earned: completedModules > 0 },
+      { id: "first-course", title: "First course", detail: "Complete every module in one course.", earned: completedCourses > 0 },
+      { id: "first-path", title: "First path", detail: "Complete every module in one learning path.", earned: completedPaths > 0 },
+    ],
+  };
+}
+
+export function nextLearning(settings: Record<string, string>) {
+  const entry = myLearning(settings).find(entry => entry.kind === "course" && courseProgress(entry.item, settings) < entry.item.lessons.length);
+  if (!entry || entry.kind !== "course") return null;
+  return { course: entry.item, ...nextCourseLesson(entry.item, settings), started: itemStarted(entry, settings) };
 }

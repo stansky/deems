@@ -34,6 +34,7 @@ type Props = {
   mutate: (action: string, data: unknown, meta?: CommandMeta) => Promise<boolean>;
   saving: boolean;
   onPractice: (id: string) => void;
+  onCareer: (companyId?: string, roleId?: string) => void;
 };
 
 type LessonDraft = {
@@ -59,7 +60,7 @@ const themeLabels: Record<StudyCourse["theme"], string> = {
   gold: "Coding",
 };
 
-export default function StudyWorkspace({ initialRoute, state, tab, setTab, selected, setSelected, mutate, saving, onPractice }: Props) {
+export default function StudyWorkspace({ initialRoute, state, tab, setTab, selected, setSelected, mutate, saving, onPractice, onCareer }: Props) {
   const [openCourseId, setOpenCourseId] = useState("");
   const [openPathId, setOpenPathId] = useState("");
   const [activeLessonId, setActiveLessonId] = useState("");
@@ -422,7 +423,8 @@ export default function StudyWorkspace({ initialRoute, state, tab, setTab, selec
     return <PathOverview path={currentPath} state={state} saving={saving} onSave={saveSelection} onCourse={setOpenCourseId} onBack={() => setOpenPathId("")} />;
   }
   return <LearningLibrary mine={tab === "My learning"} state={state} saving={saving} onSave={saveSelection}
-    onOpenCourse={setOpenCourseId} onOpenPath={setOpenPathId} onBrowse={() => setTab("Courses")} onReview={() => setTab("Flashcards")} />;
+    onOpenCourse={setOpenCourseId} onOpenPath={setOpenPathId} onBrowse={() => setTab("Courses")} onReview={() => setTab("Flashcards")} onCareer={onCareer}
+    onResume={(courseId, lessonId, mode) => { const course = studyCourses.find(item => item.id === courseId); const lesson = course?.lessons.find(item => item.id === lessonId); if (course && lesson) void openLesson(course, lesson, mode === "quiz"); }} />;
 }
 
 function StudyTabs({ tab, setTab, dueCount }: { tab: StudyTab; setTab: (tab: StudyTab) => void; dueCount: number }) {

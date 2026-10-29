@@ -214,6 +214,17 @@ function InterviewDesk() {
     try { workspaceSessionStorage.setItem(studyRouteKey, JSON.stringify(route)); } catch { /* The in-memory route still opens this path. */ }
     setStudyTab(isInLearning({ kind: "path", item: path }, state.settings) ? "My learning" : "Courses"); navigate("Study");
   }
+  function openCareer(companyId?: string, roleId?: string) {
+    const url = new URL(window.location.href);
+    url.searchParams.set("view", "interviews");
+    for (const key of ["role", "company", "step", "format", "exercise", "attempt"]) url.searchParams.delete(key);
+    if (companyId) url.searchParams.set("company", companyId);
+    if (roleId) url.searchParams.set("role", roleId);
+    if (!companyId && !roleId) url.searchParams.set("overview", "companies");
+    else url.searchParams.delete("overview");
+    window.history.replaceState(null, "", url);
+    setView("Interviews"); window.scrollTo({ top: 0, behavior: "instant" });
+  }
   const focused = view === "Home" || view === "Study" || view === "Interviews" || view === "Preparation";
 
   return <div className={`app-shell desk-shell light-lms ${focused ? "learning-shell" : ""}`}>
@@ -228,11 +239,11 @@ function InterviewDesk() {
       <main className={`main-content ${view === "Study" ? "study-main" : focused ? "prep-main" : ""}`}>
         {error && (view !== "Home" || !workspaceUnavailable) && <div className="notice notice-error" role="alert"><span>{error}</span><Button variant="ghost" onClick={load}>Retry connection</Button></div>}
         <div className={`save-status ${saving || saved ? "is-visible" : ""}`} role="status">{saving ? <><Loader2 size={13} className="spin" />Saving...</> : saved ? <><Check size={13} />{saved}</> : null}</div>
-        {view === "Home" && <LearningHome state={state} loading={loading} onOpenCourse={openCourse} onOpenPath={openPath} onMyLearning={() => library("My learning")} onReview={() => library("Flashcards")} historyUnavailable={workspaceUnavailable} onRetry={() => void load()} onCourses={() => library("Courses")} onArea={area => { if (area === "Coding") openCategory("Coding"); else if (area === "AI & systems") library("Courses"); else if (area === "Frameworks & tools") navigate("Reference"); else if (area === "Team management") openCategory("Management"); else openCategory("Behavioral"); }} />}
+        {view === "Home" && <LearningHome onCareer={openCareer} state={state} loading={loading} onOpenCourse={openCourse} onOpenPath={openPath} onMyLearning={() => library("My learning")} onReview={() => library("Flashcards")} historyUnavailable={workspaceUnavailable} onRetry={() => void load()} onCourses={() => library("Courses")} onArea={area => { if (area === "Coding") openCategory("Coding"); else if (area === "AI & systems") library("Courses"); else if (area === "Frameworks & tools") navigate("Reference"); else if (area === "Team management") openCategory("Management"); else openCategory("Behavioral"); }} />}
         {view === "Preparation" && <PrepLibrary category={prepCategory} onGuide={openStudy} onPractice={openPractice} onAlgorithms={()=>navigate("Algorithms")} onStories={()=>navigate("Experience")} onStudy={()=>library("Courses")} onReference={()=>navigate("Reference")}/>}
         {view === "Interviews" && <TargetWorkspace onGeneralPreparation={() => { const url = new URL(window.location.href); url.searchParams.delete("role"); url.searchParams.delete("step"); window.history.replaceState(null, "", url); navigate("Preparation"); }} workspace={state} onApplication={id => { setSelectedApplication(id); navigate("Applications"); }} onViewAttempt={attempt => openExercise(attempt.exerciseId,attempt.origin,attempt.sessionId)} onResource={(resource, origin) => { if (resource.kind === "guide") openStudy(resource.id); else if (resource.kind === "exercise") { openExercise(resource.id, origin ?? null); } else if (resource.kind === "algorithm") { setSelectedAlgorithm(resource.id); navigate("Algorithms"); } else if (resource.kind === "reference") { setSelectedReference(resource.id); navigate("Reference"); } }} />}
         {view === "Today" && <Today state={state} onPractice={openPractice} onStudy={openStudy} onNavigate={navigate} onApplication={id => { setSelectedApplication(id); navigate("Applications"); }} onReview={() => { setStudyTab("Flashcards"); navigate("Study"); }} />}
-        {view === "Study" && (state === blank ? <BrandState kind={loading ? "loading" : "error"} title={loading ? "Loading your learning progress" : "Could not load your progress"} action={!loading ? <Button onClick={load}>Try again</Button> : undefined} /> : <StudyWorkspace key={studyNavigationKey} initialRoute={studyLaunch} state={state} tab={studyTab} setTab={setStudyTab} selected={selectedGuide} setSelected={setSelectedGuide} mutate={mutate} saving={saving} onPractice={id => openExercise(id)} />)}
+        {view === "Study" && (state === blank ? <BrandState kind={loading ? "loading" : "error"} title={loading ? "Loading your learning progress" : "Could not load your progress"} action={!loading ? <Button onClick={load}>Try again</Button> : undefined} /> : <StudyWorkspace key={studyNavigationKey} initialRoute={studyLaunch} onCareer={openCareer} state={state} tab={studyTab} setTab={setStudyTab} selected={selectedGuide} setSelected={setSelectedGuide} mutate={mutate} saving={saving} onPractice={id => openExercise(id)} />)}
         {view === "Practice" && <Practice key={selectedExercise} exerciseId={selectedExercise} select={id=>openExercise(id)} state={state} onCommand={practiceCommand} saving={saving} origin={practiceOrigin} onReturn={returnToPlan} selectedAttemptId={selectedAttemptId} />}
         {view === "Algorithms" && <AlgorithmLab initialSelectedId={selectedAlgorithm} state={state} mutate={mutate} saving={saving} />}
         {view === "Reference" && <KnowledgeLibrary initialSelectedId={selectedReference} />}

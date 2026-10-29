@@ -30,3 +30,15 @@ Keep all navigation, filtering, completion rollups and resume selection determin
 5. Deploy main/staging and read back successful release status and hosted account gates.
 
 No new unit-test suite or evaluation project. Existing deployment checks stay enabled. Keep auth, signup controls, crawler policy, account separation and private records intact.
+
+## Dashboard progress revision
+
+The owner rejected reusing login artwork on Home, and requested an integrated learning snapshot, distinct course/path sections, logical next steps, and visible career/company tracks.
+
+Reference lock: keep the existing light Deems canvas, ink typography and outlines, cobalt path bands, lime course bands and orange actions. The authenticated GreatFrontEnd dashboard reviewed through Safari MCP on October 28, 2026 supplies progress-first hierarchy, contextual resume, separate study plans and company guides. Brilliant screen 3978f221-3899-49cf-9272-f3ac29e3e290 supplies compact progress and earned milestones. Gumroad style ac783c6e-6c2b-4663-87b3-bcd12d463b0a supplies crisp graphic containment only. Duolingo style 9457a848-2905-4fe8-bb58-e168049120cf supplies the role of a distinct character illustration only, without importing its palette, fonts or streak mechanics.
+
+Asset lock revised after owner review: use the archive's existing transparent `mascot/poses/reading.svg`, served as `/brand/pose-reading.svg`. The character is a small secondary accent beside the learning stats, with no scenery, colored image panel, divider or duplicate mascot logo. The generated outdoor landscape was rejected for excessive detail and is retained privately. Keep the same light dashboard tokens and useful progress hierarchy.
+
+Welcome panel combines unique completed modules, completed courses, saved practice sessions, topic coverage from completed modules, next module progress, and deterministic milestones. Topic progress is content coverage, never mastery or a proficiency score. Trophies represent explicitly described completion thresholds. New, loading and unavailable states do not invent accomplishments. Count modules once even if shared by paths.
+
+My learning separates active/saved courses and ordered paths, including courses inside saved paths. Empty groups show relevant existing catalog suggestions. Each saved card identifies its next incomplete module; finished items offer review. Company tracks use authenticated target data, existing branding and role/step completion. Show company and role preparation separately from general study completion. Direct navigation reuses company details and role plans. No migrations, provider calls or reseeding.

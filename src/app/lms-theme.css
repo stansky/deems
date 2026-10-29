@@ -94,6 +94,8 @@
 .desk-shell.light-lms.learning-shell .company-careers-scroll,.desk-shell.light-lms.learning-shell .company-careers th,.desk-shell.light-lms.learning-shell .company-careers td,.desk-shell.light-lms.learning-shell .company-activity { border-color:#e0e5eb !important; background:#fff !important; }
 .desk-shell.light-lms.learning-shell .company-track-grid>button,.desk-shell.light-lms.learning-shell .company-general-learning { border-color:#e0e5eb !important; background:#f0f3f6 !important; color:#172331 !important; }
 .desk-shell.light-lms.learning-shell .company-track-grid>button:hover,.desk-shell.light-lms.learning-shell .company-general-learning:hover { border-color:#edb18f !important; background:#fff4ed !important; }
+.desk-shell.light-lms.learning-shell .company-track-grid>button>span { color:#596576 !important; }
+.desk-shell.light-lms.learning-shell .company-track-grid>button>svg { color:#9a3e18 !important; }
 .desk-shell.light-lms.learning-shell .company-activity-icon { border-color:#e0e5eb !important; background:#fff !important; color:#ae5126 !important; }
 .desk-shell.light-lms.learning-shell .company-activity>li::before { background:#d9e0e7 !important; }
 .desk-shell.light-lms.learning-shell .company-activity-copy p { color:#465465 !important; }

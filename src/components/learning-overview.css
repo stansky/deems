@@ -1,0 +1,49 @@
+.learning-overview { position:relative; display:block; margin-bottom:30px; overflow:hidden; border:1.5px solid #263443; border-radius:12px; background:#fffefa; }
+.overview-body { min-width:0; padding:27px 30px 0; }
+.overview-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:25px; }
+.overview-heading h1 { margin:0; font-size:32px; line-height:1.15; font-weight:750; letter-spacing:-.045em; }
+.overview-learning-link { display:inline-flex; flex:none; align-items:center; gap:7px; min-height:44px; padding:0; background:transparent; font-size:12px; font-weight:650; color:#253b88; }
+.overview-stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin:0 200px 22px 0; }
+.overview-stats>div { display:flex; min-width:0; flex-direction:column-reverse; gap:7px; }
+.overview-stats dd { margin:0; font:750 32px/1.1 var(--font-sans,Inter,Arial,sans-serif); letter-spacing:-.04em; }
+.overview-stats dt { display:flex; align-items:center; gap:6px; font-size:11px; line-height:1.4; color:#4b5a62; }
+.overview-stats svg { flex:none; }
+.overview-progress { margin-right:200px; }
+.overview-progress>div { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:9px; font-size:11px; }
+.overview-progress strong { font-size:11px; font-weight:650; }
+.overview-progress progress { display:block; width:100%; height:10px; overflow:hidden; appearance:none; border:1px solid #9ba49a; border-radius:20px; background:#e8eade; }
+.overview-progress progress::-webkit-progress-bar { background:#e8eade; border-radius:20px; }
+.overview-progress progress::-webkit-progress-value { border-radius:20px; background:#3b8c63; }
+.overview-progress progress::-moz-progress-bar { border-radius:20px; background:#3b8c63; }
+.overview-progress>p { margin:7px 0 0; font-size:11px; color:#5c6671; }
+.overview-skills { display:flex; align-items:flex-start; gap:12px; margin:20px 200px 20px 0; }
+.overview-skills>span { flex:none; padding-top:8px; font-size:10px; color:#4b5a62; }
+.overview-skills>div { display:flex; flex-wrap:wrap; gap:6px; }
+.overview-skills button { display:inline-flex; min-height:32px; align-items:center; gap:10px; padding:6px 10px; border:1px solid #a5b6ad; border-radius:6px; background:#e4f0e4; color:#214438; font-size:10px; font-weight:600; }
+.overview-skills button>span { font:10px ui-monospace,SFMono-Regular,monospace; }
+.overview-trophies { margin:0 -30px; border-top:1px solid #b7bbaf; background:#f9edbd; }
+.overview-trophies summary { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:13px 30px; min-height:52px; list-style:none; cursor:pointer; font-size:11px; }
+.overview-trophies summary::-webkit-details-marker { display:none; }
+.overview-trophies summary>span { display:flex; align-items:center; gap:8px; }
+.overview-trophies summary>span:last-child { font-size:10px; color:#5b5130; }
+.overview-trophies ul { display:grid; gap:12px; margin:0; padding:2px 30px 20px; list-style:none; }
+.overview-trophies li { display:flex; gap:10px; align-items:center; color:#665e44; }
+.overview-trophies li.is-earned { color:#214438; }
+.overview-trophies li svg { flex:none; }
+.overview-trophies li strong { display:block; font-size:11px; font-weight:650; }
+.overview-trophies li small { display:block; margin-top:3px; font-size:10px; line-height:1.5; }
+.overview-art { position:absolute; top:81px; right:29px; display:grid; place-items:center; width:170px; height:158px; pointer-events:none; }
+.overview-art img { display:block; width:100%; height:auto; object-fit:contain; }
+.overview-pending { display:grid; grid-template-columns:repeat(3,1fr); gap:15px; min-height:220px; align-content:center; }
+.overview-pending>span { display:block; height:48px; border-radius:5px; background:#e8eade; }
+.overview-pending p { grid-column:1/-1; margin-top:14px; color:#5c6671; font-size:12px; }
+.overview-unavailable { display:flex; min-height:220px; flex-direction:column; justify-content:center; }
+.overview-unavailable h2 { font-size:19px; }
+.overview-unavailable p { margin-top:8px; color:#5c6671; font-size:12px; }
+@media(max-width:1000px) {
+  .overview-body { padding:22px 22px 0; }.overview-heading h1 { font-size:28px; }.overview-stats { margin-right:150px; }.overview-stats dt { font-size:10px; gap:4px; }.overview-stats svg { display:none; }.overview-progress { margin-right:150px; }.overview-art { top:81px; right:22px; width:128px; height:132px; }.overview-trophies { margin:0 -22px; }.overview-trophies summary { padding:13px 22px; }.overview-trophies ul { padding:2px 22px 18px; }.overview-skills { flex-direction:column; gap:6px; margin-right:150px; }.overview-skills>span { padding:0; }
+}
+@media(max-width:650px) {
+  .learning-overview { margin-bottom:24px; }.overview-body { padding:20px 20px 0; }.overview-heading { gap:8px; margin-bottom:20px; }.overview-heading h1 { font-size:28px; }.overview-learning-link { font-size:10px; gap:4px; }.overview-stats { gap:8px; margin:0 86px 20px 0; }.overview-stats dd { font-size:28px; }.overview-stats dt { font-size:9px; }.overview-art { top:76px; right:14px; width:83px; height:75px; }.overview-progress { margin-right:0; }.overview-trophies { margin:0 -20px; }.overview-trophies summary { padding:13px 20px; gap:8px; }.overview-trophies summary>span { gap:6px; }.overview-trophies summary>span:last-child { font-size:9px; }.overview-trophies ul { padding:2px 20px 18px; }.overview-skills { margin:16px 0; }.overview-skills button { min-height:38px; font-size:10px; }.overview-progress>div { font-size:10px; }.overview-progress strong { font-size:10px; }.overview-pending,.overview-unavailable { min-height:190px; }.overview-pending { padding-right:85px; }.overview-unavailable h2 { max-width:190px; }.overview-unavailable p { max-width:220px; }
+}
+@media(max-width:360px) { .overview-heading h1 { font-size:25px; }.overview-learning-link { font-size:9px; }.overview-body { padding:18px 16px 0; }.overview-trophies { margin:0 -16px; }.overview-trophies summary { padding:13px 16px; }.overview-stats { margin-right:73px; gap:7px; }.overview-stats dt { font-size:9px; }.overview-art { right:9px; width:72px; }.overview-trophies summary>span:last-child svg { display:none; } }

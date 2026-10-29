@@ -8,7 +8,7 @@ The owner reviewed Codecademy's live [Python catalog](https://www.codecademy.com
 
 Home, My learning and Browse now have separate jobs. My learning contains explicitly saved courses/paths and existing completed-module work, with an explicit removal state that preserves history. Browse uses reusable square tiles, type bands, search and filters. Two ordered paths reuse the four existing courses; each existing lesson record groups reading and knowledge checks as a module, with real practice projects linked from the course syllabus. Resume is stored per course. Counts and completion rollups come from saved records and do not require model calls.
 
-The visual direction keeps the light Deems canvas and original illustrated scene, while using stronger ink borders, blue path bands, lime course bands, brighter topic fills and orange actions. Shared shadcn learning variants and light tokens prevent the former dark controls from appearing on light pages. Curriculum appears before supporting outcomes on mobile, and changing course/path moves focus and scroll to its heading. The header is wordmark-only; career tools remain secondary.
+The visual direction keeps the light Deems canvas, small background-free archive character, and stronger ink borders, blue path bands, lime course bands, brighter topic fills and orange actions. Shared shadcn learning variants and light tokens prevent the former dark controls from appearing on light pages. Curriculum appears before supporting outcomes on mobile, and changing course/path moves focus and scroll to its heading. The header is wordmark-only; career tools remain secondary.
 
 Learning selections use the existing account-scoped PostgreSQL settings store, a versioned Zod/TypeScript contract and an OpenAPI model. Keys are per item, and server validation checks catalog membership and resume details. No schema migration, reseeding, proficiency scoring or fabricated enrollment is involved. Existing progress, FSRS records, drafts, authentication, signup controls and crawler exclusions remain intact.
 
@@ -30,7 +30,7 @@ The latest owner-supplied Base44 screenshot locks the login composition: a wordm
 
 ## Dashboard and workspace chrome
 
-The dashboard extends the approved login art direction rather than introducing another mascot or logo. The shared `SceneArt` component supplies the same saved weather/time artwork to the login and a compact welcome panel. The header keeps the wordmark only. No new image generation is needed for the dashboard.
+The owner rejected a detailed generated landscape after visual review. Home now uses the archive's background-free reading character (`public/brand/pose-reading.svg`) as a small accent beside the stats. It has no separate image panel, scenery or photo-like background. The header remains wordmark-only. The dashboard panel combines actual completed modules, courses and saved practice counts, selected-module progress, skill-area coverage and three explicit completion milestones. It does not claim mastery, XP, streaks or certificates. Weather and time scene variants remain on login. The rejected generated asset is retained privately.
 
 | Decision | Reference | Application |
 | --- | --- | --- |
@@ -80,3 +80,9 @@ Clearful supplies the calm card and activity hierarchy, Brilliant supplies cours
 The catalog removes stacked introductory panels, course details use short lesson rows, and quiz answer states remain deterministic. Completion requires an explicit successful save; a failed save retains its draft. Successful completion clears both course and quiz drafts for that lesson so an old mode cannot override the saved result. Workspace loading uses an idle mascot with a short reveal delay and a bounded session request.
 
 Validation includes typecheck, OpenAPI, existing tests, a Node24 Docker production build, settled desktop/mobile screenshots, answer selection and feedback, same-tab reload, and a browser-injected 503 proving failed-save recovery without writing personal progress. Detailed screenshots and agent evidence remain private.
+
+## Learning summary and track visibility
+
+The owner requested separate Active courses and Learning paths groups, relevant suggestions when empty, and a specific next module. These groups are shared between Home and My learning. Courses in saved paths appear without an extra save, while an explicit course removal is respected. Completed items remain available in a separate expandable group. Shared modules are counted once in the welcome summary. Skill chips are labeled content coverage, not a proficiency assessment. Trophy details expose the exact completion rules and show whether each is earned.
+
+The authenticated GreatFrontEnd dashboard was reviewed through Safari MCP on October 28, 2026. Its progress, resume, study-plan and company-guide hierarchy informs these groupings. Branded career/company cards now appear on Home and My learning, using actual target company/role data, with direct company-detail navigation. Saved working role plans have a direct resume action. Role preparation remains separate from course completion. Private research captures remain outside version control.

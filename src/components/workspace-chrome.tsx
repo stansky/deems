@@ -40,7 +40,7 @@ export function WorkspaceHeader({ view, studyTab, authenticated, onSignOut, onNa
         {(["Quizzes", "Guides", "Flashcards"] as StudyTab[]).map(tab => <button key={tab} onClick={() => go(() => onLibrary(tab))}>{tab === "Flashcards" ? "Spaced review" : tab}</button>)}
         <button onClick={() => go(() => onNavigate("Reference"))}>Frameworks & reference</button>
         <span className="desk-menu-label">Career tools</span>
-        <button onClick={() => go(() => onNavigate("Interviews"))}>Companies & interviews</button>
+        <button onClick={() => go(() => onNavigate("Interviews"))}>Career & company tracks</button>
         <button onClick={() => go(() => onNavigate("Applications"))}>Applications</button>
         <button onClick={() => go(() => onNavigate("Experience"))}>Experience & stories</button>
       </div></details>
@@ -61,6 +61,7 @@ export function WorkspaceFooter({ onNavigate, onLibrary, onCategory }: Navigatio
       <button onClick={() => onLibrary("Courses")}>Browse</button>
       <button onClick={() => onCategory("Coding")}><Code2 size={14} />Practice</button>
       <button onClick={() => onNavigate("Reference")}><FileText size={14} />Reference</button>
+      <button onClick={() => onNavigate("Interviews")}>Career tracks</button>
       <a href="/api/export" download><ArrowDownToLine size={14} />Export</a>
     </nav>
   </div></footer>;
