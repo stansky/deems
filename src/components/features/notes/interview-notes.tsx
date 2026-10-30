@@ -10,9 +10,9 @@ import { hashForRoute, isUnambiguousNoteNumber, routeFromHash, type NotesRoute }
 import { searchNotes } from "@/lib/notes-search";
 
 type CheatSheet = { title: string; summary: string; sections: GuideSection[] };
-type Props = { notes: StickyNote[]; topics: InterviewTopic[]; guides: InterviewGuide[]; cheatSheet: CheatSheet };
+type Props = { notes: StickyNote[]; topics: InterviewTopic[]; guides: InterviewGuide[]; cheatSheet: CheatSheet; subject?: string };
 
-export default function InterviewNotes({ notes, topics, guides, cheatSheet }: Props) {
+export default function InterviewNotes({ notes, topics, guides, cheatSheet, subject = "TypeScript" }: Props) {
   const count = notes.length;
   const topicIds = useMemo(() => topics.map(topic => topic.id), [topics]);
   const guideIds = useMemo(() => guides.map(guide => guide.id), [guides]);
@@ -183,8 +183,9 @@ export default function InterviewNotes({ notes, topics, guides, cheatSheet }: Pr
     <main className="inotes inotes-home">
       <header className="inotes-home-head">
         <div>
-          <p className="inotes-eyebrow">Interview notes · TypeScript</p>
+          <p className="inotes-eyebrow">Interview notes · {subject}</p>
           <h1>Find a note</h1>
+          <a href={subject === "System design" ? "/notes" : "/notes?set=system-design"}>{subject === "System design" ? "TypeScript notes" : "System design notes"}</a>
         </div>
         <button type="button" className="inotes-cheat-button" onClick={() => go({ kind: "cheat" })}><Asterisk size={20} /> Cheat sheet</button>
       </header>
@@ -192,7 +193,7 @@ export default function InterviewNotes({ notes, topics, guides, cheatSheet }: Pr
         <Search size={22} aria-hidden="true" />
         <span className="sr-only">Search notes</span>
         <input ref={searchRef} id="notes-search" type="search" value={query} autoComplete="off" spellCheck={false}
-          placeholder="Search: closure, two sum, fetch, unknown…"
+          placeholder={subject === "System design" ? "Search: cache, queues, storage, retries…" : "Search: closure, two sum, fetch, unknown…"}
           onChange={event => setQuery(event.target.value)}
           onKeyDown={event => {
             if (event.key === "Enter" && results[0]) go({ kind: results[0].kind, id: results[0].id });

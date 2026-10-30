@@ -84,3 +84,17 @@ test("keyword search finds the right topic or guide first", () => {
   assert.deepEqual(searchNotes("zzzz", interviewTopics, interviewGuides), []);
   assert.deepEqual(searchNotes("   ", interviewTopics, interviewGuides), []);
 });
+
+test("system design printed numbers resolve within their own complete set", async () => {
+  const { systemDesignNotes: notes, systemDesignTopics: topics, systemDesignGuides: guides } = await import("../src/data/system-design-notes");
+  assert.deepEqual(notes.map(n => n.number), stickyNotes.map(n => n.number));
+  const ids = topics.map(t => t.id);
+  assert.deepEqual(guides.flatMap(g => g.topics).sort(), [...ids].sort());
+  for (const note of notes) {
+    assert.ok(ids.includes(note.opens.id));
+    const topic = topics.find(t => t.id === note.opens.id)!;
+    assert.ok(topic.tips.length >= 3 && topic.watchOut.length >= 2);
+    assert.deepEqual(routeFromHash('#' + topic.id, notes.length, ids, guides.map(g => g.id)), { kind: "topic", id: topic.id });
+  }
+  assert.equal(searchNotes("cache", topics, guides)[0]?.id, "sd-cache");
+});
