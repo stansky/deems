@@ -1,0 +1,120 @@
+/* Interview note companion: a full-screen reader sized for a tablet beside the interview. */
+.inotes {
+  --code-bg: #fbfbfe;
+  --tok-keyword: #7a2a9c; --tok-string: #1c7346; --tok-comment: #677085; --tok-number: #a8501b;
+  --tok-literal: #1f5bb5; --tok-builtin: #0b737c; --tok-definition: #a3274f;
+  box-sizing: border-box; min-height: 100dvh; max-width: 1440px; margin: 0 auto;
+  padding: max(20px, env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-right, 0px)) max(32px, env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px));
+  background: var(--ui-canvas); color: var(--ui-ink);
+}
+:root[data-theme="dark"] .inotes {
+  --code-bg: #171a23;
+  --tok-keyword: #dca7ff; --tok-string: #8fd8aa; --tok-comment: #8f99ae; --tok-number: #ffb37d;
+  --tok-literal: #94b9ff; --tok-builtin: #79d5de; --tok-definition: #ff9fc2;
+}
+.inotes *, .inotes *::before, .inotes *::after { box-sizing: border-box; }
+.inotes button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; }
+.inotes button:focus-visible { outline: 3px solid var(--ui-link); outline-offset: 2px; }
+.inotes h1, .inotes h2 { text-wrap: balance; }
+
+.inotes-eyebrow { margin: 0 0 4px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ui-muted); }
+.inotes-circle {
+  display: inline-grid; place-items: center; flex: none; width: 56px; height: 56px;
+  border: 2.5px solid currentColor; border-radius: 50%;
+  font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1;
+}
+.inotes-circle-big { width: 76px; height: 76px; font-size: 32px; }
+.inotes-circle-small { width: 34px; height: 34px; font-size: 14px; border-width: 1.75px; }
+
+/* Number pad */
+.inotes-pad { display: grid; grid-template-columns: minmax(300px, 420px) minmax(0, 1fr); gap: 44px; align-items: start; }
+.inotes-entry { position: sticky; top: 20px; display: grid; gap: 12px; }
+.inotes-entry h1 { margin: 0; font-size: 34px; letter-spacing: -.03em; }
+.inotes-lede { margin: 0 0 6px; color: var(--ui-muted); font-size: 15px; line-height: 1.5; }
+.inotes-display {
+  display: flex; align-items: center; gap: 16px; min-height: 104px; padding: 14px 16px;
+  border: 1px solid var(--ui-line); border-radius: 18px; background: var(--ui-surface);
+}
+.inotes-hint { font-size: 18px; font-weight: 650; line-height: 1.35; }
+.inotes-hint-miss { color: var(--ui-error); }
+.inotes-keys { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.inotes-keys button {
+  display: flex; align-items: center; justify-content: center; height: 74px;
+  border: 1px solid var(--ui-line); border-radius: 18px; background: var(--ui-surface);
+  font-size: 30px; font-weight: 750; font-variant-numeric: tabular-nums;
+}
+.inotes-keys button:active { background: var(--ui-raised); }
+.inotes-keys .inotes-key-quiet { font-size: 17px; font-weight: 650; color: var(--ui-muted); }
+.inotes-open {
+  height: 66px; border: 0; border-radius: 18px; background: var(--ui-accent); color: var(--ui-on-accent);
+  font-size: 21px; font-weight: 800;
+}
+.inotes-open:disabled { opacity: .45; cursor: default; }
+
+.inotes-index { columns: 2 280px; column-gap: 32px; padding-top: 6px; }
+.inotes-topic { break-inside: avoid; margin-bottom: 24px; }
+.inotes-topic h2 { margin: 0 0 6px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ui-muted); }
+.inotes-topic ul { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.inotes-topic button {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 50px; padding: 7px 10px;
+  border: 0; border-radius: 12px; background: transparent; text-align: left;
+}
+.inotes-topic button:hover { background: var(--ui-surface); }
+.inotes-index-title { flex: 1; min-width: 0; font-size: 16px; font-weight: 650; }
+.inotes-index-lang { font-size: 13px; color: var(--ui-muted); }
+
+/* Note view */
+.inotes-bar {
+  position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 16px;
+  margin: calc(-1 * max(20px, env(safe-area-inset-top, 0px))) 0 0; padding: max(20px, env(safe-area-inset-top, 0px)) 0 14px;
+  border-bottom: 1px solid var(--ui-line); background: var(--ui-canvas);
+}
+.inotes-heading { min-width: 0; }
+.inotes-heading h1 { margin: 0; font-size: clamp(26px, 3.4vw, 38px); line-height: 1.1; letter-spacing: -.03em; }
+.inotes-nav { display: flex; gap: 8px; margin-left: auto; }
+.inotes-nav button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 52px; min-height: 52px; padding: 0 14px;
+  border: 1px solid var(--ui-line); border-radius: 14px; background: var(--ui-surface); font-weight: 650;
+}
+.inotes-nav button:disabled { opacity: .35; cursor: default; }
+.inotes-summary { max-width: 72ch; margin: 18px 0 22px; font-size: clamp(18px, 2vw, 21px); line-height: 1.5; }
+.inotes-columns { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 26px; align-items: start; }
+.inotes-columns.inotes-no-code { grid-template-columns: minmax(0, 1fr); max-width: 860px; }
+
+.inotes-codeblock { margin: 0 0 18px; overflow: hidden; border: 1px solid var(--ui-line); border-radius: 16px; background: var(--code-bg); }
+.inotes-codeblock figcaption { padding: 10px 16px; border-bottom: 1px solid var(--ui-line); font-size: 13px; font-weight: 700; color: var(--ui-muted); }
+.inotes-codeblock pre {
+  margin: 0; padding: 16px 18px; overflow-x: auto; white-space: pre; word-break: normal; overflow-wrap: normal;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 15.5px; line-height: 1.6; tab-size: 4;
+}
+.tok-keyword { color: var(--tok-keyword); font-weight: 700; }
+.tok-string { color: var(--tok-string); }
+.tok-comment { color: var(--tok-comment); font-style: italic; }
+.tok-number { color: var(--tok-number); }
+.tok-literal { color: var(--tok-literal); font-weight: 600; }
+.tok-builtin { color: var(--tok-builtin); }
+.tok-definition { color: var(--tok-definition); text-decoration: underline; text-underline-offset: 3px; }
+
+.inotes-list h2 { margin: 0 0 8px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ui-muted); }
+.inotes-list ul { display: grid; gap: 9px; margin: 0 0 22px; padding-left: 22px; font-size: 17px; line-height: 1.45; }
+.inotes-list-warn li::marker { color: var(--ui-error); }
+.inotes-say { margin: 0; padding: 16px 18px; border-radius: 16px; background: var(--ui-accent-soft); font-size: 18px; line-height: 1.45; }
+.inotes-say span { display: block; margin-bottom: 4px; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--ui-accent-ink); }
+.inotes-jump {
+  position: fixed; left: 50%; bottom: max(20px, env(safe-area-inset-bottom, 0px)); z-index: 5; transform: translateX(-50%);
+  margin: 0; padding: 10px 18px; border-radius: 999px; background: var(--ui-ink); color: var(--ui-canvas); font-weight: 700;
+}
+
+@media (max-width: 1000px) {
+  .inotes-columns { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 860px) {
+  .inotes-pad { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  .inotes-entry { position: static; }
+}
+@media (max-width: 560px) {
+  .inotes-bar { flex-wrap: wrap; }
+  .inotes-nav { width: 100%; }
+  .inotes-nav .inotes-all { flex: 1; }
+  .inotes-circle { width: 48px; height: 48px; font-size: 20px; }
+}

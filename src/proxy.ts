@@ -18,6 +18,12 @@ function setupResponse(message: string, status: number) {
   });
 }
 
+// The printed-note companion holds only fixed study content, never workspace data. The owner
+// asked for it to stay public so it keeps working if a one-hour session expires mid-interview.
+function isPublicNotesPath(path: string): boolean {
+  return path === "/notes" || path === "/notes/";
+}
+
 function isStaticAssetPath(path: string): boolean {
   return path.startsWith("/brand/") || path.startsWith("/_next/static/") || path === "/_next/image" ||
     path === "/favicon.ico" || path === "/icon.svg";
@@ -41,7 +47,7 @@ export async function proxy(request: NextRequest) {
   if (authEnv instanceof NextResponse) return authEnv;
 
   const path = request.nextUrl.pathname;
-  if (path === "/login" || path === "/signup" || publicLoginPaths.has(path)) return NextResponse.next();
+  if (path === "/login" || path === "/signup" || publicLoginPaths.has(path) || isPublicNotesPath(path)) return NextResponse.next();
 
   const token = getCookie(request, "deems_session");
   if (token) {

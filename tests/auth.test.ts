@@ -275,6 +275,20 @@ test("proxy challenges every unauthenticated dynamic HTML and API route", async 
   }, true);
 });
 
+test("proxy lets only the notes companion page through without a session", async () => {
+  await withProxyAuthEnvironment(async () => {
+    for (const path of ["/notes", "/notes/"]) {
+      const notes = await proxy(new NextRequest(`https://deems.dev${path}`));
+      assert.equal(notes.status, 200, path);
+      assert.equal(notes.headers.get("location"), null, path);
+    }
+    for (const path of ["/notes/12", "/notesx", "/notes/../workspace", "/api/notes"]) {
+      const blocked = await proxy(new NextRequest(`https://deems.dev${path}`));
+      assert.ok(blocked.status === 307 || blocked.status === 401, `${path} must still require sign-in`);
+    }
+  }, true);
+});
+
 test("proxy allows static assets without auth configuration", async () => {
   await withProxyAuthEnvironment(async () => {
     const asset = await proxy(new NextRequest("https://deems.dev/_next/static/chunks/app.js"));
