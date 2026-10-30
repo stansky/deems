@@ -29,8 +29,7 @@
 /* Number pad */
 .inotes-pad { display: grid; grid-template-columns: minmax(300px, 420px) minmax(0, 1fr); gap: 44px; align-items: start; }
 .inotes-entry { position: sticky; top: 20px; display: grid; gap: 12px; }
-.inotes-entry h1 { margin: 0; font-size: 34px; letter-spacing: -.03em; }
-.inotes-lede { margin: 0 0 6px; color: var(--ui-muted); font-size: 15px; line-height: 1.5; }
+.inotes-entry h2, .inotes-index h2, .inotes-topic-cards h2 { margin: 0; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ui-muted); }
 .inotes-display {
   display: flex; align-items: center; gap: 16px; min-height: 104px; padding: 14px 16px;
   border: 1px solid var(--ui-line); border-radius: 18px; background: var(--ui-surface);
@@ -51,17 +50,58 @@
 }
 .inotes-open:disabled { opacity: .45; cursor: default; }
 
-.inotes-index { columns: 2 280px; column-gap: 32px; padding-top: 6px; }
-.inotes-topic { break-inside: avoid; margin-bottom: 24px; }
-.inotes-topic h2 { margin: 0 0 6px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ui-muted); }
-.inotes-topic ul { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
-.inotes-topic button {
+.inotes-index { display: grid; gap: 6px; }
+.inotes-index ul { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 2px 18px; margin: 0; padding: 0; list-style: none; }
+.inotes-index button {
   display: flex; align-items: center; gap: 12px; width: 100%; min-height: 50px; padding: 7px 10px;
   border: 0; border-radius: 12px; background: transparent; text-align: left;
 }
-.inotes-topic button:hover { background: var(--ui-surface); }
+.inotes-index button:hover { background: var(--ui-surface); }
 .inotes-index-title { flex: 1; min-width: 0; font-size: 16px; font-weight: 650; }
 .inotes-index-lang { font-size: 13px; color: var(--ui-muted); }
+
+/* Start page: search and cheat sheet */
+.inotes-home-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+.inotes-home-head h1 { margin: 0; font-size: 34px; letter-spacing: -.03em; }
+.inotes-cheat-button {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 52px; padding: 0 18px;
+  border: 1px solid var(--ui-line); border-radius: 14px; background: var(--ui-surface); font-size: 16px; font-weight: 700;
+}
+.inotes-search {
+  display: flex; align-items: center; gap: 12px; min-height: 64px; margin-bottom: 24px; padding: 0 18px;
+  border: 1.5px solid var(--ui-line-strong); border-radius: 18px; background: var(--ui-surface); color: var(--ui-muted);
+}
+.inotes-search:focus-within { border-color: var(--ui-link); }
+.inotes-search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--ui-ink); font: inherit; font-size: 20px; }
+.inotes-results ul { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.inotes-results button {
+  display: grid; gap: 3px; width: 100%; padding: 14px 18px; text-align: left;
+  border: 1px solid var(--ui-line); border-radius: 16px; background: var(--ui-surface);
+}
+.inotes-results strong { font-size: 19px; }
+.inotes-results button > span:last-child { color: var(--ui-muted); font-size: 15px; line-height: 1.4; }
+.inotes-result-kind { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ui-link); }
+.inotes-keys-help { margin: 28px 0 0; font-size: 13px; color: var(--ui-muted); }
+
+/* Cheat sheet: tables two per row on wide screens, slightly denser */
+.inotes-cheat .inotes-sections { grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); align-items: start; gap: 20px 22px; }
+.inotes-cheat .inotes-table { font-size: 14.5px; }
+.inotes-cheat .inotes-table td { padding: 6px 10px; }
+.inotes-cheat .inotes-table th { padding: 8px 10px; }
+.inotes-cheat .inotes-inline { font-size: 13px; }
+.inotes-cheat .inotes-points .inotes-list ul { font-size: 15px; }
+
+/* Topic page: code at full width, then the lists side by side */
+.inotes-topic-page .inotes-codeblock pre { font-size: 15px; }
+.inotes-topic-lists { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 8px 28px; margin-top: 8px; }
+.inotes-topic-cards { display: grid; gap: 8px; margin-top: 26px; }
+.inotes-topic-cards ul { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+.inotes-topic-cards button {
+  display: grid; gap: 4px; width: 100%; height: 100%; padding: 14px 16px; text-align: left;
+  border: 1px solid var(--ui-line); border-radius: 16px; background: var(--ui-surface);
+}
+.inotes-topic-cards strong { font-size: 17px; }
+.inotes-topic-cards button > span { font-size: 14.5px; line-height: 1.4; color: var(--ui-muted); }
 
 /* Note view */
 .inotes-bar {
@@ -112,7 +152,7 @@
   display: inline-flex; align-items: center; gap: 8px; min-height: 46px; padding: 0 16px;
   border: 1px solid var(--ui-line); border-radius: 999px; background: var(--ui-surface); font-weight: 650;
 }
-.inotes-circle-guide { color: var(--ui-link); }
+.inotes-circle-icon { color: var(--ui-link); }
 
 /* Guide pages: dense enough to read a whole topic in one to three screens */
 .inotes-guide-page .inotes-summary { margin-bottom: 16px; }
@@ -126,19 +166,8 @@
 .inotes-table tr:first-child td { border-top: 0; }
 .inotes-table td:first-child { font-weight: 650; }
 .inotes-inline { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 14px; white-space: pre-wrap; }
-.inotes-compare { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
-.inotes-compare .inotes-codeblock { margin: 0; }
-.inotes-compare .inotes-codeblock pre { padding: 12px 16px; font-size: 14px; line-height: 1.5; }
 .inotes-points { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 8px 32px; }
 .inotes-points .inotes-list ul { margin-bottom: 0; font-size: 16px; gap: 7px; }
-.inotes-covered { margin-top: 26px; padding-top: 16px; border-top: 1px solid var(--ui-line); }
-.inotes-covered h2 { margin: 0 0 10px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ui-muted); }
-.inotes-covered ul { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.inotes-covered button {
-  display: inline-flex; align-items: center; gap: 8px; min-height: 46px; padding: 4px 14px 4px 6px;
-  border: 1px solid var(--ui-line); border-radius: 999px; background: var(--ui-surface); font-weight: 650;
-}
-.inotes-covered small { font-size: 12px; font-weight: 500; color: var(--ui-muted); }
 
 /* Guide list on the number pad page */
 .inotes-browse { display: grid; gap: 26px; min-width: 0; }
@@ -154,7 +183,6 @@
 
 @media (max-width: 1000px) {
   .inotes-columns { grid-template-columns: minmax(0, 1fr); }
-  .inotes-compare { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 860px) {
   .inotes-pad { grid-template-columns: minmax(0, 1fr); gap: 28px; }

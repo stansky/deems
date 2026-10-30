@@ -1,34 +1,28 @@
-import type { NoteLanguage } from "@/data/interview-notes";
-
-// Small static highlighter for short Python and JavaScript snippets. It labels comments,
-// strings, numbers, keywords, literals, built-ins, and names being defined. Joining the
-// token texts always reproduces the source exactly.
+// Small static highlighter for short TypeScript snippets. It labels comments, strings, numbers,
+// keywords, literals, built-in types and globals, and names being declared. Joining the token
+// texts always reproduces the source exactly.
 export type CodeTokenKind = "plain" | "keyword" | "string" | "comment" | "number" | "literal" | "builtin" | "definition";
 export type CodeToken = { text: string; kind: CodeTokenKind };
 
-const keywords: Record<NoteLanguage, Set<string>> = {
-  python: new Set(["and", "as", "assert", "async", "await", "break", "class", "continue", "def", "del", "elif", "else", "except", "finally", "for", "from", "global", "if", "import", "in", "is", "lambda", "nonlocal", "not", "or", "pass", "raise", "return", "try", "while", "with", "yield"]),
-  javascript: new Set(["async", "await", "break", "case", "catch", "class", "const", "continue", "default", "delete", "do", "else", "export", "extends", "finally", "for", "function", "if", "import", "in", "instanceof", "let", "new", "of", "return", "static", "switch", "throw", "try", "typeof", "var", "while", "yield"]),
-};
+const keywords = new Set([
+  "abstract", "as", "async", "await", "break", "case", "catch", "class", "const", "continue", "default",
+  "delete", "do", "else", "enum", "export", "extends", "finally", "for", "function", "if", "implements",
+  "import", "in", "infer", "instanceof", "interface", "is", "keyof", "let", "new", "of", "private",
+  "protected", "public", "readonly", "return", "satisfies", "static", "switch", "throw", "try", "type",
+  "typeof", "var", "while", "yield",
+]);
+const literals = new Set(["true", "false", "null", "undefined", "NaN", "Infinity", "this", "super"]);
+const builtins = new Set([
+  "string", "number", "boolean", "unknown", "never", "any", "void", "object", "bigint", "symbol",
+  "Array", "BigInt", "Boolean", "Date", "Error", "JSON", "Map", "Math", "Number", "Object", "Promise",
+  "RangeError", "Record", "Partial", "Required", "Readonly", "Pick", "Omit", "ReturnType", "Parameters",
+  "Awaited", "NonNullable", "Response", "Set", "String", "TypeError", "AbortSignal", "console", "fetch",
+  "setTimeout", "clearTimeout", "structuredClone",
+]);
+const declarers = new Set(["class", "function", "interface", "type", "enum"]);
+const pattern = /(\/\/[^\n]*)|("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'|`(?:\\.|[^`\\])*`)|(\b\d[\d_]*(?:\.\d+)?(?:e[+-]?\d+)?n?\b)|([A-Za-z_$][\w$]*)/g;
 
-const literals: Record<NoteLanguage, Set<string>> = {
-  python: new Set(["True", "False", "None", "self"]),
-  javascript: new Set(["true", "false", "null", "undefined", "NaN", "this", "super"]),
-};
-
-const builtins: Record<NoteLanguage, Set<string>> = {
-  python: new Set(["abs", "all", "any", "bool", "dict", "enumerate", "int", "isinstance", "len", "list", "max", "min", "next", "print", "range", "repr", "reversed", "set", "sorted", "str", "sum", "tuple", "zip", "Exception", "ValueError", "Counter", "defaultdict", "deque", "cache"]),
-  javascript: new Set(["Array", "BigInt", "Boolean", "Error", "JSON", "Map", "Math", "Number", "Object", "Promise", "RangeError", "Response", "Set", "String", "TypeError", "AbortSignal", "console", "fetch", "encodeURIComponent"]),
-};
-
-const patterns: Record<NoteLanguage, RegExp> = {
-  python: /(#[^\n]*)|([rbfuRBFU]{0,2}(?:"""[\s\S]*?"""|'''[\s\S]*?'''|"(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'))|(\b\d[\d_]*(?:\.\d+)?(?:e[+-]?\d+)?\b)|([A-Za-z_][\w]*)/g,
-  javascript: /(\/\/[^\n]*)|("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'|`(?:\\.|[^`\\])*`)|(\b\d[\d_]*(?:\.\d+)?(?:e[+-]?\d+)?n?\b)|([A-Za-z_$][\w$]*)/g,
-};
-
-const definers = new Set(["def", "class", "function"]);
-
-export function highlightCode(source: string, language: NoteLanguage): CodeToken[] {
+export function highlightCode(source: string): CodeToken[] {
   const tokens: CodeToken[] = [];
   const push = (text: string, kind: CodeTokenKind) => {
     if (!text) return;
@@ -36,31 +30,31 @@ export function highlightCode(source: string, language: NoteLanguage): CodeToken
     if (last && last.kind === kind && kind === "plain") last.text += text;
     else tokens.push({ text, kind });
   };
-  const pattern = new RegExp(patterns[language].source, "g");
   let cursor = 0;
-  let defineNext = false;
-  for (const match of source.matchAll(pattern)) {
+  let declareNext = false;
+  for (const match of source.matchAll(new RegExp(pattern.source, "g"))) {
     const start = match.index ?? 0;
     push(source.slice(cursor, start), "plain");
     const [text, comment, string, number, word] = match;
+    cursor = start + text.length;
     if (comment) push(text, "comment");
     else if (string) push(text, "string");
     else if (number) push(text, "number");
     else if (word) {
       const afterDot = source[start - 1] === ".";
+      // An object or type member name (`type: "x"`, `id?: number`) is not a keyword.
+      const isMemberName = /^\??:(?!:)/.test(source.slice(cursor).trimStart()) && word !== "default";
       let kind: CodeTokenKind = "plain";
-      if (defineNext) kind = "definition";
-      else if (afterDot) kind = "plain";
-      else if (keywords[language].has(word)) kind = "keyword";
-      else if (literals[language].has(word)) kind = "literal";
-      else if (builtins[language].has(word)) kind = "builtin";
+      if (declareNext && !keywords.has(word)) kind = "definition";
+      else if (afterDot || isMemberName) kind = "plain";
+      else if (keywords.has(word)) kind = "keyword";
+      else if (literals.has(word)) kind = "literal";
+      else if (builtins.has(word)) kind = "builtin";
       push(text, kind);
-      defineNext = !afterDot && definers.has(word);
-      cursor = start + text.length;
+      declareNext = kind === "keyword" && declarers.has(word);
       continue;
     }
-    defineNext = false;
-    cursor = start + text.length;
+    declareNext = false;
   }
   push(source.slice(cursor), "plain");
   return tokens;

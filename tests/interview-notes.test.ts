@@ -1,84 +1,86 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { guideForNote, interviewGuides } from "../src/data/interview-guides";
-import { interviewNoteByNumber, interviewNotes } from "../src/data/interview-notes";
+import { cheatSheet, interviewGuides } from "../src/data/interview-guides";
+import { stickyNotes } from "../src/data/interview-notes";
+import { interviewTopics, topicById } from "../src/data/interview-topics";
 import { highlightCode } from "../src/lib/highlight-code";
 import { hashForRoute, isUnambiguousNoteNumber, noteNumberFromHash, routeFromHash } from "../src/lib/note-number";
+import { searchNotes } from "../src/lib/notes-search";
 
-test("guides cover every note exactly once, in order, with routable ids", () => {
-  const covered = interviewGuides.flatMap(guide =>
-    Array.from({ length: guide.lastNote - guide.firstNote + 1 }, (_, index) => guide.firstNote + index));
-  assert.deepEqual(covered, interviewNotes.map(note => note.number));
-  for (const guide of interviewGuides) {
-    assert.match(guide.id, /^[a-z][a-z-]*$/, "guide ids must not look like note numbers");
-    for (const section of guide.sections) {
-      if (section.kind === "table") {
-        assert.equal(section.languages.length, section.headers.length, `${guide.id}: ${section.title}`);
-        for (const row of section.rows) assert.equal(row.length, section.headers.length, `${guide.id}: ${row[0]}`);
-      }
-      if (section.kind === "compare") {
-        assert.equal(highlightCode(section.python, "python").map(token => token.text).join(""), section.python);
-        assert.equal(highlightCode(section.javascript, "javascript").map(token => token.text).join(""), section.javascript);
-      }
-    }
-  }
-  assert.equal(guideForNote(1)?.id, "loops");
-  assert.equal(guideForNote(17)?.id, "collections");
-});
+const topicIds = interviewTopics.map(topic => topic.id);
+const guideIds = interviewGuides.map(guide => guide.id);
 
-test("hash routes open notes, guides, or the number pad", () => {
-  const ids = interviewGuides.map(guide => guide.id);
-  assert.deepEqual(routeFromHash("#12", 39, ids), { kind: "note", number: 12 });
-  assert.deepEqual(routeFromHash("#loops", 39, ids), { kind: "guide", id: "loops" });
-  assert.equal(routeFromHash("#nope", 39, ids), null);
-  assert.equal(routeFromHash("", 39, ids), null);
-  assert.equal(hashForRoute({ kind: "guide", id: "traps" }), "traps");
-  assert.equal(hashForRoute({ kind: "note", number: 5 }), "5");
-  assert.equal(hashForRoute(null), "");
-});
-
-test("interview notes are numbered 1 to n with unique ids and matching code languages", () => {
-  assert.deepEqual(interviewNotes.map(note => note.number), interviewNotes.map((_, index) => index + 1));
-  assert.equal(new Set(interviewNotes.map(note => note.id)).size, interviewNotes.length);
-  for (const note of interviewNotes) {
-    assert.ok(note.title && note.summary && note.tips.length, `note ${note.number} needs a title, summary and tips`);
-    for (const block of note.code) {
-      if (note.language !== "any") assert.equal(block.language, note.language, `note ${note.number} mixes languages`);
-    }
-  }
-  assert.equal(interviewNoteByNumber(17)?.id, "two-sum-py");
-  assert.equal(interviewNoteByNumber(interviewNotes.length + 1), undefined);
-});
-
-test("highlighting keeps every snippet's text exactly", () => {
-  for (const note of interviewNotes) {
-    for (const block of note.code) {
-      assert.equal(highlightCode(block.source, block.language).map(token => token.text).join(""), block.source);
-    }
+test("ten printed notes, numbered 1 to 10, each opening a real topic or guide", () => {
+  assert.deepEqual(stickyNotes.map(note => note.number), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  for (const note of stickyNotes) {
+    const ids = note.opens.kind === "topic" ? topicIds : guideIds;
+    assert.ok(ids.includes(note.opens.id), `note ${note.number} opens ${note.opens.id}`);
+    assert.ok(note.text.startsWith("**"), `note ${note.number} starts with a bold label`);
+    assert.ok(note.text.split("\n").length <= (note.size === 80 ? 13 : 18), `note ${note.number} fits its label`);
   }
 });
 
-test("highlighting marks keywords, definitions, strings, comments and properties", () => {
-  const python = highlightCode('def fib(n):\n    return "x"  # done', "python");
-  assert.deepEqual(python.filter(token => token.kind !== "plain").map(token => [token.kind, token.text]), [
-    ["keyword", "def"], ["definition", "fib"], ["keyword", "return"], ["string", '"x"'], ["comment", "# done"],
-  ]);
-  const js = highlightCode("const m = new Map(); m.get(1); // ok", "javascript");
-  const kinds = Object.fromEntries(js.filter(token => token.kind !== "plain").map(token => [token.text, token.kind]));
-  assert.equal(kinds.const, "keyword");
+test("every topic belongs to exactly one guide and ids never collide", () => {
+  const listed = interviewGuides.flatMap(guide => guide.topics);
+  assert.deepEqual([...listed].sort(), [...topicIds].sort());
+  assert.equal(new Set(listed).size, listed.length);
+  for (const topic of interviewTopics) {
+    assert.ok(guideIds.includes(topic.guide));
+    assert.ok(interviewGuides.find(guide => guide.id === topic.guide)?.topics.includes(topic.id));
+  }
+  const all = [...topicIds, ...guideIds, "cheat"];
+  assert.equal(new Set(all).size, all.length);
+  for (const id of all) assert.match(id, /^[a-z][a-z-]*$/, "ids must not look like note numbers");
+  for (const section of [...interviewGuides.flatMap(guide => guide.sections), ...cheatSheet.sections]) {
+    if (section.kind !== "table") continue;
+    assert.equal(section.code.length, section.headers.length, section.title);
+    for (const row of section.rows) assert.equal(row.length, section.headers.length, `${section.title}: ${row[0]}`);
+  }
+});
+
+test("highlighting keeps every snippet's text and marks TypeScript syntax", () => {
+  for (const topic of interviewTopics) {
+    for (const block of topic.code) {
+      assert.equal(highlightCode(block.source).map(token => token.text).join(""), block.source, topic.id);
+    }
+  }
+  const tokens = highlightCode('interface User { type: string; id?: number }\nconst m = new Map<string, number>(); // ok');
+  const kinds = Object.fromEntries(tokens.filter(token => token.kind !== "plain").map(token => [token.text, token.kind]));
+  assert.equal(kinds.interface, "keyword");
+  assert.equal(kinds.User, "definition");
+  assert.equal(kinds.type, undefined, "a member named type stays plain");
+  assert.equal(kinds.string, "builtin");
   assert.equal(kinds.Map, "builtin");
-  assert.equal(kinds["1"], "number");
-  assert.equal(kinds.get, undefined, "a property after a dot stays plain");
+  assert.equal(kinds.const, "keyword");
   assert.equal(kinds["// ok"], "comment");
 });
 
-test("note numbers open from the hash and as soon as typing is unambiguous", () => {
-  assert.equal(noteNumberFromHash("#12", 39), 12);
-  assert.equal(noteNumberFromHash("#40", 39), null);
-  assert.equal(noteNumberFromHash("#1.5", 39), null);
-  assert.equal(noteNumberFromHash("", 39), null);
-  assert.equal(isUnambiguousNoteNumber("3", 39), false, "30 to 39 still possible");
-  assert.equal(isUnambiguousNoteNumber("4", 39), true);
-  assert.equal(isUnambiguousNoteNumber("12", 39), true);
-  assert.equal(isUnambiguousNoteNumber("45", 39), false);
+test("hash routes open notes, topics, guides, and the cheat sheet", () => {
+  assert.deepEqual(routeFromHash("#3", 10, topicIds, guideIds), { kind: "note", number: 3 });
+  assert.equal(routeFromHash("#11", 10, topicIds, guideIds), null);
+  assert.deepEqual(routeFromHash("#two-sum", 10, topicIds, guideIds), { kind: "topic", id: "two-sum" });
+  assert.deepEqual(routeFromHash("#patterns", 10, topicIds, guideIds), { kind: "guide", id: "patterns" });
+  assert.deepEqual(routeFromHash("#cheat", 10, topicIds, guideIds), { kind: "cheat" });
+  assert.equal(routeFromHash("", 10, topicIds, guideIds), null);
+  assert.equal(routeFromHash("#%", 10, topicIds, guideIds), null);
+  assert.equal(routeFromHash("#%E0%A4", 10, topicIds, guideIds), null);
+  assert.equal(hashForRoute({ kind: "cheat" }), "cheat");
+  assert.equal(hashForRoute({ kind: "topic", id: "bfs" }), "bfs");
+  assert.equal(noteNumberFromHash("#10", 10), 10);
+  assert.equal(isUnambiguousNoteNumber("1", 10), false, "1 waits for 10");
+  assert.equal(isUnambiguousNoteNumber("2", 10), true);
+  assert.equal(isUnambiguousNoteNumber("10", 10), true);
+});
+
+test("keyword search finds the right topic or guide first", () => {
+  const top = (query: string) => searchNotes(query, interviewTopics, interviewGuides)[0]?.id;
+  assert.equal(top("debounce"), "debounce");
+  assert.equal(top("two sum"), "two-sum");
+  assert.equal(top("closure"), "js-closures");
+  assert.equal(top("unknown"), "ts-unknown");
+  assert.equal(top("sliding window"), "sliding-window");
+  assert.equal(top("patterns"), "patterns");
+  assert.equal(topicById(top("fetch") ?? "")?.guide, "practical");
+  assert.deepEqual(searchNotes("zzzz", interviewTopics, interviewGuides), []);
+  assert.deepEqual(searchNotes("   ", interviewTopics, interviewGuides), []);
 });
