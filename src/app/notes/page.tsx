@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import InterviewNotes from "@/components/features/notes/interview-notes";
+import { interviewGuides } from "@/data/interview-guides";
 import { interviewNotes } from "@/data/interview-notes";
 import "./notes.css";
 
@@ -12,7 +13,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover" };
 
-// Every note ships with the page, so moving between notes never needs the network.
+// Every note and guide ships with the page, so moving between them never needs the network.
 export default function NotesPage() {
-  return <InterviewNotes notes={interviewNotes} />;
+  return <InterviewNotes notes={interviewNotes} guides={interviewGuides} />;
 }
