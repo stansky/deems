@@ -21,6 +21,7 @@ docs/*
 !docs/deployment.md
 !docs/practice-evidence.md
 !docs/coding-practice.md
+!docs/course-content-provenance.md
 !docs/lms-dashboard-implementation-plan.md
 !docs/vendor/
 
