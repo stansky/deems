@@ -156,7 +156,8 @@
 
 /* Guide pages: dense enough to read a whole topic in one to three screens */
 .inotes-guide-page .inotes-summary { margin-bottom: 16px; }
-.inotes-sections { display: grid; gap: 22px; }
+.inotes-sections { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; }
+.inotes-block { min-width: 0; }
 .inotes-block h2 { margin: 0 0 10px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ui-muted); }
 .inotes-block-note { margin: 10px 0 0; font-size: 16px; color: var(--ui-muted); }
 .inotes-table-wrap { overflow-x: auto; border: 1px solid var(--ui-line); border-radius: 16px; background: var(--ui-surface); }
