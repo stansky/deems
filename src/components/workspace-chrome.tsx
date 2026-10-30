@@ -3,7 +3,6 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { Check, ChevronDown, LogOut, UserRound } from "lucide-react";
 import { DeemsBrand } from "./brand";
-import { ThemeControl } from "./theme";
 import type { StudyTab } from "@/contracts/study";
 import type { PrepCategory } from "./features/prep/prep-library";
 import "./workspace-chrome.css";
@@ -49,10 +48,9 @@ export function WorkspaceHeader({ view, studyTab, category, authenticated, onSig
   return <header ref={header} className={`learning-header desk-header workspace-header${view === "Algorithms" ? " workspace-header-workbench" : ""}`}>
     <button className="learning-brand" aria-label="Deems home" onClick={() => go(() => onNavigate("Home"))}><DeemsBrand /></button>
     <nav className="desk-navigation" aria-label="Workspace sections">{items.map(item => item.id === "practice" ? <details key={item.id} className="workspace-practice-menu" name="deems-header-menu"><summary className={active === "practice" ? "is-active" : ""} aria-current={active === "practice" ? "true" : undefined}>Practice<ChevronDown size={13} /></summary><nav className="desk-menu" aria-label="Practice formats">{practiceItems.map(entry => <button key={entry.label} onClick={() => go(entry.action)} aria-current={active === "practice" && entry.selected ? "page" : undefined}><span>{entry.label}</span>{active === "practice" && entry.selected && <Check size={15} aria-hidden="true" />}</button>)}</nav></details> : <button key={item.id} className={active === item.id ? "is-active" : ""} aria-current={active === item.id ? "page" : undefined} onClick={() => go(item.action)}>{item.label}</button>)}</nav>
-    <div className="workspace-utilities"><details className="workspace-account" name="deems-header-menu"><summary aria-label="Workspace menu"><UserRound size={19} /><ChevronDown size={12} /></summary><div className="desk-menu">
-      <div className="workspace-account-theme"><span>Appearance</span><ThemeControl /></div>
+    <div className="workspace-utilities">{authenticated && <details className="workspace-account" name="deems-header-menu"><summary aria-label="Workspace menu"><UserRound size={19} /><ChevronDown size={12} /></summary><div className="desk-menu">
       {authenticated && <button onClick={() => go(onSignOut)}><LogOut size={16} />Sign out</button>}
-    </div></details></div>
+    </div></details>}</div>
   </header>;
 }
 

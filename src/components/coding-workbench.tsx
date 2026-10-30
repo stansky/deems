@@ -9,7 +9,7 @@ import { Button } from "./ui";
 import "./coding-workbench.css";
 
 const labels: Record<CodingAttempt["status"],string> = { queued:"Run in progress", passed:"Tests passed", wrong_answer:"Check your result", runtime_error:"Program error", time_limit:"Time limit exceeded", runner_error:"Run unavailable" };
-export function CodingWorkbench({ questionId, language }: { questionId: string; language: CodingLanguage }) {
+export function CodingWorkbench({ questionId, language, fill = false }: { questionId: string; language: CodingLanguage; fill?: boolean }) {
   const definition = codingDefinition(questionId);
   const starter = definition?.starter[language] ?? "";
   const draftKey = `coding-draft-v1:${questionId}:${language}`;
@@ -72,10 +72,11 @@ export function CodingWorkbench({ questionId, language }: { questionId: string; 
     } finally { window.clearTimeout(deadline); if (live.current) setPending(false); }
   }
   if (!definition) return <p className="coding-not-supported">Executable tests are not available for this problem yet.</p>;
-  return <section className="coding-workbench" aria-label="Coding practice">
+  return <section className={`coding-workbench${fill ? " coding-workbench-fill" : ""}`} aria-label="Coding practice">
     <div className="coding-workbench-heading"><h3>Your solution</h3><span>{language === "python" ? "Python" : "JavaScript"}</span><button className="coding-history-button" onClick={()=>setHistoryOpen(open=>!open)} aria-expanded={historyOpen}><History size={15}/>Saved runs{attempts.length>0 && <span>{attempts.length}</span>}</button></div>
-    {ready && <CodeEditor value={code} onChange={update} language={language}/>}
+    {ready && <CodeEditor value={code} onChange={update} language={language} fill={fill}/>}
     <div className="coding-actions"><span>{draftError ? "Browser draft could not be saved." : "Draft kept in this tab"}</span><Button variant="secondary" disabled={pending || checking || !configured || !problem || !code.trim() || code.length>32000} onClick={()=>run("examples")}><Play size={14}/>Run examples</Button><Button disabled={pending || checking || !configured || !problem || !code.trim() || code.length>32000} onClick={()=>run("submit")}>{pending ? <Loader2 className="spin" size={14}/> : <Send size={14}/>}Submit tests</Button></div>
+    <div className="coding-status-dock">
     {pending && <div className="coding-run-status" role="status"><Loader2 className="spin" size={16}/>Running your solution…</div>}
     {!checking && !configured && !error && <p className="coding-availability">The code runner is not connected yet. You can write your solution and keep a draft here.</p>}
     {checking && <p className="coding-availability" role="status">Loading saved runs…</p>}
@@ -84,6 +85,7 @@ export function CodingWorkbench({ questionId, language }: { questionId: string; 
     {result && <RunResult result={result} current={result.code===code && result.language===language} saved={saved}/>}
     {problem && !result && <details className="coding-examples"><summary>Example tests <span>{problem.examples.length} examples · {problem.totalCases} total tests</span><ChevronDown size={14}/></summary>{problem.examples.map(test=><div key={test.id}><strong>{test.name}</strong><p>Input <code>{JSON.stringify(test.args)}</code></p><p>Expected <code>{JSON.stringify(test.expected)}</code></p></div>)}</details>}
     {historyOpen && <section className="coding-history" aria-label="Saved coding runs"><div className="coding-history-heading"><h4>Saved runs</h4><Button variant="ghost" onClick={load} disabled={checking || pending}><RotateCcw size={13}/>Refresh</Button></div>{attempts.length===0 ? <p>No saved runs yet. Run examples or submit your solution to start.</p> : attempts.map(item=><div className="coding-history-row" key={item.attemptId}><span className={`coding-result-dot ${item.status}`}/><div><strong>{labels[item.status]}</strong><span>{item.language === "python" ? "Python" : "JavaScript"} · {item.mode === "examples" ? "Examples" : "Full suite"} · {new Date(item.createdAt).toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}</span></div><button onClick={()=>{setResult(item);setSaved(true);}}>Results</button>{item.language===language && <button onClick={()=>{setUndo(code);update(item.code);setResult(item);setSaved(true);}}>Load code</button>}</div>)}{undo!==null && <button className="coding-undo" onClick={()=>{update(undo);setUndo(null);}}>Undo code replacement</button>}</section>}
+    </div>
   </section>;
 }
 function RunResult({result,current,saved}:{result:CodingAttempt;current:boolean;saved:boolean}) {

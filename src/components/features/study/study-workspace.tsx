@@ -1,5 +1,9 @@
 "use client";
 
+import { QuestionSession, SessionAction, ReadOnlyCode } from "@/components/features/learning/question-session";
+import { recallContexts } from "@/data/practice-context";
+import { recallDraftKey, recallDraftSchema } from "@/contracts/review-draft";
+import { ChevronDown, Lightbulb } from "lucide-react";
 import { workspaceSessionStorage } from "@/components/workspace-client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -476,70 +480,20 @@ function LessonStudy({ course, lesson, draft, setDraft, headingRef, onBack, onSt
   saveError: string;
   saving: boolean;
 }) {
-  const [showWhy, setShowWhy] = useState(false);
-  useEffect(() => { setShowWhy(false); }, [draft.checkIndex, draft.feedback]);
   const guide = cheatSheets.find(item => item.id === lesson.guideId);
-  const quizOnly = draft.quizOnly === true;
-  useEffect(() => {
-    requestAnimationFrame(() => headingRef.current?.focus());
-  }, [draft.sectionIndex, draft.checkIndex, draft.inChecks, headingRef]);
+  useEffect(() => { requestAnimationFrame(() => headingRef.current?.focus()); }, [draft.sectionIndex, draft.checkIndex, draft.inChecks, headingRef]);
   if (!guide) return <div className="study-workspace"><p role="alert">The guide for this lesson is unavailable.</p><button type="button" onClick={onBack}>Return to course</button></div>;
-  const readingComplete = draft.sectionIndex >= guide.sections.length;
   const checksComplete = draft.inChecks && draft.checkIndex >= lesson.checks.length;
   const check = lesson.checks[draft.checkIndex];
-  const currentSection = guide.sections[draft.sectionIndex];
-  const totalSteps = quizOnly ? lesson.checks.length : guide.sections.length + lesson.checks.length;
-  const currentStep = draft.inChecks
-    ? (quizOnly ? draft.checkIndex + 1 : guide.sections.length + draft.checkIndex + 1)
-    : Math.min(draft.sectionIndex + 1, guide.sections.length);
-  const progressPercent = Math.min(100, totalSteps ? ((currentStep - 1) / totalSteps) * 100 : 0);
+  const section = guide.sections[draft.sectionIndex];
+  const source = check && guide.sections.find(item => item.title === check.sourceSectionTitle);
   const correctCount = draft.results.filter(result => result.correct).length;
   const revealedCount = draft.results.filter(result => result.revealed).length;
-
-  return <div className="study-workspace sw-lesson-screen">
-    <div className="sw-lesson-topline"><button type="button" className="sw-close-lesson" onClick={onBack} aria-label="Close lesson"><X size={20} /><span>Close lesson</span></button><span className="sw-lesson-name">{lesson.title}</span><span>{quizOnly ? "Question" : "Step"} {Math.min(currentStep, totalSteps)} of {totalSteps}</span></div>
-    <div className="sw-lesson-progress" role="progressbar" aria-label="Lesson progress" aria-valuemin={0} aria-valuemax={totalSteps} aria-valuenow={Math.min(currentStep - 1, totalSteps)} aria-valuetext={`${Math.max(0, Math.round(progressPercent))}%`}><span style={{ width: `${progressPercent}%` }} /></div>
-    <article className="sw-lesson-content">
-      {!draft.inChecks && !readingComplete && currentSection && <>
-        <p className="sw-eyebrow">{guide.category} · Section {draft.sectionIndex + 1} of {guide.sections.length}</p>
-        <h1 ref={headingRef} tabIndex={-1}>{currentSection.title}</h1>
-        {draft.sectionIndex === 0 && <p className="sw-lesson-description">{lesson.description}</p>}
-        <div className="sw-reading-copy"><p>{currentSection.body}</p>
-          {currentSection.bullets?.length ? <ul>{currentSection.bullets.map(item => <li key={item}>{item}</li>)}</ul> : null}
-          {currentSection.code && <pre><code>{currentSection.code}</code></pre>}
-        </div>
-        {guide.sources?.length ? <div className="sw-inline-sources"><span>Related sources</span>{guide.sources.map(source => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{source.title}<ExternalLink size={13} /></a>)}</div> : null}
-        <div className="sw-lesson-actions"><button type="button" className="sw-primary-button" onClick={() => draft.sectionIndex + 1 < guide.sections.length ? setDraft(current => ({ ...current, sectionIndex: current.sectionIndex + 1 })) : onStartChecks()}>{draft.sectionIndex + 1 < guide.sections.length ? "Continue" : "Start the checks"}<ArrowRight size={17} /></button></div>
-      </>}
-      {draft.inChecks && !checksComplete && check && <>
-        <p className="sw-eyebrow">{quizOnly ? `Question ${draft.checkIndex + 1} of ${lesson.checks.length}` : `Check ${draft.checkIndex + 1} of ${lesson.checks.length}`}</p>
-        <h1 ref={headingRef} tabIndex={-1}>{check.prompt}</h1>
-        <p className="sw-check-source">From the guide section: <strong>{check.sourceSectionTitle}</strong></p>
-        <fieldset className={`sw-answer-options is-${draft.feedback}`} disabled={draft.feedback !== "idle"}>
-          <legend>Choose one answer</legend>
-          {check.options.map(option => <label key={option.id} className={`sw-answer-option ${draft.selectedOptionId === option.id ? "is-selected" : ""} ${draft.feedback === "incorrect" && option.id === draft.selectedOptionId ? "is-incorrect" : ""} ${(draft.feedback === "correct" || draft.feedback === "revealed") && option.id === check.answerId ? "is-correct" : ""}`}>
-            <input type="radio" name={`study-check-${check.id}`} value={option.id} checked={draft.selectedOptionId === option.id} onChange={() => setDraft(current => ({ ...current, selectedOptionId: option.id }))} />
-            <span>{option.text}</span>
-          </label>)}
-        </fieldset>
-        {draft.feedback === "incorrect" && <div className="sw-feedback sw-feedback-incorrect" role="status"><strong><X size={17} />Not quite. Try another answer, or review the explanation.</strong><div><button type="button" onClick={onRetry}><RotateCcw size={15} />Try again</button><button type="button" onClick={onReveal}>See explanation<ArrowRight size={15} /></button></div></div>}
-        {draft.feedback === "correct" && <div className="sw-feedback sw-feedback-correct" role="status"><div className="sw-feedback-copy"><strong><CheckCircle2 size={18} />Correct</strong>{showWhy && <p>{check.explanation}</p>}</div><div className="sw-feedback-actions"><button type="button" className="sw-why-button" aria-expanded={showWhy} onClick={() => setShowWhy(value => !value)}>{showWhy ? "Hide why" : "Why?"}</button><button type="button" className="sw-continue-button" onClick={onContinue}>Continue<ArrowRight size={17} /></button></div></div>}
-        {draft.feedback === "revealed" && <div className="sw-feedback sw-feedback-revealed" role="status"><strong><BookOpen size={17} />Answer revealed</strong><p>{check.options.find(option => option.id === check.answerId)?.text} {check.explanation}</p></div>}
-        <div className="sw-lesson-actions">
-          {draft.feedback === "idle" ? <><button type="button" className="sw-check-button" onClick={onSubmit} disabled={!draft.selectedOptionId}>Check answer<Check size={16} /></button><button type="button" className="sw-reset-selection" onClick={onRetry} disabled={!draft.selectedOptionId}>Reset selection</button></> : draft.feedback === "incorrect" || draft.feedback === "correct" ? null : <button type="button" className="sw-continue-button" onClick={onContinue}>Continue<ArrowRight size={17} /></button>}
-        </div>
-      </>}
-      {checksComplete && <>
-        <div className="sw-completion-icon"><CheckCircle2 size={27} /></div>
-        <p className="sw-eyebrow">Ready to save</p>
-        <h1 ref={headingRef} tabIndex={-1}>{lesson.title}</h1>
-        <p className="sw-completion-copy">Save this session to mark the {quizOnly ? "quiz" : "lesson"} complete. This records reviewed checks, not mastery.</p>
-        <div className="sw-check-summary"><span><strong>{correctCount}</strong><small>Correct</small></span><span><strong>{revealedCount}</strong><small>Explanations opened</small></span><span><strong>{lesson.checks.length}</strong><small>Checks reviewed</small></span></div>
-        {saveError && <p className="sw-save-error" role="alert">{saveError}</p>}
-        <div className="sw-lesson-actions"><button type="button" className="sw-check-button" onClick={onFinish} disabled={saving}>{saving ? "Saving progress…" : "Save progress"}<Check size={17} /></button></div>
-      </>}
-    </article>
-  </div>;
+  const feedback = draft.feedback === "correct" ? "Correct. Here’s why." : draft.feedback === "incorrect" ? "Not quite. Try another approach." : draft.feedback === "revealed" ? "Compare with your thinking." : "Select one answer, then check it.";
+  const actions = <div className="qs-footer-actions">{checksComplete ? <SessionAction onClick={onFinish} disabled={saving}>{saving ? "Saving progress…" : "Save progress"}<Check size={18} /></SessionAction> : !draft.inChecks ? <SessionAction onClick={() => draft.sectionIndex + 1 < guide.sections.length ? setDraft(current => ({ ...current, sectionIndex: current.sectionIndex + 1 })) : onStartChecks()}>{draft.sectionIndex + 1 < guide.sections.length ? "Continue" : "Start the checks"}<ArrowRight size={18} /></SessionAction> : draft.feedback === "idle" ? <SessionAction onClick={onSubmit} disabled={!draft.selectedOptionId}>Check answer<ArrowRight size={18} /></SessionAction> : draft.feedback === "incorrect" ? <><SessionAction secondary onClick={onReveal}>See explanation</SessionAction><SessionAction onClick={onRetry}>Try again<RotateCcw size={18} /></SessionAction></> : <SessionAction onClick={onContinue}>Continue<ArrowRight size={18} /></SessionAction>}</div>;
+  return <QuestionSession title={lesson.title} context={course.title} onExit={onBack} className="qs-lesson" position={draft.inChecks ? checksComplete ? "Checks reviewed" : `Question ${draft.checkIndex + 1} of ${lesson.checks.length}` : `Section ${draft.sectionIndex + 1} of ${guide.sections.length}`} completed={draft.results.filter(result => result.correct || result.revealed).length} total={draft.inChecks ? lesson.checks.length : undefined} footer={<><div className="qs-footer-message" aria-live="polite">{checksComplete ? <CheckCircle2 size={21} /> : <BookOpen size={21} />}<div><strong>{checksComplete ? "Ready to save" : draft.inChecks ? feedback : "One section at a time."}</strong><p>{saveError || (checksComplete ? "Reviewed checks are saved only when you choose Save progress." : draft.inChecks ? "Your answer stays here until you continue." : "Your place is kept in this tab.")}</p></div></div>{actions}</>}>
+    {checksComplete ? <section className="qs-completion"><CheckCircle2 size={45} /><h1 ref={headingRef} tabIndex={-1}>{lesson.title}</h1><p>Save this session to mark the {draft.quizOnly ? "quiz" : "lesson"} complete. This records reviewed checks, not mastery.</p><div className="qs-completion-stats"><span><strong>{correctCount}</strong>Correct</span><span><strong>{revealedCount}</strong>Explanations opened</span><span><strong>{lesson.checks.length}</strong>Checks reviewed</span></div>{saveError && <p className="qs-save-error" role="alert">{saveError}</p>}</section> : !draft.inChecks && section ? <article className="qs-reading"><div className="qs-subject"><BookOpen size={20} /><span>{guide.category}</span></div><h1 ref={headingRef} tabIndex={-1}>{section.title}</h1><p>{section.body}</p>{section.bullets?.length ? <ul>{section.bullets.map(item => <li key={item}>{item}</li>)}</ul> : null}{section.code && <ReadOnlyCode code={section.code} />}{guide.sources?.length ? <details className="qs-source"><summary>Related sources<ChevronRight size={16} /></summary>{guide.sources.map(source => <p key={source.url}><a href={source.url} target="_blank" rel="noreferrer">{source.title}<ExternalLink size={13} /></a></p>)}</details> : null}</article> : check && <div className="qs-columns"><section className="qs-question" aria-label="Question and context"><div className="qs-subject"><Code2 size={20} /><span>{guide.category}</span><span>Knowledge check</span></div><h1 ref={headingRef} tabIndex={-1}>{check.prompt}</h1><p className="qs-intro">{lesson.description}</p>{source?.code && <ReadOnlyCode code={source.code} label="Example from the lesson" />}{source && <details className="qs-source"><summary><Lightbulb size={18} />Review the source section<ChevronDown size={16} /></summary><h2 className="qs-source-heading">{source.title}</h2><p>{source.body}</p>{source.bullets?.length ? <ul>{source.bullets.map(item => <li key={item}>{item}</li>)}</ul> : null}</details>}</section><section className="qs-response" aria-label="Your answer"><h2>Choose your answer.</h2><p>One choice. You can review the source if you need a nudge.</p><fieldset className="qs-answer-options" disabled={draft.feedback !== "idle"}><legend>Choose one answer</legend>{check.options.map((option, index) => <label key={option.id} className={`qs-answer-option ${draft.selectedOptionId === option.id ? "is-selected" : ""} ${draft.feedback === "incorrect" && option.id === draft.selectedOptionId ? "is-incorrect" : ""} ${(draft.feedback === "correct" || draft.feedback === "revealed") && option.id === check.answerId ? "is-correct" : ""}`}><span className="qs-answer-letter">{String.fromCharCode(65 + index)}</span><input type="radio" name={`study-check-${check.id}`} value={option.id} checked={draft.selectedOptionId === option.id} onChange={() => setDraft(current => ({ ...current, selectedOptionId: option.id }))} /><span>{option.text}</span></label>)}</fieldset>{(draft.feedback === "correct" || draft.feedback === "revealed") && <div className="qs-explanation" role="status"><h2>{draft.feedback === "correct" ? "The connection" : "Answer revealed"}</h2><p>{check.explanation}</p></div>}{draft.feedback === "incorrect" && <p role="status">That answer misses a constraint. Your choice is kept so you can compare it with the source.</p>}</section></div>}
+  </QuestionSession>;
 }
 
 function FlashcardStudy({ state, setTab, dueCount, topic, setTopic, dueOnly, setDueOnly, cardIndex, setCardIndex, revealed, setRevealed, saving, mutate, reviewError, setReviewError, lastReviewedCard, setLastReviewedCard }: {
@@ -561,72 +515,54 @@ function FlashcardStudy({ state, setTab, dueCount, topic, setTopic, dueOnly, set
   lastReviewedCard: string;
   setLastReviewedCard: (id: string) => void;
 }) {
-  const [recallAnswer, setRecallAnswer] = useState("");
+  const [queue, setQueue] = useState<string[]>([]);
+  const [cursor, setCursor] = useState(0);
+  const [started, setStarted] = useState(false);
+  const [answers, setAnswers] = useState<Record<string, { text: string; revealed: boolean }>>({});
+  const [ready, setReady] = useState(false);
+  const [draftError, setDraftError] = useState(false);
+  const [batchSize, setBatchSize] = useState(10);
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const submitLock = useRef(false);
   const reviews = useMemo(() => latestReviews(state.reviews), [state.reviews]);
-  const cards = flashcards.filter(card => {
-    const latest = reviews.get(card.id);
-    const due = Boolean(latest && new Date(latest.dueAt).getTime() <= Date.now());
-    return (topic === "All topics" || card.category === topic) && (!dueOnly || due);
-  });
-  const card = cards[cardIndex];
   const topics = Array.from(new Set(flashcards.map(item => item.category))).sort();
-
+  const cards = flashcards.filter(card => (topic === "All topics" || card.category === topic) && (!dueOnly || Boolean(reviews.get(card.id) && Date.parse(reviews.get(card.id)!.dueAt) <= Date.now())));
+  const card = flashcards.find(item => item.id === queue[cursor]);
+  const context = card ? recallContexts[card.id] : undefined;
+  const answer = card ? answers[card.id] ?? { text:"", revealed:false } : { text:"", revealed:false };
+  useEffect(() => {
+    try {
+      const parsed = recallDraftSchema.safeParse(JSON.parse(workspaceSessionStorage.getItem(recallDraftKey) ?? "null"));
+      if (parsed.success && parsed.data.ids.every(id => flashcards.some(card => card.id === id)) && (parsed.data.topic === "All topics" || topics.includes(parsed.data.topic))) {
+        setQueue(parsed.data.ids); setCursor(parsed.data.cursor); setAnswers(parsed.data.answers); setTopic(parsed.data.topic); setDueOnly(parsed.data.dueOnly);
+        setStarted(parsed.data.ids.length > 0 && parsed.data.cursor < parsed.data.ids.length);
+      }
+    } catch { setDraftError(true); }
+    setReady(true);
+  }, []);
+  useEffect(() => {
+    if (!ready) return;
+    try { workspaceSessionStorage.setItem(recallDraftKey, JSON.stringify(recallDraftSchema.parse({version:1,topic,dueOnly,ids:queue,cursor,answers}))); setDraftError(false); }
+    catch { setDraftError(true); }
+  }, [ready, topic, dueOnly, queue, cursor, answers]);
+  function updateAnswer(change: Partial<typeof answer>) { if (card) setAnswers(previous => ({...previous,[card.id]:{...answer,...change}})); }
+  function begin() { if (queue.length && cursor < queue.length) { setStarted(true); return; } setQueue(cards.slice(0,batchSize).map(card => card.id)); setCursor(0); setStarted(true); setReviewError(""); }
+  function configure(nextTopic: string, nextDueOnly: boolean) { setTopic(nextTopic); setDueOnly(nextDueOnly); setQueue([]); setCursor(0); setReviewError(""); }
   async function review(rating: "again" | "good") {
-    if (!card || saving || reviewSubmitting) return;
-    setReviewError("");
-    setReviewSubmitting(true);
+    if (!card || !answer.revealed || saving || submitLock.current) return;
+    submitLock.current = true; setReviewSubmitting(true); setReviewError("");
     const now = new Date();
     try {
-      const ok = await mutate("review", {
-        cardId: card.id,
-        rating,
-        reviewedAt: now.toISOString(),
-        dueAt: new Date(now.getTime() + (rating === "again" ? 10 * 60_000 : 24 * 60 * 60_000)).toISOString(),
-      });
-      if (!ok) {
-        setReviewError("This review did not save. The card and your answer are still here so you can try again.");
-        return;
-      }
+      const ok = await mutate("review", { cardId:card.id, rating, reviewedAt:now.toISOString(), dueAt:new Date(now.getTime() + (rating === "again" ? 10 * 60_000 : 24 * 60 * 60_000)).toISOString() });
+      if (!ok) { setReviewError("This review did not save. Your answer is still here. Try again."); return; }
       setLastReviewedCard(card.id);
-      setRevealed(false);
-      setRecallAnswer("");
-      setCardIndex(index => dueOnly || !cards.length ? index : (index + 1) % cards.length);
-    } finally {
-      setReviewSubmitting(false);
-    }
+      setAnswers(previous => {const next = {...previous}; delete next[card.id]; return next;});
+      setCursor(index => index + 1);
+    } finally { submitLock.current = false; setReviewSubmitting(false); }
   }
-
-  function changeTopic(nextTopic: string) {
-    setTopic(nextTopic);
-    setCardIndex(0);
-    setRevealed(false);
-    setRecallAnswer("");
-    setReviewError("");
-  }
-
-  function changeDueFilter(nextDueOnly: boolean) {
-    setDueOnly(nextDueOnly);
-    setCardIndex(0);
-    setRevealed(false);
-    setRecallAnswer("");
-    setReviewError("");
-  }
-
-  return <div className="study-workspace sw-flashcards">
-    <section className="sw-review-panel" aria-label="Review cards">
-    <header className="sw-card-toolbar"><h1>Review</h1><div className="sw-review-controls"><label><span className="sr-only">Topic</span><select value={topic} onChange={event => changeTopic(event.target.value)}>{["All topics", ...topics].map(item => <option key={item}>{item}</option>)}</select></label><div className="sw-filter-toggle" role="group" aria-label="Review card set"><button type="button" className={dueOnly ? "is-selected" : ""} aria-pressed={dueOnly} onClick={() => changeDueFilter(true)}>Due {dueCount}</button><button type="button" className={!dueOnly ? "is-selected" : ""} aria-pressed={!dueOnly} onClick={() => changeDueFilter(false)}>All cards {flashcards.length}</button></div></div></header>
-    {lastReviewedCard && reviews.get(lastReviewedCard) && <p className="sw-review-saved" role="status">Review saved. Next due {new Date(reviews.get(lastReviewedCard)!.dueAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}.</p>}
-    {reviewError && <p className="sw-save-error" role="alert">{reviewError}</p>}
-    {dueOnly && topic === "All topics" && dueCount === 0 && lastReviewedCard && reviews.has(lastReviewedCard) ? <BrandState kind="success" title="Reviews are caught up" description="You reviewed every card that was due. More cards will return when they are ready." compact /> : card ? <article className="sw-flashcard">
-      <div className="sw-flashcard-meta"><span>{card.category}</span><span>{!reviews.has(card.id) ? "New · " : ""}{cardIndex + 1} of {cards.length}</span></div>
-      <h2>{card.question}</h2>
-      <label className="sw-recall-field"><span>Your answer <small>(optional)</small></span><textarea value={recallAnswer} onChange={event => setRecallAnswer(event.target.value)} placeholder="A few words or steps, in your own words…" /></label>
-      {revealed ? <div className="sw-flashcard-answer"><p className="sw-eyebrow">The idea</p><p>{card.answer}</p>{card.example && <div><strong>For example</strong><p>{card.example}</p></div>}</div> : <button type="button" className="sw-secondary-button" onClick={() => setRevealed(true)}>Reveal answer<ChevronRight size={16} /></button>}
-      {revealed && <div className="sw-flashcard-actions"><span>How well did you recall it?</span><div><button type="button" className="sw-secondary-button" onClick={() => review("again")} disabled={saving || reviewSubmitting}><RotateCcw size={15} />Again</button><button type="button" className="sw-primary-button" onClick={() => review("good")} disabled={saving || reviewSubmitting}><Check size={16} />Got it</button></div></div>}
-    </article> : <div className="sw-caught-up"><CheckCircle2 size={24} /><h2>No cards are due in this topic.</h2><p>Choose All cards to practice cards that are not due yet.</p><button type="button" className="sw-secondary-button" onClick={() => changeDueFilter(false)}>Show all cards<ArrowRight size={16} /></button></div>}
-    </section>
-  </div>;
+  if (started && queue.length && cursor >= queue.length) return <QuestionSession title="Review complete" context="Recall practice" onExit={() => setStarted(false)} completed={cursor} total={queue.length} position={`${cursor} reviews saved`} footer={<><div className="qs-footer-message"><CheckCircle2 size={22} /><div><strong>A little clearer.</strong><p>Your ratings were saved. Cards return according to their review schedule.</p></div></div><SessionAction onClick={() => {setStarted(false);setQueue([]);setCursor(0);}}>Choose more practice<ArrowRight size={18} /></SessionAction></>}><section className="qs-completion"><CheckCircle2 size={45} /><h1>{cursor} cards reviewed.</h1><p>That’s this batch complete. Take a break or choose another topic.</p></section></QuestionSession>;
+  if (started && card) return <QuestionSession title="Recall & explain" context={card.category} onExit={() => setStarted(false)} className="qs-review" position={`Card ${cursor + 1} of ${queue.length}`} completed={cursor} total={queue.length} footer={<><div className="qs-footer-message" aria-live="polite"><BookOpen size={21} /><div><strong>{reviewError ? "Your answer is still here." : answer.revealed ? "How well did you recall it?" : "Recall first. Then compare."}</strong><p role={reviewError ? "alert" : undefined}>{reviewError || (draftError ? "The browser draft could not be saved. Keep this page open." : answer.revealed ? "Your rating schedules the next review." : "Writing an answer is optional.")}</p></div></div><div className="qs-footer-actions">{answer.revealed ? <><SessionAction secondary disabled={saving || reviewSubmitting} onClick={() => void review("again")}><RotateCcw size={18} />Again</SessionAction><SessionAction disabled={saving || reviewSubmitting} onClick={() => void review("good")}>{reviewSubmitting ? "Saving…" : "Got it"}<Check size={18} /></SessionAction></> : <SessionAction onClick={() => updateAnswer({revealed:true})}>Reveal explanation<ArrowRight size={18} /></SessionAction>}</div></>}><div className="qs-columns"><section className="qs-question" aria-label="Recall question"><div className="qs-subject"><BookOpen size={20} /><span>{card.category}</span><span>{card.difficulty}</span></div><h1>{card.question}</h1>{context && <div className="qs-recall-scenario"><span>FICTIONAL SCENARIO</span><h2>{context.title}</h2><div>{context.steps.map((step,index) => <span key={step}>{index > 0 && <ArrowRight size={15} />}<span>{step}</span></span>)}</div><p>{context.description}</p></div>}<div className="qs-review-note"><strong>Explain it in your own words.</strong><p>Think about the decision, why it matters, and an example. Compare your reasoning before rating your recall.</p></div></section><section className="qs-response" aria-label="Your thinking"><h2>{answer.revealed ? "Compare your thinking." : "Where would you start?"}</h2>{answer.revealed ? <><div className="qs-explanation"><h2>The idea</h2><p>{card.answer}</p>{card.example && <div><strong>For example</strong><p>{card.example}</p></div>}</div>{answer.text && <details className="qs-source"><summary>Your response<ChevronDown size={16} /></summary><p>{answer.text}</p></details>}</> : <><label htmlFor="recall-response" className="qs-recall-label">Your thinking <span>Optional</span></label><textarea id="recall-response" className="qs-recall-input" maxLength={12000} value={answer.text} onChange={event => updateAnswer({text:event.target.value})} placeholder="Start with what you remember…" /><p className="qs-intro">Self-rated recall. There is no automatic grade.</p></>}</section></div></QuestionSession>;
+  return <div className="study-workspace sw-flashcards"><section className="recall-setup"><header><div><h1>Recall & explain</h1><p>Choose a topic and a short batch.</p></div><BookOpen size={30} /></header><div className="recall-setup-controls"><label>Topic<select value={topic} onChange={event => configure(event.target.value,dueOnly)}><option>All topics</option>{topics.map(item => <option key={item}>{item}</option>)}</select></label><label>Cards<select value={dueOnly ? "due" : "all"} onChange={event => configure(topic,event.target.value === "due")}><option value="due">Due now · {dueCount}</option><option value="all">All cards</option></select></label><label>Batch size<select value={batchSize} onChange={event => {setBatchSize(Number(event.target.value));setQueue([]);setCursor(0);}}>{[5,10,20].map(size => <option key={size} value={size}>{size} cards</option>)}</select></label></div>{!cards.length ? <BrandState kind="success" title="No cards due here" description="Choose all cards or another topic to keep practicing." compact /> : <p className="recall-available">{cards.length} cards available · {Math.min(cards.length,batchSize)} in a new batch</p>}<div className="recall-setup-actions"><button type="button" className="sw-secondary-button" onClick={() => setTab("Quizzes")}>Browse quizzes<ArrowRight size={17} /></button><button type="button" className="sw-primary-button" disabled={!ready || (!cards.length && !(queue.length && cursor < queue.length))} onClick={begin}>{queue.length && cursor < queue.length ? "Continue review" : "Start review"}<ArrowRight size={18} /></button></div>{draftError && <p className="qs-save-error">Browser draft storage is unavailable. Your answers stay in this open page.</p>}</section></div>;
 }
 
 

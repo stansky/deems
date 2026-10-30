@@ -16,3 +16,5 @@
 @media(max-width:850px) { .practice-format-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; } }
 @media(max-width:560px) { .hub-page-heading { flex-wrap:wrap; }.practice-format-grid { grid-template-columns:1fr; }.practice-format-card { min-height:190px; } }
 @media(prefers-reduced-motion:reduce) { .practice-format-card { transition:none; }.practice-format-card:hover { transform:none; } }
+
+.practice-more-heading{font-size:21px;margin:28px 0 16px}.practice-format-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.practice-format-card{min-height:185px}
