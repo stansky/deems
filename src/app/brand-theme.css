@@ -150,24 +150,24 @@
 
 .workspace-boot .deems-brand-state,
 .learning-shell .deems-brand-state {
-  border-color: #405064;
-  background: var(--brand-surface-dark);
-  color: var(--brand-cream);
+  border-color: var(--ui-line);
+  background: var(--ui-surface);
+  color: var(--ui-ink);
 }
 
 .workspace-boot .deems-brand-state p,
 .learning-shell .deems-brand-state p {
-  color: #c3ced9;
+  color: var(--ui-muted);
 }
 
 .desk-shell:not(.learning-shell) .deems-brand-state {
-  border-color: #e4d9cd;
-  background: #fffdfb;
-  color: var(--brand-ink);
+  border-color: var(--ui-line);
+  background: var(--ui-surface);
+  color: var(--ui-ink);
 }
 
 .desk-shell:not(.learning-shell) .deems-brand-state p {
-  color: #526174;
+  color: var(--ui-muted);
 }
 
 

@@ -13,7 +13,7 @@ export function Badge({ children, tone = "neutral" }: { children: ReactNode; ton
   return <span className={`badge badge-${tone}`}>{children}</span>;
 }
 
-export function Empty({ title, children }: { title: string; children: ReactNode }) {
-  if (typeof children === "string") return <BrandState kind="empty" title={title} description={children} compact />;
+export function Empty({ title, children, loading = false }: { title: string; children: ReactNode; loading?: boolean }) {
+  if (typeof children === "string") return <BrandState kind={loading ? "loading" : "empty"} title={title} description={children} compact />;
   return <div className="empty-state"><strong>{title}</strong><p>{children}</p></div>;
 }
