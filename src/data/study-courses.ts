@@ -518,6 +518,73 @@ const checks = {
       sourceSectionTitle: "Constructor, state, and methods side by side",
     },
   ],
+  pyjsProblemSteps: [
+    {
+      id: "problem-first-step",
+      prompt: "The interviewer reads you a coding task. What should you do first?",
+      options: [
+        { id: "type-fast", text: "Start typing the fastest solution you can think of." },
+        { id: "restate-example", text: "Repeat the task in your own words, work one example input and output, and ask about edge cases." },
+        { id: "big-o", text: "State the Big O of the best possible solution." },
+        { id: "language", text: "Ask which language the company uses in production." },
+      ],
+      answerId: "restate-example",
+      explanation: "A worked example and a few edge-case questions make sure you are solving the right problem, and they give you test cases for step 5.",
+      sourceSectionTitle: "The five steps",
+    },
+    {
+      id: "simple-way-first",
+      prompt: "You can see a slow but correct approach and are not sure of the fast one. What should you do?",
+      options: [
+        { id: "stay-quiet", text: "Stay quiet until you think of the fast one." },
+        { id: "skip-it", text: "Skip the slow version, because it will be marked wrong." },
+        { id: "ask-hint", text: "Ask for the answer right away." },
+        { id: "say-slow", text: "Say the simple approach and its cost, then look for the repeated work to remove." },
+      ],
+      answerId: "say-slow",
+      explanation: "Brute force shows you can solve it and gives you something to improve. Most fast solutions come from removing the repeated work in the slow one.",
+      sourceSectionTitle: "Step 3: say the simple way first",
+    },
+    {
+      id: "slow-count-cost",
+      prompt: "The simple version calls s.count(ch) for every character in s. Why is that O(n²)?",
+      options: [
+        { id: "count-scans", text: "count scans the whole string, and it runs once for each character." },
+        { id: "strings-slow", text: "Strings are always O(n²) in Python." },
+        { id: "two-returns", text: "The function has two return statements." },
+        { id: "dict-used", text: "It uses a dict behind the scenes." },
+      ],
+      answerId: "count-scans",
+      explanation: "n characters times a scan of n characters is n times n work. Counting once into a dict brings it down to O(n).",
+      sourceSectionTitle: "Step 3: say the simple way first",
+    },
+    {
+      id: "hint-pairs-target",
+      prompt: "A task says: find two numbers in the list that add up to a target. Which tool does that wording hint at?",
+      options: [
+        { id: "stack", text: "A stack of numbers." },
+        { id: "window", text: "A sliding window of size 2." },
+        { id: "seen-dict", text: "A dict of the numbers seen so far, so each partner is one lookup." },
+        { id: "recursion", text: "Recursion on the rest of the list." },
+      ],
+      answerId: "seen-dict",
+      explanation: "For each number, the partner you need is target minus that number. A dict of earlier numbers answers do I have that partner in O(1).",
+      sourceSectionTitle: "Words in the task that hint at the tool",
+    },
+    {
+      id: "term-edge-case",
+      prompt: "What is an edge case?",
+      options: [
+        { id: "edge-input", text: "An input at the limits, such as empty, one item, duplicates, or negative numbers, where code often breaks." },
+        { id: "last-line", text: "The last line of a function." },
+        { id: "rare-bug", text: "A bug that only happens on one computer." },
+        { id: "border-ui", text: "A problem with the border of a page layout." },
+      ],
+      answerId: "edge-input",
+      explanation: "Edge cases are where off-by-one errors and missing checks show up. Ask about them in step 2 and test them in step 5.",
+      sourceSectionTitle: "Words to know",
+    },
+  ],
   pyjsReview: [
     {
       id: "review-collection-term",
@@ -787,7 +854,7 @@ const courses: StudyCourse[] = [
   },
   {
     id: "python-js-interview-essentials", version: 1, title: "Python and JavaScript for coding interviews",
-    description: "Learn when to use if, for, or while, and when to use a list, dict, set, or tuple, in plain words with Python and JavaScript side by side. Ends with a terms review.",
+    description: "Learn when to use if, for, or while, when to use a list, dict, set, or tuple, and how to work through a problem out loud, in plain words with Python and JavaScript side by side. Ends with a terms review.",
     theme: "green", illustration: 3,
     lessons: [
       { id: "choose-if-for-while", guideId: "pyjs-choose-control", title: "Choose if, for, or while", description: "One question tells you which control tool to write, with examples of each in both languages.", checks: checks.pyjsChooseControl },
@@ -795,6 +862,7 @@ const courses: StudyCourse[] = [
       { id: "choose-list-dict-set", guideId: "pyjs-choose-collection", title: "Choose a list, dict, set, or tuple", description: "Pick the container by what you will do with the data most often, and know how fast each one is.", checks: checks.pyjsChooseCollection },
       { id: "choose-collections", guideId: "pyjs-collections", title: "Collections in practice: count, group, sort", description: "Dedupe, count, group, and sort, and avoid the classic object-key and shared-row traps.", checks: checks.pyjsCollections },
       { id: "classes-and-errors", guideId: "pyjs-classes", title: "Write classes and error types", description: "Build a constructor, methods, and an LRU cache, and avoid shared defaults and lost this.", checks: checks.pyjsClasses },
+      { id: "work-through-problem", guideId: "pyjs-problem-steps", title: "Work through a problem out loud", description: "Five steps from a blank editor to tested code: example, edge cases, simple version, faster version, tests.", checks: checks.pyjsProblemSteps },
       { id: "crash-course-review", guideId: "pyjs-crash-review", title: "Review: pick the tool and say why", description: "Two cheat sheets, sentences to say out loud, and a terms quiz covering the whole course.", checks: checks.pyjsReview },
     ],
   },

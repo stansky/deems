@@ -6,7 +6,7 @@ Sources checked on 2026-10-29, with MDN Array.prototype.forEach() and the Python
 
 ID `python-js-interview-essentials`. Coding, Foundations. Prerequisite: reading basic code in either Python or JavaScript. Written in plain words for a learner who has not yet internalized when to use each loop or collection; every lesson ends with a "Words to know" glossary, and the last lesson is a cheat sheet and terms review.
 
-Outcomes: choose if, for, or while for a task and say why; choose a list, dict, set, or tuple by the operation you repeat; explain three Fibonacci versions and how their work grows; write a small class with a constructor, methods, and an error type; define the common interview terms in plain words.
+Outcomes: choose if, for, or while for a task and say why; choose a list, dict, set, or tuple by the operation you repeat; explain three Fibonacci versions and how their work grows; write a small class with a constructor, methods, and an error type; work through a problem out loud in five steps; define the common interview terms in plain words.
 
 | Lesson | Guide | Checks | Sources |
 |---|---|---|---|
@@ -15,6 +15,7 @@ Outcomes: choose if, for, or while for a task and say why; choose a list, dict, 
 | `choose-list-dict-set` | `pyjs-choose-collection` | `seen-signups-set`, `lookup-by-id-dict`, `ordered-steps-list`, `tuple-key-hashable`, `term-o1-meaning` | Python tutorial: Data structures; Python wiki: Time complexity; MDN: Map and Set; Python: collections |
 | `choose-collections` | `pyjs-collections` | `js-default-sort`, `map-vs-object-keys`, `grid-shared-rows`, `two-sum-check-first` | Python tutorial: Data structures; Python: collections; MDN: Map, Set, Array.prototype.sort(); Python: Sorting techniques |
 | `classes-and-errors` | `pyjs-classes` | `term-instance`, `lru-structure`, `mutable-default-arg`, `custom-error-why`, `self-and-this` | Python tutorial: Classes and More control flow tools (default argument evaluation); MDN: Classes; Python: collections (OrderedDict) |
+| `work-through-problem` | `pyjs-problem-steps` | `problem-first-step`, `simple-way-first`, `slow-count-cost`, `hint-pairs-target`, `term-edge-case` | Python tutorial: Data structures; Python: collections; Python wiki: Time complexity |
 | `crash-course-review` | `pyjs-crash-review` | `review-collection-term`, `review-iterable`, `review-mutable`, `review-guard-clause`, `review-say-why` | Python tutorial: More control flow tools and Data structures; MDN: Loops and iteration; Python wiki: Time complexity |
 
 Practice link: `algo-intervals`. Claims to note: forEach has no way to stop early other than throwing (MDN); dict and set lookups are O(1) on average and list membership is O(n) (Python wiki); a Python set does not preserve insertion order while dict and JavaScript Set do; the Python default recursion limit is 1000 (sys.getrecursionlimit); fib(78) = 8944394323791464 is the largest Fibonacci number below Number.MAX_SAFE_INTEGER; Array.prototype.sort without a comparator compares string values. The two cheat sheets in the review lesson are plain text tables, not code.
@@ -35,9 +36,9 @@ Practice links: `code-events`, `code-workers`. The streaming lesson states the H
 
 ## Paths
 
-- `pyjs-interview-crash-course`: `python-js-interview-essentials`, `coding-reasoning`, `fullstack-interview-code`. Language mechanics first, then problem reasoning, then full-stack code shape.
+- `pyjs-interview-crash-course`: `python-js-interview-essentials`, `fullstack-interview-code`. Language mechanics and problem-solving steps in plain words first, then full-stack code shape. The existing `coding-reasoning` course was in this path at first and was removed on 2026-10-30 because its lessons are short and assume terms this path is meant to teach; its problem-solving content is covered in plain words by the `work-through-problem` lesson. The course itself is unchanged.
 - `agent-product-engineering`: `fullstack-interview-code`, `reliable-systems`, `trusted-agents`. Client and streaming code first, then the durable workflow and authority boundaries around it.
 
 ## Example verification
 
-All runnable Python, JavaScript, and Go examples were executed with bounded timeouts (Python 3.10, Node 23, Go 1.26; 54 runnable segments) and their printed output matches the comments in the guides. The Go client ran against an httptest server, including the 404 and errors.As paths. Additional edge cases were run outside the guides: an empty page with a next cursor, an encoded cursor, tied error counts, an event split across chunks, a blank line split across chunks, and a trailing event without a blank line. The FastAPI endpoint and the browser fetch reader in "Reading the stream" are labeled static sketches and were not executed.
+All runnable Python, JavaScript, and Go examples were executed with bounded timeouts (Python 3.10, Node 23, Go 1.26; 60 runnable segments) and their printed output matches the comments in the guides. The Go client ran against an httptest server, including the 404 and errors.As paths. Additional edge cases were run outside the guides: an empty page with a next cursor, an encoded cursor, tied error counts, an event split across chunks, a blank line split across chunks, and a trailing event without a blank line. The FastAPI endpoint and the browser fetch reader in "Reading the stream" are labeled static sketches and were not executed.
