@@ -18,7 +18,7 @@
 .workspace-header .desk-navigation summary > svg { transform: none; }
 .workspace-header .desk-navigation details[open] > summary > svg { transform: rotate(180deg); }
 .workspace-header .desk-menu { top: calc(100% + 16px); width: 250px; border-radius: 14px; }
-.workspace-header .desk-menu button, .workspace-header .desk-menu a { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.workspace-header .desk-menu button, .workspace-header .desk-menu a { display: flex; align-items: center; gap: 10px; background:transparent; font-size: 13px; }
 .workspace-header .desk-menu-label { letter-spacing: .03em; text-transform: uppercase; font-size: 10px; }
 .workspace-account { position: relative; justify-self: end; }
 .workspace-account > summary { display: flex; align-items: center; justify-content: center; gap: 7px; min-width: 52px; min-height: 44px; padding: 0 10px; border: 1px solid #dddcd6; border-radius: 24px; background: #faf9f6; cursor: pointer; list-style: none; }
