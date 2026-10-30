@@ -20,8 +20,10 @@ import {
 import type { WorkspaceState } from "@/lib/types";
 import type { CommandMeta } from "@/domains/career/contracts";
 import "./study-workspace.css";
-import "./study-night.css";
+
 import "./study-combined.css";
+import { latestReviews, reviewCounts } from "@/lib/review-summary";
+import { PageHeader } from "@/components/ui";
 import { BrandState } from "@/components/brand";
 
 type Props = {
@@ -74,7 +76,7 @@ export default function StudyWorkspace({ initialRoute, state, tab, setTab, selec
   const [quizCourseId, setQuizCourseId] = useState(studyCourses[0]?.id ?? "");
   const [quizLessonId, setQuizLessonId] = useState(studyCourses[0]?.lessons[0]?.id ?? "");
   const [cardTopic, setCardTopic] = useState("All topics");
-  const [dueOnly, setDueOnly] = useState(true);
+  const [dueOnly, setDueOnly] = useState(false);
   const [cardIndex, setCardIndex] = useState(0);
   const [cardRevealed, setCardRevealed] = useState(false);
   const [reviewError, setReviewError] = useState("");
@@ -88,10 +90,7 @@ export default function StudyWorkspace({ initialRoute, state, tab, setTab, selec
     [state.settings],
   );
   const reviewsByCard = useMemo(() => latestReviews(state.reviews), [state.reviews]);
-  const dueCount = flashcards.filter(card => {
-    const latest = reviewsByCard.get(card.id);
-    return !latest || new Date(latest.dueAt).getTime() <= Date.now();
-  }).length;
+  const dueCount = reviewCounts(state.reviews).due;
 
   useEffect(() => {
     try {
@@ -445,9 +444,9 @@ function QuizHub({ courses, progressByLesson, courseId, lessonId, onCourseChange
   const guide = lesson && cheatSheets.find(item => item.id === lesson.guideId);
   return <div className="study-workspace sw-quiz-hub">
 
-    <header className="sw-quiz-heading"><div><h1>Quizzes</h1></div></header>
+    <PageHeader title="Quizzes" />
     <section className="sw-quiz-picker" aria-labelledby="sw-quiz-picker-title">
-      <div className="sw-quiz-picker-heading"><p className="sw-eyebrow">Choose a concept</p><h2 id="sw-quiz-picker-title">Practice a concept</h2></div>
+      <h2 id="sw-quiz-picker-title" className="sr-only">Choose a quiz</h2>
       {course && <div className="sw-quiz-selects">
         <label>Subject<select className="sw-select-blue" aria-label="Choose a course" value={course.id} onChange={event => onCourseChange(event.target.value)}>{courses.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label>
         {lesson && <label>Lesson<select className="sw-select-blue" aria-label="Choose a lesson" value={lesson.id} onChange={event => onLessonChange(event.target.value)}>{course.lessons.map(item => <option key={item.id} value={item.id}>{item.title}{progressByLesson.get(item.id) ? " · reviewed" : ""}</option>)}</select></label>}
@@ -567,7 +566,7 @@ function FlashcardStudy({ state, setTab, dueCount, topic, setTopic, dueOnly, set
   const reviews = useMemo(() => latestReviews(state.reviews), [state.reviews]);
   const cards = flashcards.filter(card => {
     const latest = reviews.get(card.id);
-    const due = !latest || new Date(latest.dueAt).getTime() <= Date.now();
+    const due = Boolean(latest && new Date(latest.dueAt).getTime() <= Date.now());
     return (topic === "All topics" || card.category === topic) && (!dueOnly || due);
   });
   const card = cards[cardIndex];
@@ -616,12 +615,12 @@ function FlashcardStudy({ state, setTab, dueCount, topic, setTopic, dueOnly, set
 
   return <div className="study-workspace sw-flashcards">
 
-    <header className="sw-catalog-heading sw-flashcard-heading"><div><h1>Review</h1></div><span className="sw-due-count"><strong>{dueCount}</strong><small>due now</small></span></header>
-    <div className="sw-card-toolbar"><label>Topic<select value={topic} onChange={event => changeTopic(event.target.value)}>{["All topics", ...topics].map(item => <option key={item}>{item}</option>)}</select></label><div className="sw-filter-toggle" role="group" aria-label="Flashcard set"><button type="button" className={dueOnly ? "is-selected" : ""} aria-pressed={dueOnly} onClick={() => changeDueFilter(true)}>Due now</button><button type="button" className={!dueOnly ? "is-selected" : ""} aria-pressed={!dueOnly} onClick={() => changeDueFilter(false)}>All cards</button></div></div>
+    <PageHeader title="Review" />
+    <div className="sw-card-toolbar"><label>Topic<select value={topic} onChange={event => changeTopic(event.target.value)}>{["All topics", ...topics].map(item => <option key={item}>{item}</option>)}</select></label><div className="sw-filter-toggle" role="group" aria-label="Review card set"><button type="button" className={dueOnly ? "is-selected" : ""} aria-pressed={dueOnly} onClick={() => changeDueFilter(true)}>Due {dueCount}</button><button type="button" className={!dueOnly ? "is-selected" : ""} aria-pressed={!dueOnly} onClick={() => changeDueFilter(false)}>All cards {flashcards.length}</button></div></div>
     {lastReviewedCard && reviews.get(lastReviewedCard) && <p className="sw-review-saved" role="status">Review saved. Next due {new Date(reviews.get(lastReviewedCard)!.dueAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}.</p>}
     {reviewError && <p className="sw-save-error" role="alert">{reviewError}</p>}
     {dueOnly && topic === "All topics" && dueCount === 0 && lastReviewedCard && reviews.has(lastReviewedCard) ? <BrandState kind="success" title="Reviews are caught up" description="You reviewed every card that was due. More cards will return when they are ready." compact /> : card ? <article className="sw-flashcard">
-      <div className="sw-flashcard-meta"><span>{card.category}</span><span>{cardIndex + 1} of {cards.length} · {card.difficulty}</span></div>
+      <div className="sw-flashcard-meta"><span>{card.category}</span><span>{!reviews.has(card.id) ? "New · " : ""}{cardIndex + 1} of {cards.length} · {card.difficulty}</span></div>
       <h2>{card.question}</h2>
       <label className="sw-recall-field"><span>Your answer <small>(optional)</small></span><textarea value={recallAnswer} onChange={event => setRecallAnswer(event.target.value)} placeholder="A few words or steps, in your own words…" /></label>
       {revealed ? <div className="sw-flashcard-answer"><p className="sw-eyebrow">The idea</p><p>{card.answer}</p>{card.example && <div><strong>For example</strong><p>{card.example}</p></div>}</div> : <button type="button" className="sw-secondary-button" onClick={() => setRevealed(true)}>Reveal answer<ChevronRight size={16} /></button>}
@@ -630,10 +629,6 @@ function FlashcardStudy({ state, setTab, dueCount, topic, setTopic, dueOnly, set
   </div>;
 }
 
-function latestReviews(reviews: WorkspaceState["reviews"]) {
-  const ordered = [...reviews].sort((left, right) => left.reviewedAt.localeCompare(right.reviewedAt));
-  return new Map(ordered.map(review => [review.cardId, review] as const));
-}
 
 function courseCountLabel(count: number) {
   return count === 1 ? "lesson" : "lessons";

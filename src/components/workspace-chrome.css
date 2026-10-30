@@ -5,15 +5,15 @@
 .workspace-header .deems-brand-wordmark { width: 112px; }
 .workspace-header .desk-navigation { justify-content: center; gap: 12px; }
 .desk-shell.light-lms .main-content:not(:has(.sw-lesson-screen)) { width:100%; max-width:1248px; margin-inline:auto; padding:28px 24px 56px; }
-.workspace-sections { display:flex; flex-wrap:wrap; align-items:center; gap:8px 24px; margin:0 0 28px; padding:0 0 14px; border-bottom:1px solid #c7cec9; }
-.workspace-sections>button { min-height:40px; padding:5px 0; border-radius:0; background:transparent; color:#52616c; font-size:14px; font-weight:550; border-bottom:2px solid transparent; }
-.workspace-sections>button[aria-current="page"] { color:#172331; border-bottom-color:#6b8f7a; font-weight:700; }
-.workspace-sections>button:hover { color:#172331; }
+.workspace-sections { display:flex; flex-wrap:wrap; align-items:center; gap:8px 24px; margin:0 0 28px; padding:0 0 14px; border-bottom:1px solid var(--ui-line); }
+.workspace-sections>button { min-height:40px; padding:5px 0; border-radius:0; background:transparent; color:var(--ui-muted); font-size:14px; font-weight:550; border-bottom:2px solid transparent; }
+.workspace-sections>button[aria-current="page"] { color:var(--ui-ink); border-bottom-color:#6b8f7a; font-weight:700; }
+.workspace-sections>button:hover { color:var(--ui-ink); }
 .workspace-sections>button:focus-visible { outline:3px solid #4a87c5; outline-offset:4px; }
 .desk-shell:has(.sw-lesson-screen) .workspace-sections { display:none; }
-.desk-shell.light-lms .workspace-header { border-bottom:1.5px solid #263443!important; }
+.desk-shell.light-lms .workspace-header { border-bottom:1.5px solid var(--ui-line-strong)!important; }
 .workspace-header .desk-navigation > button, .workspace-header .desk-navigation summary { position: relative; border-radius: 0; padding: 0 12px; }
-.desk-shell.light-lms .workspace-header .desk-navigation .is-active { background: transparent !important; color: #17232c !important; }
+.desk-shell.light-lms .workspace-header .desk-navigation .is-active { background: transparent !important; color: var(--ui-ink) !important; }
 .workspace-header .desk-navigation .is-active::after { position: absolute; content: ""; height: 3px; border-radius: 4px; background: #dc8250; bottom: -15px; inset-inline: 12px; }
 .workspace-header .desk-navigation summary > svg { transform: none; }
 .workspace-header .desk-navigation details[open] > summary > svg { transform: rotate(180deg); }

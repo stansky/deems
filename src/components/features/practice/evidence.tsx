@@ -76,13 +76,10 @@ export function PracticeReflectionFields({ assistance, assessment, nextAction, o
 
     <section className="practice-reflection-section" aria-labelledby="practice-assessment-heading">
       <div className="practice-evidence-section-heading">
-        <h3 id="practice-assessment-heading">Your self-assessment</h3>
+        <h3 id="practice-assessment-heading">Observed result</h3>
         <span>Self-reported · code is not run</span>
       </div>
-      <fieldset className="practice-evidence-rubric">
-        <legend>What did you cover?</legend>
-        {assessment.checkedItems.length ? <ul className="practice-evidence-selected-items">{assessment.checkedItems.map(item => <li key={item}>{item}</li>)}</ul> : <p className="practice-evidence-readonly">No rubric items selected.</p>}
-      </fieldset>
+
       <label className="practice-evidence-field">
         Observed result
         <textarea rows={3} maxLength={8000} value={assessment.observedResult} onChange={event => onAssessment({ ...assessment, observedResult: event.target.value })} placeholder="What did you observe in your own work?" />

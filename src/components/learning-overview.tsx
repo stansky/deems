@@ -1,8 +1,6 @@
 "use client";
 
 import { ArrowRight, BookOpenCheck, Check, CheckCircle2, Code2, Trophy } from "lucide-react";
-import { readLearningSelection } from "@/contracts/study";
-import { studyCourses } from "@/data/study-courses";
 import type { WorkspaceState } from "@/lib/types";
 import { learningSnapshot } from "@/lib/learning-catalog";
 import "./learning-overview.css";
@@ -13,11 +11,6 @@ export function LearningOverview({ state, loading, unavailable, onLearning, onAr
   const snapshot = learningSnapshot(state.settings);
   const earned = snapshot.milestones.filter(item => item.earned);
   const hasProgress = snapshot.completedModules > 0;
-  const steps = [
-    { label: "Save a course", complete: studyCourses.some(course => readLearningSelection(state.settings, "course", course.id)?.saved), action: onCourses },
-    { label: "Finish a module", complete: snapshot.completedModules > 0 },
-    { label: "Try a review", complete: state.reviews.length > 0, action: onReview },
-  ];
   if (loading || unavailable) return null;
   if (compact) return <aside className="overview-compact" aria-label="Learning progress summary">
     <div className="overview-compact-counts">{snapshot.completedModules > 0 && <div><strong>{snapshot.completedModules}</strong><span>Modules</span></div>}{snapshot.completedCourses > 0 && <div><strong>{snapshot.completedCourses}</strong><span>Courses</span></div>}{state.sessions.length > 0 && <div><strong>{state.sessions.length}</strong><span>Practice</span></div>}</div>
@@ -26,7 +19,7 @@ export function LearningOverview({ state, loading, unavailable, onLearning, onAr
   </aside>;
 
   if (!hasProgress) return <section className="learning-overview overview-new" aria-labelledby="learning-overview-title">
-    <div className="overview-new-copy"><p className="overview-kicker">Welcome to Deems</p><h1 id="learning-overview-title">Your next skill starts here</h1><ol aria-label="First steps">{steps.map((step, index) => <li key={step.label} className={step.complete ? "is-done" : ""}>{step.action ? <button type="button" onClick={step.action} aria-label={step.label}>{step.complete ? <Check size={15} /> : index + 1}</button> : <span>{step.complete ? <Check size={15} /> : index + 1}</span>}<strong>{step.label}</strong></li>)}</ol><button className="overview-browse" onClick={onCourses}>Browse courses<ArrowRight size={16} /></button></div>
+    <div className="overview-new-copy"><h1 id="learning-overview-title">Your next skill starts here</h1><button className="overview-browse" onClick={onCourses}>Browse courses<ArrowRight size={16} /></button></div>
     <img className="overview-new-mascot" src="/brand/presidio-reading.webp" alt="" width={512} height={512} />
   </section>;
 

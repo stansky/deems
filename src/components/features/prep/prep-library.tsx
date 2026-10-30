@@ -10,6 +10,7 @@ import {
   UsersRound,
 } from "lucide-react";
 import "./prep-library.css";
+import { PageHeader } from "@/components/ui";
 
 export type PrepCategory = "Coding" | "System design" | "Behavioral" | "Management";
 
@@ -115,10 +116,7 @@ export default function PrepLibrary({
 
   return (
     <section className="prep-library" aria-label={`${category} preparation`}>
-      <header className="prep-library-heading">
-        <Icon aria-hidden="true" size={22} strokeWidth={1.8} />
-        <h1>{category}</h1>
-      </header>
+      <PageHeader title={category === "Management" ? "Team management" : category === "Behavioral" ? "Interview skills" : category} />
 
       {category === "Coding" && (
         <>
@@ -190,10 +188,7 @@ export default function PrepLibrary({
         </>
       )}
 
-      <footer className="prep-library-footer" aria-label="More preparation resources">
-        <button type="button" onClick={onStudy}><BookOpenCheck aria-hidden="true" size={15} /> Courses</button>
-        <button type="button" onClick={onReference}><BookOpen aria-hidden="true" size={15} /> Reference</button>
-      </footer>
+
     </section>
   );
 }

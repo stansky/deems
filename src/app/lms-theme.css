@@ -1,28 +1,28 @@
 /* Deems personal LMS surfaces. Imported last by the LMS shell and page. */
 .desk-shell.light-lms,
 .desk-shell.light-lms.learning-shell {
-  --lms-canvas: #fff8ee;
-  --desk-background: #fffefa;
-  --desk-foreground: #172331;
+  --lms-canvas: var(--ui-canvas);
+  --desk-background: var(--ui-surface);
+  --desk-foreground: var(--ui-ink);
   --desk-primary: #ff874f;
   --desk-secondary: #e9edff;
-  --desk-secondary-foreground: #172331;
+  --desk-secondary-foreground: var(--ui-ink);
   --desk-accent: #eeeaff;
-  --desk-accent-foreground: #172331;
+  --desk-accent-foreground: var(--ui-ink);
   --desk-input: #c7cdd3;
-  --desk-border: #263443;
-  --lms-surface: #ffffff;
-  --lms-soft: #f0f3f6;
-  --lms-line: #e0e5eb;
-  --lms-ink: #172331;
-  --lms-muted: #596576;
+  --desk-border: var(--ui-line-strong);
+  --lms-surface: var(--ui-surface);
+  --lms-soft: var(--ui-raised);
+  --lms-line: var(--ui-line);
+  --lms-ink: var(--ui-ink);
+  --lms-muted: var(--ui-muted);
   --lms-orange: #ff7a3d;
-  --lms-orange-soft: #fff0e8;
-  --lms-link: #315d88;
-  --lms-success: #286348;
+  --lms-orange-soft: var(--ui-accent-soft);
+  --lms-link: var(--ui-link);
+  --lms-success: var(--ui-success);
   color: var(--lms-ink) !important;
   background: var(--lms-canvas) !important;
-  color-scheme: light;
+  color-scheme: var(--ui-scheme);
 }
 .desk-shell.light-lms :is(.main-shell,.main-content,.learning-header),
 .desk-shell.light-lms.learning-shell :is(.main-shell,.main-content,.learning-header) {
@@ -31,7 +31,7 @@
 }
 .desk-shell.light-lms .desk-header,
 .desk-shell.light-lms.learning-shell .desk-header {
-  background: #fff !important;
+  background: var(--ui-surface) !important;
   color: var(--lms-ink) !important;
   border-color: var(--lms-line) !important;
 }
@@ -41,83 +41,83 @@
 .desk-shell.light-lms.learning-shell .learning-brand > svg { color: var(--lms-orange) !important; }
 .desk-shell.light-lms .deems-brand-wordmark-ink { display: block !important; }
 .desk-shell.light-lms .deems-brand-wordmark-light { display: none !important; }
-.desk-shell.light-lms .desk-navigation .is-active { color: #8d3c18 !important; background: var(--lms-orange-soft) !important; }
-.desk-shell.light-lms .desk-menu { border-color: var(--lms-line) !important; background: #fff !important; box-shadow: 0 8px 24px #17233116 !important; }
+.desk-shell.light-lms .desk-navigation .is-active { color: var(--ui-accent-ink) !important; background: var(--lms-orange-soft) !important; }
+.desk-shell.light-lms .desk-menu { border-color: var(--lms-line) !important; background: var(--ui-surface) !important; box-shadow: 0 8px 24px #17233116 !important; }
 .desk-shell.light-lms .desk-menu :is(a,button) { color: var(--lms-ink) !important; }
-.desk-shell.light-lms .desk-menu :is(a,button):hover { background: var(--lms-orange-soft) !important; color: #8d3c18 !important; }
+.desk-shell.light-lms .desk-menu :is(a,button):hover { background: var(--lms-orange-soft) !important; color: var(--ui-accent-ink) !important; }
 .desk-shell.light-lms :is(a,.text-button,.sw-progress-copy,.sw-quiz-path-link,.sw-inline-sources>a,.sw-guide-sources>a) { color: var(--lms-link); }
 .desk-shell.light-lms :is(button,input,textarea,select,a):focus-visible { outline: 3px solid #6ca8ff !important; outline-offset: 3px; }
-.desk-shell.light-lms :is(input,textarea,select,.sw-search,.sw-card-toolbar select,.sw-recall-field textarea,.sw-select-blue) { border-color: #c7d0da !important; background: #fff !important; color: var(--lms-ink) !important; color-scheme: light; }
+.desk-shell.light-lms :is(input,textarea,select,.sw-search,.sw-card-toolbar select,.sw-recall-field textarea,.sw-select-blue) { border-color: var(--ui-line) !important; background: var(--ui-surface) !important; color: var(--lms-ink) !important; color-scheme: var(--ui-scheme); }
 .desk-shell.light-lms :is(input,textarea)::placeholder { color: #687587 !important; opacity: 1; }
-.desk-shell.light-lms :is(.button-primary,[data-slot="button"][data-variant="default"],.sw-primary-button,.sw-check-button,.sw-continue-button,.sw-path-continue,.sw-course-continue) { border-color: var(--lms-orange) !important; background: var(--lms-orange) !important; color: #172331 !important; font-weight: 700; }
+.desk-shell.light-lms :is(.button-primary,[data-slot="button"][data-variant="default"],.sw-primary-button,.sw-check-button,.sw-continue-button,.sw-path-continue,.sw-course-continue) { border-color: var(--lms-orange) !important; background: var(--lms-orange) !important; color: var(--ui-ink) !important; font-weight: 700; }
 .desk-shell.light-lms :is(.button-primary,[data-slot="button"][data-variant="default"],.sw-primary-button,.sw-check-button,.sw-continue-button,.sw-path-continue,.sw-course-continue):hover:not(:disabled) { border-color: #ed682e !important; background: #ed682e !important; }
-.desk-shell.light-lms .save-status { border-color: #c5decf !important; background: #edf7f0 !important; color: var(--lms-success) !important; }
-.desk-shell.light-lms .learning-exit { border-color: var(--lms-line); background: #fff; color: var(--lms-ink); }
+.desk-shell.light-lms .save-status { border-color: #c5decf !important; background: var(--ui-success-soft) !important; color: var(--lms-success) !important; }
+.desk-shell.light-lms .learning-exit { border-color: var(--lms-line); background: var(--ui-surface); color: var(--lms-ink); }
 .desk-shell.light-lms .learning-exit:hover { border-color: #dd8b63; }
 
 /* Study catalog, lesson, quiz, recall, and feedback. */
-.desk-shell.light-lms.learning-shell { --learn-canvas: #f6f7f9; --learn-panel: #fff; --learn-raised: #f0f3f6; --learn-line: #e0e5eb; --learn-ink: #172331; --learn-muted: #596576; --learn-action: #ff7a3d; --learn-selection: #fff0e8; --sw-ink: #172331; --sw-muted: #596576; --sw-line: #e0e5eb; --sw-soft: #fff; --sw-green: #286348; --sw-green-soft: #e8f4ec; }
-.desk-shell.light-lms.learning-shell .study-workspace { --sw-canvas:#fff8ee; --sw-panel:#fff; --sw-ink:#172331; --sw-muted:#596576; --sw-line:#c7d0da; --sw-focus:#4a87c5; color:#172331!important; }
-.desk-shell.light-lms.learning-shell :is(.sw-lesson-content h1,.sw-guide-article h1,.sw-catalog-toolbar h1,.sw-quiz-heading h1) { color:#172331!important; }
-.desk-shell.light-lms.learning-shell :is(.sw-lesson-topline,.sw-close-lesson,.sw-lesson-name) { color:#52616c!important; }
+.desk-shell.light-lms.learning-shell { --learn-canvas: var(--ui-canvas); --learn-panel: var(--ui-surface); --learn-raised: var(--ui-raised); --learn-line: var(--ui-line); --learn-ink: var(--ui-ink); --learn-muted: var(--ui-muted); --learn-action: #ff7a3d; --learn-selection: var(--ui-accent-soft); --sw-ink: var(--ui-ink); --sw-muted: var(--ui-muted); --sw-line: var(--ui-line); --sw-soft: var(--ui-surface); --sw-green: var(--ui-success); --sw-green-soft: var(--ui-success-soft); }
+.desk-shell.light-lms.learning-shell .study-workspace { --sw-canvas:var(--ui-canvas); --sw-panel:var(--ui-surface); --sw-ink:var(--ui-ink); --sw-muted:var(--ui-muted); --sw-line:var(--ui-line); --sw-focus:#4a87c5; color:var(--ui-ink)!important; }
+.desk-shell.light-lms.learning-shell :is(.sw-lesson-content h1,.sw-guide-article h1,.sw-catalog-toolbar h1,.sw-quiz-heading h1) { color:var(--ui-ink)!important; }
+.desk-shell.light-lms.learning-shell :is(.sw-lesson-topline,.sw-close-lesson,.sw-lesson-name) { color:var(--ui-muted)!important; }
 .desk-shell.light-lms.learning-shell .sw-lesson-topline { font-size:13px; }
 .desk-shell.light-lms:has(.sw-lesson-screen) .save-status { display:none; }
-.desk-shell.light-lms.learning-shell .sw-lesson-content { padding:28px!important; border:1px solid #c7d0da; }
-.desk-shell.light-lms.learning-shell :is(.sw-review-nudge,.sw-progress-overview,.sw-course-overview,.sw-lesson-path,.sw-quiz-picker,.sw-lesson-content,.sw-flashcard,.sw-caught-up,.sw-guide-list>button,.sw-map-label,.sw-check-summary>span) { border-color: #e0e5eb !important; background: #fff !important; color: #172331 !important; box-shadow: 0 1px 3px #1723310a; }
+.desk-shell.light-lms.learning-shell .sw-lesson-content { padding:28px!important; border:1px solid var(--ui-line); }
+.desk-shell.light-lms.learning-shell :is(.sw-review-nudge,.sw-progress-overview,.sw-course-overview,.sw-lesson-path,.sw-quiz-picker,.sw-lesson-content,.sw-flashcard,.sw-caught-up,.sw-guide-list>button,.sw-map-label,.sw-check-summary>span) { border-color: var(--ui-line) !important; background: var(--ui-surface) !important; color: var(--ui-ink) !important; box-shadow: 0 1px 3px #1723310a; }
 .desk-shell.light-lms.learning-shell :is(.sw-review-nudge,.sw-guide-list>button):hover { background: #f7f9fb !important; }
-.desk-shell.light-lms.learning-shell :is(.sw-eyebrow,.sw-tile-count,.sw-tile-footer,.sw-lesson-description,.sw-check-source,.sw-answer-options legend,.sw-completion-copy,.sw-check-summary>span small,.sw-reset-selection,.sw-map-label small,.sw-guide-subtitle,.sw-guide-list>button>span,.sw-guide-sections h2>span,.sw-guide-sources h2,.sw-card-toolbar>label,.sw-flashcard-meta,.sw-recall-field small,.sw-flashcard-actions>span,.sw-caught-up p) { color: #596576 !important; }
-.desk-shell.light-lms.learning-shell :is(.sw-tile-copy h3,.sw-quiz-preview h3,.sw-guide-list>button>strong,.sw-map-label strong,.sw-check-source strong,.sw-flashcard-meta>span:first-child,.sw-reading-copy,.sw-guide-sections p,.sw-guide-sections li,.sw-recall-field,.sw-flashcard-answer) { color: #172331 !important; }
-.desk-shell.light-lms.learning-shell :is(.sw-catalog-heading>div>p:last-child,.sw-course-copy>p:not(.sw-eyebrow):not(.sw-progress-copy),.sw-quiz-heading>div>p:last-child,.sw-quiz-preview p:last-child,.sw-quiz-preview>span,.sw-tile-description) { color: #596576 !important; }
-.desk-shell.light-lms.learning-shell .sw-course-tile { border-color: #e0e5eb !important; border-top: 3px solid var(--course-accent) !important; border-radius: 16px; background: var(--course-surface,#fff) !important; color: #172331 !important; }
+.desk-shell.light-lms.learning-shell :is(.sw-eyebrow,.sw-tile-count,.sw-tile-footer,.sw-lesson-description,.sw-check-source,.sw-answer-options legend,.sw-completion-copy,.sw-check-summary>span small,.sw-reset-selection,.sw-map-label small,.sw-guide-subtitle,.sw-guide-list>button>span,.sw-guide-sections h2>span,.sw-guide-sources h2,.sw-card-toolbar>label,.sw-flashcard-meta,.sw-recall-field small,.sw-flashcard-actions>span,.sw-caught-up p) { color: var(--ui-muted) !important; }
+.desk-shell.light-lms.learning-shell :is(.sw-tile-copy h3,.sw-quiz-preview h3,.sw-guide-list>button>strong,.sw-map-label strong,.sw-check-source strong,.sw-flashcard-meta>span:first-child,.sw-reading-copy,.sw-guide-sections p,.sw-guide-sections li,.sw-recall-field,.sw-flashcard-answer) { color: var(--ui-ink) !important; }
+.desk-shell.light-lms.learning-shell :is(.sw-catalog-heading>div>p:last-child,.sw-course-copy>p:not(.sw-eyebrow):not(.sw-progress-copy),.sw-quiz-heading>div>p:last-child,.sw-quiz-preview p:last-child,.sw-quiz-preview>span,.sw-tile-description) { color: var(--ui-muted) !important; }
+.desk-shell.light-lms.learning-shell .sw-course-tile { border-color: var(--ui-line) !important; border-top: 3px solid var(--course-accent) !important; border-radius: 16px; background: var(--course-surface,var(--ui-surface)) !important; color: var(--ui-ink) !important; }
 .desk-shell.light-lms.learning-shell .sw-theme-blue { --course-accent:#4d8cba; --course-surface:#edf6fc; }
 .desk-shell.light-lms.learning-shell .sw-theme-purple { --course-accent:#9876bd; --course-surface:#f5f0fa; }
 .desk-shell.light-lms.learning-shell .sw-theme-green { --course-accent:#558b68; --course-surface:#eef7f0; }
 .desk-shell.light-lms.learning-shell .sw-theme-gold { --course-accent:#b87b31; --course-surface:#fff5e8; }
 .desk-shell.light-lms.learning-shell .sw-course-tile:hover { border-color:var(--course-accent) !important; box-shadow:0 5px 18px #17233112 !important; }
-.desk-shell.light-lms.learning-shell :is(.sw-tile-topic,.sw-progress-copy,.sw-quiz-path-link,.sw-inline-sources>a,.sw-guide-sources>a) { color:#8d3c18 !important; }
+.desk-shell.light-lms.learning-shell :is(.sw-tile-topic,.sw-progress-copy,.sw-quiz-path-link,.sw-inline-sources>a,.sw-guide-sources>a) { color:var(--ui-accent-ink) !important; }
 .desk-shell.light-lms.learning-shell :is(.sw-overall-progress,.sw-tile-progress,.sw-lesson-progress) { background:#e5e9ee !important; }
 .desk-shell.light-lms.learning-shell :is(.sw-overall-progress,.sw-tile-progress,.sw-lesson-progress)>span { background:#ff7a3d !important; }
-.desk-shell.light-lms.learning-shell :is(.sw-answer-option,.sw-secondary-button,.sw-print-button) { border-color:#c7d0da !important; background:#fff !important; color:#172331 !important; }
-.desk-shell.light-lms.learning-shell .sw-answer-option.is-selected { border-color:#da8a60 !important; background:#fff0e8 !important; color:#172331 !important; }
-.desk-shell.light-lms.learning-shell .sw-answer-option.is-correct,.desk-shell.light-lms.learning-shell .sw-feedback-correct { border-color:#b8d8c2 !important; background:#e8f4ec !important; color:#24553e !important; }
-.desk-shell.light-lms.learning-shell :is(.sw-feedback-incorrect,.sw-feedback-revealed) { border-color:#e5c3a6 !important; background:#fff4e7 !important; color:#603c19 !important; }
-.desk-shell.light-lms.learning-shell :is(.sw-reading-copy pre,.sw-guide-sections pre,.sw-flashcard-answer>div) { border:1px solid #e0e5eb; background:#f0f3f6 !important; color:#172331 !important; }
-.desk-shell.light-lms.learning-shell .sw-map-item.is-current .sw-map-diamond { border-color:#ff7a3d !important; background:#ff7a3d !important; color:#172331 !important; box-shadow:0 4px 0 #ca5928 !important; }
-.desk-shell.light-lms.learning-shell .sw-map-item.is-complete .sw-map-diamond { border-color:#b9d9c4 !important; background:#e8f4ec !important; color:#24553e !important; box-shadow:0 4px 0 #8bb99a !important; }
-.desk-shell.light-lms.learning-shell .sw-map-item.is-upcoming .sw-map-diamond { border-color:#cbd4dd !important; background:#f0f3f6 !important; color:#596576 !important; box-shadow:0 4px 0 #d8dfe6 !important; }
-.desk-shell.light-lms.learning-shell .sw-guide-list>button.is-selected { border-color:#dc986f !important; background:#fff2e9 !important; }
+.desk-shell.light-lms.learning-shell :is(.sw-answer-option,.sw-secondary-button,.sw-print-button) { border-color:var(--ui-line) !important; background:var(--ui-surface) !important; color:var(--ui-ink) !important; }
+.desk-shell.light-lms.learning-shell .sw-answer-option.is-selected { border-color:#da8a60 !important; background:var(--ui-accent-soft) !important; color:var(--ui-ink) !important; }
+.desk-shell.light-lms.learning-shell .sw-answer-option.is-correct,.desk-shell.light-lms.learning-shell .sw-feedback-correct { border-color:#b8d8c2 !important; background:var(--ui-success-soft) !important; color:var(--ui-success) !important; }
+.desk-shell.light-lms.learning-shell :is(.sw-feedback-incorrect,.sw-feedback-revealed) { border-color:#e5c3a6 !important; background:var(--ui-warning-soft) !important; color:var(--ui-warning) !important; }
+.desk-shell.light-lms.learning-shell :is(.sw-reading-copy pre,.sw-guide-sections pre,.sw-flashcard-answer>div) { border:1px solid var(--ui-line); background:var(--ui-raised) !important; color:var(--ui-ink) !important; }
+.desk-shell.light-lms.learning-shell .sw-map-item.is-current .sw-map-diamond { border-color:#ff7a3d !important; background:#ff7a3d !important; color:var(--ui-ink) !important; box-shadow:0 4px 0 #ca5928 !important; }
+.desk-shell.light-lms.learning-shell .sw-map-item.is-complete .sw-map-diamond { border-color:#b9d9c4 !important; background:var(--ui-success-soft) !important; color:var(--ui-success) !important; box-shadow:0 4px 0 #8bb99a !important; }
+.desk-shell.light-lms.learning-shell .sw-map-item.is-upcoming .sw-map-diamond { border-color:#cbd4dd !important; background:var(--ui-raised) !important; color:var(--ui-muted) !important; box-shadow:0 4px 0 #d8dfe6 !important; }
+.desk-shell.light-lms.learning-shell .sw-guide-list>button.is-selected { border-color:#dc986f !important; background:var(--ui-accent-soft) !important; }
 .desk-shell.light-lms.learning-shell .sw-course-art,.desk-shell.light-lms.learning-shell .sw-tile-art { background-color:transparent !important; }
 
 /* Company and role study details inherit the same calm light surfaces. */
-.desk-shell.light-lms .targets-workspace.company-board { background:transparent!important; color:#172331!important; }
-.desk-shell.light-lms .company-board .target-pipeline-section-heading h2 { color:#172331!important; font-size:20px; }
-.desk-shell.light-lms .company-board .target-pipeline-section-heading>span { color:#596576!important; font-size:13px; }
-.desk-shell.light-lms .company-board [role="combobox"] { background:#fffefa!important; color:#172331!important; border-color:#89929a!important; }
-.desk-shell.light-lms.learning-shell :is(.target-detail-workspace,.company-home) { background:#f6f7f9 !important; color:#172331 !important; }
-.desk-shell.light-lms.learning-shell :is(.company-home-overview,.company-home-section,.target-detail-workspace .target-plan-aside,.target-detail-workspace .target-upcoming,.target-detail-workspace .target-requirement,.target-detail-workspace .target-debrief,.target-detail-workspace .target-interview-record,.target-detail-workspace .target-source-reader,.target-detail-workspace .target-source-index,.target-detail-workspace .target-source-provenance,.target-detail-workspace .target-related,.target-detail-workspace .target-explainer,.target-detail-workspace .target-evidence-context,.target-detail-workspace .target-gap-focus,.target-detail-workspace .target-linked-requirements,.target-detail-workspace .target-requirement-feedback,.target-detail-workspace .target-next-actions,.target-detail-workspace .target-pipeline-notes,.target-detail-workspace .target-pipeline-edit,.target-detail-workspace .target-form,.target-detail-workspace .career-conflict-review) { border-color:#e0e5eb !important; background:#fff !important; color:#172331 !important; }
-.desk-shell.light-lms.learning-shell :is(.company-home-heading h1,.company-home-section h2,.company-careers td,.company-careers button,.company-track-grid strong,.company-activity-copy strong,.target-detail-workspace h1,.target-detail-workspace h2,.target-detail-workspace h3,.target-detail-workspace h4,.target-detail-workspace strong,.target-detail-workspace .target-step-summary strong) { color:#172331 !important; }
-.desk-shell.light-lms.learning-shell :is(.company-home-heading p,.company-home-pitch p,.company-home-empty,.company-careers th,.company-activity-copy small,.company-activity-copy p,.target-detail-workspace p,.target-detail-workspace small,.target-detail-workspace label,.target-detail-workspace .muted,.target-detail-workspace .target-save-status,.target-detail-workspace .target-loading,.target-detail-workspace .target-role-context,.target-detail-workspace .target-phase>h4,.target-detail-workspace .target-step-summary,.target-detail-workspace .target-step-duration,.target-detail-workspace .target-source-body) { color:#596576 !important; }
-.desk-shell.light-lms.learning-shell .company-home-pitch { border-color:#f0c2a7 !important; border-left-color:#ff7a3d !important; background:#fff8f3 !important; }
-.desk-shell.light-lms.learning-shell .company-home-pitch h2 { color:#8d3c18 !important; }
-.desk-shell.light-lms.learning-shell .company-careers-scroll,.desk-shell.light-lms.learning-shell .company-careers th,.desk-shell.light-lms.learning-shell .company-careers td,.desk-shell.light-lms.learning-shell .company-activity { border-color:#e0e5eb !important; background:#fff !important; }
-.desk-shell.light-lms.learning-shell .company-track-grid>button,.desk-shell.light-lms.learning-shell .company-general-learning { border-color:#e0e5eb !important; background:#f0f3f6 !important; color:#172331 !important; }
-.desk-shell.light-lms.learning-shell .company-track-grid>button:hover,.desk-shell.light-lms.learning-shell .company-general-learning:hover { border-color:#edb18f !important; background:#fff4ed !important; }
-.desk-shell.light-lms.learning-shell .company-track-grid>button>span { color:#596576 !important; }
-.desk-shell.light-lms.learning-shell .company-track-grid>button>svg { color:#9a3e18 !important; }
-.desk-shell.light-lms.learning-shell .company-activity-icon { border-color:#e0e5eb !important; background:#fff !important; color:#ae5126 !important; }
+.desk-shell.light-lms .targets-workspace.company-board { background:transparent!important; color:var(--ui-ink)!important; }
+.desk-shell.light-lms .company-board .target-pipeline-section-heading h2 { color:var(--ui-ink)!important; font-size:20px; }
+.desk-shell.light-lms .company-board .target-pipeline-section-heading>span { color:var(--ui-muted)!important; font-size:13px; }
+.desk-shell.light-lms .company-board [role="combobox"] { background:var(--ui-surface)!important; color:var(--ui-ink)!important; border-color:#89929a!important; }
+.desk-shell.light-lms.learning-shell :is(.target-detail-workspace,.company-home) { background:var(--ui-canvas) !important; color:var(--ui-ink) !important; }
+.desk-shell.light-lms.learning-shell :is(.company-home-overview,.company-home-section,.target-detail-workspace .target-plan-aside,.target-detail-workspace .target-upcoming,.target-detail-workspace .target-requirement,.target-detail-workspace .target-debrief,.target-detail-workspace .target-interview-record,.target-detail-workspace .target-source-reader,.target-detail-workspace .target-source-index,.target-detail-workspace .target-source-provenance,.target-detail-workspace .target-related,.target-detail-workspace .target-explainer,.target-detail-workspace .target-evidence-context,.target-detail-workspace .target-gap-focus,.target-detail-workspace .target-linked-requirements,.target-detail-workspace .target-requirement-feedback,.target-detail-workspace .target-next-actions,.target-detail-workspace .target-pipeline-notes,.target-detail-workspace .target-pipeline-edit,.target-detail-workspace .target-form,.target-detail-workspace .career-conflict-review) { border-color:var(--ui-line) !important; background:var(--ui-surface) !important; color:var(--ui-ink) !important; }
+.desk-shell.light-lms.learning-shell :is(.company-home-heading h1,.company-home-section h2,.company-careers td,.company-careers button,.company-track-grid strong,.company-activity-copy strong,.target-detail-workspace h1,.target-detail-workspace h2,.target-detail-workspace h3,.target-detail-workspace h4,.target-detail-workspace strong,.target-detail-workspace .target-step-summary strong) { color:var(--ui-ink) !important; }
+.desk-shell.light-lms.learning-shell :is(.company-home-heading p,.company-home-pitch p,.company-home-empty,.company-careers th,.company-activity-copy small,.company-activity-copy p,.target-detail-workspace p,.target-detail-workspace small,.target-detail-workspace label,.target-detail-workspace .muted,.target-detail-workspace .target-save-status,.target-detail-workspace .target-loading,.target-detail-workspace .target-role-context,.target-detail-workspace .target-phase>h4,.target-detail-workspace .target-step-summary,.target-detail-workspace .target-step-duration,.target-detail-workspace .target-source-body) { color:var(--ui-muted) !important; }
+.desk-shell.light-lms.learning-shell .company-home-pitch { border-color:#f0c2a7 !important; border-left-color:#ff7a3d !important; background:var(--ui-accent-soft) !important; }
+.desk-shell.light-lms.learning-shell .company-home-pitch h2 { color:var(--ui-accent-ink) !important; }
+.desk-shell.light-lms.learning-shell .company-careers-scroll,.desk-shell.light-lms.learning-shell .company-careers th,.desk-shell.light-lms.learning-shell .company-careers td,.desk-shell.light-lms.learning-shell .company-activity { border-color:var(--ui-line) !important; background:var(--ui-surface) !important; }
+.desk-shell.light-lms.learning-shell .company-track-grid>button,.desk-shell.light-lms.learning-shell .company-general-learning { border-color:var(--ui-line) !important; background:var(--ui-raised) !important; color:var(--ui-ink) !important; }
+.desk-shell.light-lms.learning-shell .company-track-grid>button:hover,.desk-shell.light-lms.learning-shell .company-general-learning:hover { border-color:#edb18f !important; background:var(--ui-accent-soft) !important; }
+.desk-shell.light-lms.learning-shell .company-track-grid>button>span { color:var(--ui-muted) !important; }
+.desk-shell.light-lms.learning-shell .company-track-grid>button>svg { color:var(--ui-accent-ink) !important; }
+.desk-shell.light-lms.learning-shell .company-activity-icon { border-color:var(--ui-line) !important; background:var(--ui-surface) !important; color:#ae5126 !important; }
 .desk-shell.light-lms.learning-shell .company-activity>li::before { background:#d9e0e7 !important; }
 .desk-shell.light-lms.learning-shell .company-activity-copy p { color:#465465 !important; }
-.desk-shell.light-lms.learning-shell .target-detail-workspace .target-tabs>button { color:#596576 !important; }
-.desk-shell.light-lms.learning-shell .target-detail-workspace .target-tabs>button.selected { border-color:#ff7a3d !important; color:#8d3c18 !important; }
+.desk-shell.light-lms.learning-shell .target-detail-workspace .target-tabs>button { color:var(--ui-muted) !important; }
+.desk-shell.light-lms.learning-shell .target-detail-workspace .target-tabs>button.selected { border-color:#ff7a3d !important; color:var(--ui-accent-ink) !important; }
 .desk-shell.light-lms.learning-shell .target-detail-workspace .target-step-summary { background:transparent !important; }
-.desk-shell.light-lms.learning-shell .target-detail-workspace .target-step-summary:hover { background:#f0f3f6 !important; }
-.desk-shell.light-lms.learning-shell .target-detail-workspace :is(.target-step,.target-step:first-of-type,.target-plan-title,.target-section-heading,.target-requirement-heading,.target-debrief-section,.target-history-section,.target-source-index,.target-related,.target-interview-record) { border-color:#e0e5eb !important; }
-.desk-shell.light-lms.learning-shell .target-detail-workspace :is(.target-role-selector>select,.target-detail-workspace input,.target-detail-workspace textarea,.target-detail-workspace select) { min-height:44px; border-color:#c7d0da !important; background:#fff !important; color:#172331 !important; }
-.desk-shell.light-lms.learning-shell .target-detail-workspace .target-resources>button { min-height:44px; border-color:#d4dce5 !important; background:#f6f7f9 !important; color:#315d88 !important; }
-.desk-shell.light-lms.learning-shell .target-detail-workspace .target-source-body a { color:#315d88 !important; }
+.desk-shell.light-lms.learning-shell .target-detail-workspace .target-step-summary:hover { background:var(--ui-raised) !important; }
+.desk-shell.light-lms.learning-shell .target-detail-workspace :is(.target-step,.target-step:first-of-type,.target-plan-title,.target-section-heading,.target-requirement-heading,.target-debrief-section,.target-history-section,.target-source-index,.target-related,.target-interview-record) { border-color:var(--ui-line) !important; }
+.desk-shell.light-lms.learning-shell .target-detail-workspace :is(.target-role-selector>select,.target-detail-workspace input,.target-detail-workspace textarea,.target-detail-workspace select) { min-height:44px; border-color:var(--ui-line) !important; background:var(--ui-surface) !important; color:var(--ui-ink) !important; }
+.desk-shell.light-lms.learning-shell .target-detail-workspace .target-resources>button { min-height:44px; border-color:#d4dce5 !important; background:var(--ui-canvas) !important; color:var(--ui-link) !important; }
+.desk-shell.light-lms.learning-shell .target-detail-workspace .target-source-body a { color:var(--ui-link) !important; }
 .desk-shell.light-lms.learning-shell :is(.target-detail-workspace,.company-home) :is(button,a,input,textarea,select):focus-visible { outline:3px solid #6ca8ff !important; outline-offset:3px; }
 
 @media (max-width:760px) { .desk-shell.light-lms.learning-shell .company-home-grid { grid-template-columns:1fr !important; } }
 @media (prefers-reduced-motion:reduce) { .desk-shell.light-lms.learning-shell *,.desk-shell.light-lms.learning-shell *::before,.desk-shell.light-lms.learning-shell *::after { transition-duration:.01ms !important; animation-duration:.01ms !important; animation-iteration-count:1 !important; } }
 
-.workspace-boot{background:#f6f7f9!important;color:#172331!important}.workspace-boot .deems-brand-state{background:#fff!important;color:#172331!important;border-color:#e0e5eb!important}.workspace-boot .deems-brand-state p{color:#596576!important}.light-lms .desk-menu-label{padding:12px 12px 4px;font-size:11px;color:#687386;border-top:1px solid #e0e5eb;margin-top:6px}.light-lms .desk-navigation .is-active{background:#fff0e8!important;color:#9a3e18!important}
+.workspace-boot{background:var(--ui-canvas)!important;color:var(--ui-ink)!important}.workspace-boot .deems-brand-state{background:var(--ui-surface)!important;color:var(--ui-ink)!important;border-color:var(--ui-line)!important}.workspace-boot .deems-brand-state p{color:var(--ui-muted)!important}.light-lms .desk-menu-label{padding:12px 12px 4px;font-size:11px;color:#687386;border-top:1px solid var(--ui-line);margin-top:6px}.light-lms .desk-navigation .is-active{background:var(--ui-accent-soft)!important;color:var(--ui-accent-ink)!important}

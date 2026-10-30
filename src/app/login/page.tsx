@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Eye, EyeOff, LoaderCircle } from "lucide-react";
 import "./login.css";
+import { ThemeControl } from "@/components/theme";
 import { DeemsBrand } from "@/components/brand";
 import { Registration } from "./registration";
 import { notifyAccountChange } from "@/components/workspace-client";
@@ -169,7 +170,7 @@ export default function LoginPage() {
   const accountForm = screen === "signup" || screen === "confirm" || screen === "recover";
   return <main className="deems-login-page">
     <section className={`deems-login-card${accountForm ? " deems-login-card-registration" : ""}`} aria-labelledby="login-title">
-      <header className="deems-login-brand"><DeemsBrand /></header>
+      <header className="deems-login-brand"><DeemsBrand /><ThemeControl /></header>
 
       <div className="deems-login-content">
       {screen === "signup" || screen === "confirm" || screen === "recover" ? <Registration key={screen} initialMode={screen} initialEmail={email} onBack={returnToSignIn} onComplete={(address, message) => { setEmail(address); returnToSignIn(); setNotice(message); }} /> : <>

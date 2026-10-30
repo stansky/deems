@@ -1,6 +1,7 @@
 "use client";
+import { reviewCounts } from "@/lib/review-summary";
 import LearningHome from "@/components/learning-home";
-import { WorkspaceHeader, WorkspaceSections, type WorkspaceView } from "@/components/workspace-chrome";
+import { PageFrame, WorkspaceHeader, WorkspaceSections, type WorkspaceView } from "@/components/workspace-chrome";
 import { PracticeHub } from "@/components/practice-hub";
 import { studyCourses } from "@/data/study-courses";
 import { studyPaths } from "@/data/study-catalog";
@@ -14,7 +15,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Activity as ActivityIcon, ArrowLeft, ArrowRight, BookOpen, BriefcaseBusiness, Check, CheckCircle2, ChevronRight, Circle, Clock3, Code2, ExternalLink, FileText, Flag, Layers3, Lightbulb, Loader2, Menu, MessageSquare, MoreHorizontal, Pause, Play, Plus, Printer, RotateCcw, Search, Sparkles, Target, Timer, UserRound, X } from "lucide-react";
 import { roles, cheatSheets, flashcards, exercises, stories } from "@/data/prep";
 import type { Application, Exercise, WorkspaceState } from "@/lib/types";
-import { Badge, Button, Empty } from "@/components/ui";
+import { Badge, Button, Empty, PageHeader } from "@/components/ui";
 import Practice from "@/components/features/practice/practice-workspace";
 import type { PracticeOrigin, PracticeCommand, PracticeAttempt } from "@/contracts/practice";
 import { practiceCommandSchema, practiceResponseSchema } from "@/contracts/practice";
@@ -111,7 +112,7 @@ function InterviewDesk() {
     window.addEventListener("popstate", restoreView);
     return () => window.removeEventListener("popstate", restoreView);
   }, []);
-  const [selectedGuide, setSelectedGuide] = useState(cheatSheets[0]?.id ?? "");
+  const [selectedGuide, setSelectedGuide] = useState("agent-design");
   const [selectedExercise, setSelectedExercise] = useState(exercises[0]?.id ?? "");
   const [practiceOrigin, setPracticeOrigin] = useState<PracticeOrigin | null>(null);
   const [selectedAttemptId, setSelectedAttemptId] = useState<string | undefined>();
@@ -240,7 +241,7 @@ function InterviewDesk() {
     {mobileMenu && <button aria-label="Close navigation" className="sidebar-scrim" onClick={() => setMobileMenu(false)} />}
     <div className="main-shell">
       <WorkspaceHeader view={view} studyTab={studyTab} authenticated={authenticated} onSignOut={() => void signOut()} onNavigate={navigate} onLibrary={library} onCategory={openCategory} onCareer={() => openCareer()} />
-      <main className={`main-content ${view === "Study" ? "study-main" : focused ? "prep-main" : ""}`}>
+      <PageFrame workbench={view === "Algorithms"} className={view === "Study" ? "study-main" : focused ? "prep-main" : ""}>
         <WorkspaceSections view={view} studyTab={studyTab} category={prepCategory} onNavigate={navigate} onLibrary={library} onCategory={openCategory} onCareer={() => openCareer()} />
         {error && (view !== "Home" || !workspaceUnavailable) && <div className="notice notice-error" role="alert"><span>{error}</span><Button variant="ghost" onClick={load}>Retry connection</Button></div>}
         <div className={`save-status ${saving || saved ? "is-visible" : ""}`} role="status">{saving ? <><Loader2 size={13} className="spin" />Saving...</> : saved ? <><Check size={13} />{saved}</> : null}</div>
@@ -255,12 +256,12 @@ function InterviewDesk() {
         {view === "Reference" && <KnowledgeLibrary initialSelectedId={selectedReference} />}
         {view === "Applications" && <Applications state={state} selected={activeApplication} select={setSelectedApplication} mutate={mutate} saving={saving} loading={loading} />}
         {view === "Experience" && <Background state={state} mutate={mutate} saving={saving} />}
-      </main>
+      </PageFrame>
     </div>
   </div>;
 }
 
-function PageHeading({ eyebrow, title, description, action }: { eyebrow?: string; title: string; description?: string; action?: React.ReactNode }) { return <div className="page-heading"><div>{eyebrow && <p className="eyebrow">{eyebrow}</p>}<h1>{title}</h1>{description && <p className="page-description">{description}</p>}</div>{action}</div>; }
+function PageHeading({ title, action }: { eyebrow?: string; title: string; description?: string; action?: React.ReactNode }) { return <PageHeader title={title} actions={action} />; }
 
 function Today({ state, onPractice, onStudy, onNavigate, onApplication, onReview }: { state: WorkspaceState; onPractice: (kind?: string) => void; onStudy: (id?: string) => void; onNavigate: (v: View) => void; onApplication: (id: string) => void; onReview: () => void }) {
   const [schedule,setSchedule]=useState<TargetsState|null>(null);
@@ -275,18 +276,19 @@ function Today({ state, onPractice, onStudy, onNavigate, onApplication, onReview
   const nextCompany=schedule?.companies.find(company=>company.id===upcoming?.companyId);
   const nextRole=schedule?.roles.find(role=>role.id===upcoming?.roleId);
 
-  const due = flashcards.filter(card => { const review = state.reviews.find(item => item.cardId === card.id); return !review || new Date(review.dueAt).getTime() <= Date.now(); }).length;
+  const reviewSummary = reviewCounts(state.reviews);
+  const due = reviewSummary.due;
   const activeRoles = state.applications.slice().sort((a, b) => Number(b.roleId === "fde") - Number(a.roleId === "fde") || Number(b.company === "Ollama") - Number(a.company === "Ollama")).slice(0, 3);
   const sourceRoles = [state.applications.find(a => a.roleId === "fde"), state.applications.find(a => a.company === "Ollama")].filter((a): a is Application => Boolean(a));
   const prep = ["coding-collab", "agent-design", "math-patterns"].map(id => cheatSheets.find(guide => guide.id === id)).filter((guide): guide is typeof cheatSheets[number] => Boolean(guide));
   return <div className="today-workbench">
-    <PageHeading title="Today" action={<Button variant="secondary" onClick={() => window.print()}><Printer size={15} />Print</Button>} />
+    <PageHeading title="Upcoming" action={<Button variant="secondary" onClick={() => window.print()}><Printer size={15} />Print</Button>} />
     <section className="interview-workbench">
       <div className="interview-workbench-heading"><div><span className="section-kicker">{upcoming?"NEXT INTERVIEW":"PREPARATION"}</span><h2>{upcoming?nextCompany?.name??"Upcoming interview":"Keep preparing"}</h2><p>{upcoming?`${nextRole?.title??""} · ${upcoming.title}`:scheduleError||(!schedule?"Loading saved schedule...":"No upcoming interview is scheduled.")}</p></div>{upcoming?.scheduledAt&&<div className="interview-time"><strong>{new Date(upcoming.scheduledAt).toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit",timeZoneName:"short"})}</strong><span>{new Date(upcoming.scheduledAt).toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"})}</span></div>}</div>
       <div className="interview-practice-options"><div><span className="workbench-icon"><Code2 size={21} /></span><div><h3>Live coding</h3><p>60 min · Python / JavaScript</p></div><Button onClick={() => onPractice("Live coding")}>Practice<ArrowRight size={15} /></Button></div><div><span className="workbench-icon"><Layers3 size={21} /></span><div><h3>System design</h3><p>60 min · Architecture & tradeoffs</p></div><Button variant="secondary" onClick={() => onPractice("System design")}>Practice<ArrowRight size={15} /></Button></div></div>
       <div className="interview-open-questions"><Flag size={13} /><span>Confirm the role, session format, and tool permissions before a scheduled round.</span></div>
     </section>
-    <div className="workbench-columns"><div><section className="workbench-section"><div className="section-heading"><h2>Review</h2><button className="text-button" onClick={() => onStudy()}>All guides<ArrowRight size={14} /></button></div><div className="workbench-list">{prep.map(guide => <button key={guide.id} onClick={() => onStudy(guide.id)}><BookOpen size={17} /><span><strong>{guide.title}</strong>{guide.category !== guide.title && <small>{guide.category}</small>}</span><ChevronRight size={15} /></button>)}<button onClick={onReview}><Layers3 size={17} /><span><strong>Flashcards</strong><small>{due} due</small></span><ChevronRight size={15} /></button><button onClick={() => onNavigate("Experience")}><MessageSquare size={17} /><span><strong>Project stories</strong><small>{stories.length} from your resume</small></span><ChevronRight size={15} /></button></div></section><section className="workbench-section practice-history"><div className="section-heading"><h2>Recent practice</h2><span className="small muted">{state.sessions.length} saved</span></div>{state.sessions.length ? <div className="workbench-list">{state.sessions.slice(0, 2).map(session => { const exercise = exercises.find(item => item.id === session.exerciseId); return <button key={session.id} onClick={() => onPractice(exercise?.kind)}><CheckCircle2 size={17} /><span><strong>{exercise?.title ?? "Practice session"}</strong><small>{session.mode} · {Math.floor(session.elapsed / 60)} min</small></span><span className="session-date">{new Date(session.completedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span></button>; })}</div> : <p className="workbench-empty">No saved sessions yet.</p>}</section></div>
+    <div className="workbench-columns"><div><section className="workbench-section"><div className="section-heading"><h2>Study</h2><button className="text-button" onClick={() => onStudy()}>All guides<ArrowRight size={14} /></button></div><div className="workbench-list">{prep.map(guide => <button key={guide.id} onClick={() => onStudy(guide.id)}><BookOpen size={17} /><span><strong>{guide.title}</strong>{guide.category !== guide.title && <small>{guide.category}</small>}</span><ChevronRight size={15} /></button>)}<button onClick={onReview}><Layers3 size={17} /><span><strong>Review cards</strong><small>{due > 0 ? `${due} due` : reviewSummary.fresh > 0 ? `${reviewSummary.fresh} new cards` : "Up to date"}</small></span><ChevronRight size={15} /></button><button onClick={() => onNavigate("Experience")}><MessageSquare size={17} /><span><strong>Project stories</strong><small>{stories.length} from your resume</small></span><ChevronRight size={15} /></button></div></section><section className="workbench-section practice-history"><div className="section-heading"><h2>Recent practice</h2><span className="small muted">{state.sessions.length} saved</span></div>{state.sessions.length ? <div className="workbench-list">{state.sessions.slice(0, 2).map(session => { const exercise = exercises.find(item => item.id === session.exerciseId); return <button key={session.id} onClick={() => onPractice(exercise?.kind)}><CheckCircle2 size={17} /><span><strong>{exercise?.title ?? "Practice session"}</strong><small>{session.mode} · {Math.floor(session.elapsed / 60)} min</small></span><span className="session-date">{new Date(session.completedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span></button>; })}</div> : <p className="workbench-empty">No saved sessions yet.</p>}</section></div>
     <div><section className="workbench-section"><div className="section-heading"><h2>Applications</h2><button className="text-button" onClick={() => onNavigate("Applications")}>View all {state.applications.length}<ArrowRight size={14} /></button></div><div className="workbench-list application-shortlist">{activeRoles.map(application => <button key={application.id} onClick={() => onApplication(application.id)}><span className="company-avatar">{application.company[0]}</span><span><strong>{application.company}</strong><small>{application.title}</small></span><ChevronRight size={15} /></button>)}</div></section><section className="workbench-section"><div className="section-heading"><h2>Role sources</h2><span className="small muted">{state.documents?.length ?? 0} saved</span></div><div className="workbench-list">{sourceRoles.map(application => { const count = (state.documents ?? []).filter(document => document.applicationId === application.id).length; return <button key={application.id} onClick={() => onApplication(application.id)}><FileText size={17} /><span><strong>{application.company}</strong><small>{count} {count === 1 ? "source" : "sources"} · {state.activities.filter(activity => activity.applicationId === application.id).length} updates</small></span><ChevronRight size={15} /></button>; })}</div></section></div></div>
   </div>;
 }

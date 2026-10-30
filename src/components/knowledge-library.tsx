@@ -6,7 +6,7 @@ import { useCallback, useRef, useState, useEffect } from "react";
 import { ArrowRight, BookOpen, ChevronRight, ExternalLink, Lightbulb, Loader2, RotateCcw, Search } from "lucide-react";
 import type { KnowledgeEntry } from "@/data/knowledge";
 import { knowledgeListResponseSchema } from "@/contracts/learning";
-import { Badge, Button, Empty } from "@/components/ui";
+import { Badge, Button, Empty, PageHeader } from "@/components/ui";
 import "./knowledge-library.css";
 
 type KindFilter = "all" | "term" | "mental-math";
@@ -42,8 +42,8 @@ export default function KnowledgeLibrary({ initialSelectedId = "" }: { initialSe
     requestAnimationFrame(() => readerRef.current?.scrollIntoView({ block: "start", behavior: "instant" }));
   }
   return <div className="knowledge-library">
-    <div className="page-heading"><h1>Reference</h1></div>
-    <div className="reference-toolbar"><div className="reference-kind-tabs" role="tablist" aria-label="Reference type">{kindOptions.map(option => <button key={option.value} role="tab" aria-selected={kind === option.value} className={kind === option.value ? "selected" : ""} onClick={() => { setKind(option.value); setCategory("All topics"); }}>{option.label}</button>)}</div><label className="search-input"><Search size={16} /><input aria-label="Search reference library" placeholder="Search a term or estimate" value={query} onChange={event => setQuery(event.target.value)} /></label><select aria-label="Filter reference topic" value={category} onChange={event => setCategory(event.target.value)}><option>All topics</option>{categories.map(topic => <option key={topic}>{topic}</option>)}</select><span className="reference-count">{filtered.length}</span></div>
+    <PageHeader title="Reference" />
+    <div className="reference-toolbar"><div className="reference-kind-tabs" role="tablist" aria-label="Reference type">{kindOptions.map(option => <button key={option.value} role="tab" aria-selected={kind === option.value} className={kind === option.value ? "selected" : ""} onClick={() => { setKind(option.value); setCategory("All topics"); }}>{option.label}</button>)}</div><label className="search-input"><Search size={16} /><input aria-label="Search reference library" placeholder={entries.length ? `Search ${entries.length} references` : "Search references"} value={query} onChange={event => setQuery(event.target.value)} /></label><select aria-label="Filter reference topic" value={category} onChange={event => setCategory(event.target.value)}><option>All topics</option>{categories.map(topic => <option key={topic}>{topic}</option>)}</select>{(query || kind !== "all" || category !== "All topics") && <span className="reference-count">{filtered.length} results</span>}</div>
     {error && <div className="notice notice-error" role="alert"><span>{error}</span><Button variant="ghost" onClick={load}><RotateCcw size={14} />Retry</Button></div>}
     {loading ? <div className="reference-loading" role="status"><Loader2 size={18} className="spin" />Loading reference library...</div> : selected ? <div className="reference-layout"><aside className="reference-index" aria-label="Reference entries">{filtered.map(entry => <button key={entry.id} onClick={() => selectEntry(entry.id)} className={entry.id === selected.id ? "selected" : ""} aria-current={entry.id === selected.id ? "true" : undefined}><span className="reference-index-icon">{entry.kind === "mental-math" ? <Lightbulb size={15} /> : <BookOpen size={15} />}</span><span><strong>{entry.title}</strong><small>{entry.category}</small></span><ChevronRight size={14} /></button>)}</aside><div ref={readerRef} className="reference-reader-container"><ReferenceReader key={selected.id} entry={selected} entries={entries} onRelated={id => selectEntry(id, true)} /></div></div> : !error && <Empty title="No matching entries">Try another topic or search.</Empty>}
   </div>;

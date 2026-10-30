@@ -1,14 +1,19 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { ChevronDown, LogOut, UserRound } from "lucide-react";
 import { DeemsBrand } from "./brand";
+import { ThemeControl } from "./theme";
 import type { StudyTab } from "@/contracts/study";
 import type { PrepCategory } from "./features/prep/prep-library";
 import "./workspace-chrome.css";
 
 export type WorkspaceView = "Home" | "PracticeHub" | "Preparation" | "Interviews" | "Today" | "Study" | "Practice" | "Algorithms" | "Reference" | "Applications" | "Experience";
 type Navigation = { onNavigate: (view: WorkspaceView) => void; onLibrary: (tab: StudyTab) => void; onCategory: (category: PrepCategory) => void; onCareer: () => void };
+
+export function PageFrame({ children, workbench = false, className = "" }: { children: ReactNode; workbench?: boolean; className?: string }) {
+  return <main className={`main-content workspace-frame${workbench ? " workspace-frame-workbench" : ""} ${className}`}>{children}</main>;
+}
 
 export function WorkspaceHeader({ view, studyTab, authenticated, onSignOut, onNavigate, onLibrary, onCareer }: Navigation & { view: WorkspaceView; studyTab: StudyTab; authenticated: boolean; onSignOut: () => void }) {
   const header = useRef<HTMLElement>(null);
@@ -32,13 +37,13 @@ export function WorkspaceHeader({ view, studyTab, authenticated, onSignOut, onNa
     { id: "practice", label: "Practice", action: () => onNavigate("PracticeHub") },
     { id: "career", label: "Career", action: onCareer },
   ];
-  return <header ref={header} className="learning-header desk-header workspace-header">
+  return <header ref={header} className={`learning-header desk-header workspace-header${view === "Algorithms" ? " workspace-header-workbench" : ""}`}>
     <button className="learning-brand" aria-label="Deems home" onClick={() => go(() => onNavigate("Home"))}><DeemsBrand /></button>
     <nav className="desk-navigation" aria-label="Workspace sections">{items.map(item => <button key={item.id} className={active === item.id ? "is-active" : ""} aria-current={active === item.id ? "page" : undefined} onClick={() => go(item.action)}>{item.label}</button>)}</nav>
-    <details className="workspace-account" name="deems-header-menu"><summary aria-label="Workspace menu"><UserRound size={19} /><ChevronDown size={12} /></summary><div className="desk-menu">
+    <div className="workspace-utilities"><ThemeControl /><details className="workspace-account" name="deems-header-menu"><summary aria-label="Workspace menu"><UserRound size={19} /><ChevronDown size={12} /></summary><div className="desk-menu">
       <div className="workspace-account-label"><strong>Your workspace</strong><span>Personal learning space</span></div>
       {authenticated && <button onClick={() => go(onSignOut)}><LogOut size={16} />Sign out</button>}
-    </div></details>
+    </div></details></div>
   </header>;
 }
 

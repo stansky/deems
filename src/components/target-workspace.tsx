@@ -1,4 +1,5 @@
 "use client";
+import { CompanyCard } from "./company-card";
 
 import { workspaceFetch, workspaceSessionStorage } from "@/components/workspace-client";
 
@@ -318,11 +319,7 @@ function Pipeline({ data, onOpen, onOpenCompany, onCompanyCreated }: { data: Tar
       const brand = companyBranding[companyId];
       const steps = roles.flatMap(role => role.steps);
       const completed = roles.reduce((sum, role) => sum + role.steps.filter(step => data.progress.some(item => item.roleId === role.id && item.itemId === step.id && item.status === "done")).length, 0);
-      return <button className="company-tile" key={companyId} style={companySurface(brand?.accent)} onClick={()=>onOpenCompany(companyId)} aria-label={`Open ${company.name} company details`}>
-        <span className="company-tile-logo">{brand?.logoPath ? <><img src={brand.logoPath} alt="" onError={event => { event.currentTarget.hidden = true; event.currentTarget.parentElement?.classList.add("logo-missing"); }}/><span className="company-logo-fallback" aria-hidden="true">{company.name.slice(0,1)}</span></> : <span>{company.name.slice(0,1)}</span>}</span>
-        <strong>{company.name}</strong>
-        <span className="company-tile-count">{completed > 0 && steps.length ? `${completed}/${steps.length} preparation steps` : roles.length ? `${roles.length} ${roles.length === 1 ? "role" : "roles"}` : rounds.length ? `${rounds.length} past rounds` : "Company prospect"}</span>
-      </button>;
+      return <CompanyCard key={companyId} name={company.name} logo={brand?.logoPath} accent={brand?.accent} done={completed} total={steps.length} meta={completed > 0 ? `${completed} / ${steps.length} steps` : roles.length ? `${roles.length} ${roles.length === 1 ? "role" : "roles"}` : rounds.length ? `${rounds.length} past rounds` : "Company prospect"} onOpen={() => onOpenCompany(companyId)} label={`Open ${company.name} company details`} />;
     })}</div>}
     </section>;
     }) : <BrandState kind="empty" title="No companies yet" description="Add a company to organize interview roles and preparation." compact />}

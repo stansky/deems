@@ -4,7 +4,7 @@ Owner approved implementation and deployment on October 28, 2026, following the 
 
 ## Reference lock
 
-Keep the light Deems canvas, wordmark-only header, cream character with minimal Presidio context, compact square overview cards and visible company branding. Codecademy owns the separation of discovery, saved learning and ordered curriculum. Brilliant contributes the first-steps checklist, contextual resume with course selectors, ordered course tiles, and clear answer feedback with Why and Continue. GreatFrontEnd contributes distinct practice formats, company plans and contextual detail progress. Clearful contributes restrained empty states. Do not copy XP, leagues, certificates, marketing promotions or unsupported streaks.
+Keep the Deems wordmark-only header, cream character with minimal Presidio context, compact square company cards and visible company branding. The October 29 request adds Light, Dark and System appearance, with light as the default. The earlier light-only lock is superseded. Codecademy owns the separation of discovery, saved learning and ordered curriculum. Brilliant contributes the first-steps checklist, contextual resume with course selectors, ordered course tiles, and clear answer feedback with Why and Continue. GreatFrontEnd contributes distinct practice formats, company plans and contextual detail progress. Clearful contributes restrained empty states. Do not copy XP, leagues, certificates, marketing promotions or unsupported streaks.
 
 The private evidence gallery is private/design-review-opus-20261028/expanded-references/index.html. It contains 2732px Brilliant originals and 3352px signed-in Safari GreatFrontEnd captures, with complete long-page images and source manifests. Premium gates remain evidence limits.
 
@@ -35,3 +35,24 @@ Implemented: five direct header destinations and contextual hub navigation; a de
 Local validation: typecheck, OpenAPI contract validation and production build passed. Existing tests passed 20 checks; two database isolation checks remain skipped without their dedicated disposable database. No new test suite was added. Browser-only fixtures verified empty, active and completed Home, saved selections across reload, course switching, filtered empty results, loading and failure states, continued catalog access during a workspace failure, quiz retry/explanation/Continue and draft reload. Real local Career navigation verified unique company cards, company detail reload and return to overview. Home, My learning and Browse each measure 1200px content width at a 1440px desktop viewport. Screenshots and receipts remain under private/lms-ui-review.
 
 The state and save-flow fixtures intercepted workspace requests and did not write personal database records. These checks do not claim a new hosted persistence or account-isolation audit. Desktop only was requested. Hosted release status is recorded in the private release receipt after main/staging deployment.
+
+
+## October 29 desktop audit and appearance slice
+
+The owner supplied LeetCode study-plan, topic collection and split-editor screenshots, requested both themes, and asked Claude to inspect every desktop page for shared components, layout, duplicated headings and verbosity. Refero SuperHi (style b98edb8d-43a6-47e2-9adf-71ac4d584f47) contributes strong subject colors and readable sans typography. The owner screenshots control catalog density and workbench layout. Deems keeps its wordmark, character, login scenes and orange actions. No borrowed artwork or course content is used.
+
+Captured 20 desktop screens in both themes at 1600 by 1000, with full-page copies for long screens. Claude Opus 5.5 reported inspecting all 40 viewports and 20 long captures. The original review remains private/desktop-design-audit-20261029/claude-review.md. The review is evidence of that captured revision, not approval of later changes. Final captures are in the after subfolder, which adds company detail and revealed Review states.
+
+Implemented changes:
+
+- Light, Dark and System selection shared by login and the workspace, with a local saved preference, first-paint theme and OS/cross-tab updates. CodeMirror follows the same choice. No account or workspace data is moved.
+- Shared neutral, action, selection, status and progress-track roles. Legacy reading panels, tables, search frames, buttons and input surfaces use those roles. Removed the competing automatic study-night stylesheet. Company colors stay independent and logo SVGs use a light internal scheme for stable contrast.
+- Locally hosted Manrope with its weight range and OFL license. Colored covers use real Lucide subject icons. A compact variant of the same LearningCard serves catalog rows and empty My learning suggestions. No duplicate module count or generic footer action on unsaved cards.
+- Shared PageFrame, accessible PageHeader and CompanyCard. Tab-named pages retain an accessible H1 without repeating the visible tab. Coding has a wider frame with its header aligned to that frame. Course, path, company and problem titles remain visible because they identify the selected record.
+- Review has one aligned topic/count toolbar and one reading width. New cards are distinct from reviews that are due. Review, Practice and Upcoming use one latest-review/count helper. Existing review records and scheduling are preserved.
+- Coding has side-by-side problem and editor panes, Description/Solution/Notes/Coach panels, language selection and existing runner/history/draft behavior. Optional exercise reflection fields are grouped without removing their stored data or provenance.
+- Home puts topics before company tracks and reduces the company shelf. My learning keeps saved learning distinct from clearly labeled starter suggestions. Prep pages use the selected theme and no redundant navigation footer. Quiz setup starts with its selectors rather than stacked generic headlines.
+
+Validation: existing typecheck, OpenAPI contract validation and tests pass (24 passed, two database isolation checks skipped without their dedicated database). The local production build and healthy restart pass. Browser checks verify theme reload, OS mode changes, editor preservation across theme/panel changes and reference-language switching. Captures use actual local data without saving progress, reviews or application records. Desktop only was requested. Hosted release receipts record the deployed SHA and live check separately.
+
+Further recommendations from the audit are retained as optional follow-up, not claimed implemented: a drawer for the question index, a single shared split-reader abstraction across all legacy reading surfaces, and a broader subject catalog. These do not block the scoped theme, density and repetition corrections.

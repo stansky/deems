@@ -1,17 +1,17 @@
 .prep-library {
-  --prep-bg: #141618;
-  --prep-surface: #1d2125;
-  --prep-line: #343a40;
-  --prep-ink: #f5f7f8;
-  --prep-muted: #a5adb3;
+  --prep-bg: var(--ui-canvas);
+  --prep-surface: var(--ui-surface);
+  --prep-line: var(--ui-line);
+  --prep-ink: var(--ui-ink);
+  --prep-muted: var(--ui-muted);
   --prep-lime: #c7ff69;
   --prep-violet: #b8a5ff;
   box-sizing: border-box;
   width: 100%;
-  max-width: 1040px;
+  max-width: 1200px;
   min-height: 100%;
   margin: 0 auto;
-  padding: clamp(24px, 4vw, 46px) clamp(18px, 4vw, 42px) 22px;
+  padding: 0;
   background: var(--prep-bg);
   color: var(--prep-ink);
   font-family: inherit;
@@ -52,7 +52,7 @@
 .prep-library-section > h2,
 .prep-story-link h2 {
   margin: 0 0 14px;
-  color: #c5cbd0;
+  color: var(--ui-muted);
   font-size: 11px;
   font-weight: 650;
   letter-spacing: 0.075em;
@@ -120,7 +120,7 @@
 .prep-guide:hover,
 .prep-action:hover {
   border-color: #77814f;
-  background: #22272a;
+  background: var(--ui-raised);
 }
 
 .prep-guide:focus-visible,
@@ -204,12 +204,12 @@
   margin: 0 0 17px;
   padding: 15px 17px 16px;
   border-left: 2px solid var(--prep-violet);
-  background: #1a1e22;
+  background: var(--ui-raised);
 }
 
 .prep-prompt-body p {
   margin: 0 0 9px;
-  color: #dce0e3;
+  color: var(--ui-ink);
   font-size: 12px;
   line-height: 1.55;
 }
@@ -261,7 +261,7 @@
 }
 
 .prep-inline-button:hover {
-  background: #272d20;
+  background: var(--ui-raised);
 }
 
 .prep-library-footer {
@@ -281,7 +281,7 @@
   border: 0;
   border-radius: 5px;
   background: transparent;
-  color: #c1c8cd;
+  color: var(--ui-muted);
   font: inherit;
   font-size: 11px;
   cursor: pointer;

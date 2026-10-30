@@ -78,7 +78,9 @@ export default function LearningHome({ state, loading, historyUnavailable = fals
       <LearningOverview compact state={state} loading={false} unavailable={false} onLearning={onMyLearning} onArea={onArea} />
     </div>}
 
-    {isNew && suggestedCourses.length > 0 && <section className="home-suggested" aria-labelledby="home-suggested-title"><div className="home-section-heading"><div><p className="home-eyebrow">Take one small step</p><h2 id="home-suggested-title">Suggested courses</h2></div><button className="home-text-action" onClick={onCourses}>Browse all courses<ArrowRight size={15} /></button></div><div className="home-course-grid">{suggestedCourses.map(entry => entry.kind === "course" && <LearningCard key={entry.item.id} entry={entry} settings={state.settings} onOpen={() => onOpenCourse(entry.item.id)} />)}</div></section>}
+    <nav className="home-topics" aria-label="Explore learning topics"><span className="home-eyebrow">Explore topics</span><div>{["Coding", "AI & systems", "Frameworks & tools", "Team management", "Interview skills"].map(topic => <button key={topic} onClick={() => onArea(topic)}>{topic}<ArrowRight size={14} /></button>)}</div></nav>
+
+    {isNew && suggestedCourses.length > 0 && <section className="home-suggested" aria-labelledby="home-suggested-title"><div className="home-section-heading"><div><h2 id="home-suggested-title">Suggested courses</h2></div><button className="home-text-action" onClick={onCourses}>Browse all courses<ArrowRight size={15} /></button></div><div className="home-course-grid">{suggestedCourses.map(entry => entry.kind === "course" && <LearningCard key={entry.item.id} entry={entry} settings={state.settings} onOpen={() => onOpenCourse(entry.item.id)} />)}</div></section>}
 
     {finished && <>
       <LearningOverview state={state} loading={false} unavailable={false} onLearning={onMyLearning} onArea={onArea} onCourses={onCourses} onReview={onReview} />
@@ -91,7 +93,7 @@ export default function LearningHome({ state, loading, historyUnavailable = fals
     {dueReviews.length > 0 && <div className="home-due-review"><span><strong>{dueReviews.length} review{dueReviews.length === 1 ? "" : "s"} due</strong><small>{dueReviews[0].category} · {dueReviews[0].question}</small></span><button onClick={onReview}>Review now<ArrowRight size={15} /></button></div>}
 
     <CareerLearning onOpen={onCareer} limit={4} />
-    <nav className="home-topics" aria-label="Explore learning topics"><span className="home-eyebrow">Explore topics</span><div>{["Coding", "AI & systems", "Frameworks & tools", "Team management", "Interview skills"].map(topic => <button key={topic} onClick={() => onArea(topic)}>{topic}<ArrowRight size={14} /></button>)}</div></nav>
+
     {recent.length > 0 && <section className="home-recent" aria-labelledby="home-recent"><div className="home-section-heading"><h2 id="home-recent">Recent activity</h2></div><div className="home-recent-grid">{recent.map(item => <div key={`${item.kind}-${item.id}`}><item.icon size={18} /><div><strong>{item.title}</strong><span>{item.kind} · <time dateTime={item.date}>{new Date(item.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</time></span></div></div>)}</div></section>}
   </div>;
 }
