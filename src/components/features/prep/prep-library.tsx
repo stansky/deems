@@ -116,7 +116,7 @@ export default function PrepLibrary({
 
   return (
     <section className="prep-library" aria-label={`${category} preparation`}>
-      <PageHeader title={category === "Management" ? "Team management" : category === "Behavioral" ? "Interview skills" : category} />
+      <PageHeader title={category === "Management" ? "Team management" : category === "Behavioral" ? "Interview skills" : category} visible />
 
       {category === "Coding" && (
         <>

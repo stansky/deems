@@ -444,7 +444,7 @@ function QuizHub({ courses, progressByLesson, courseId, lessonId, onCourseChange
   const guide = lesson && cheatSheets.find(item => item.id === lesson.guideId);
   return <div className="study-workspace sw-quiz-hub">
 
-    <PageHeader title="Quizzes" />
+    <PageHeader title="Quizzes" visible />
     <section className="sw-quiz-picker" aria-labelledby="sw-quiz-picker-title">
       <h2 id="sw-quiz-picker-title" className="sr-only">Choose a quiz</h2>
       {course && <div className="sw-quiz-selects">
@@ -614,18 +614,18 @@ function FlashcardStudy({ state, setTab, dueCount, topic, setTopic, dueOnly, set
   }
 
   return <div className="study-workspace sw-flashcards">
-
-    <PageHeader title="Review" />
-    <div className="sw-card-toolbar"><label>Topic<select value={topic} onChange={event => changeTopic(event.target.value)}>{["All topics", ...topics].map(item => <option key={item}>{item}</option>)}</select></label><div className="sw-filter-toggle" role="group" aria-label="Review card set"><button type="button" className={dueOnly ? "is-selected" : ""} aria-pressed={dueOnly} onClick={() => changeDueFilter(true)}>Due {dueCount}</button><button type="button" className={!dueOnly ? "is-selected" : ""} aria-pressed={!dueOnly} onClick={() => changeDueFilter(false)}>All cards {flashcards.length}</button></div></div>
+    <section className="sw-review-panel" aria-label="Review cards">
+    <header className="sw-card-toolbar"><h1>Review</h1><div className="sw-review-controls"><label><span className="sr-only">Topic</span><select value={topic} onChange={event => changeTopic(event.target.value)}>{["All topics", ...topics].map(item => <option key={item}>{item}</option>)}</select></label><div className="sw-filter-toggle" role="group" aria-label="Review card set"><button type="button" className={dueOnly ? "is-selected" : ""} aria-pressed={dueOnly} onClick={() => changeDueFilter(true)}>Due {dueCount}</button><button type="button" className={!dueOnly ? "is-selected" : ""} aria-pressed={!dueOnly} onClick={() => changeDueFilter(false)}>All cards {flashcards.length}</button></div></div></header>
     {lastReviewedCard && reviews.get(lastReviewedCard) && <p className="sw-review-saved" role="status">Review saved. Next due {new Date(reviews.get(lastReviewedCard)!.dueAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}.</p>}
     {reviewError && <p className="sw-save-error" role="alert">{reviewError}</p>}
     {dueOnly && topic === "All topics" && dueCount === 0 && lastReviewedCard && reviews.has(lastReviewedCard) ? <BrandState kind="success" title="Reviews are caught up" description="You reviewed every card that was due. More cards will return when they are ready." compact /> : card ? <article className="sw-flashcard">
-      <div className="sw-flashcard-meta"><span>{card.category}</span><span>{!reviews.has(card.id) ? "New · " : ""}{cardIndex + 1} of {cards.length} · {card.difficulty}</span></div>
+      <div className="sw-flashcard-meta"><span>{card.category}</span><span>{!reviews.has(card.id) ? "New · " : ""}{cardIndex + 1} of {cards.length}</span></div>
       <h2>{card.question}</h2>
       <label className="sw-recall-field"><span>Your answer <small>(optional)</small></span><textarea value={recallAnswer} onChange={event => setRecallAnswer(event.target.value)} placeholder="A few words or steps, in your own words…" /></label>
       {revealed ? <div className="sw-flashcard-answer"><p className="sw-eyebrow">The idea</p><p>{card.answer}</p>{card.example && <div><strong>For example</strong><p>{card.example}</p></div>}</div> : <button type="button" className="sw-secondary-button" onClick={() => setRevealed(true)}>Reveal answer<ChevronRight size={16} /></button>}
       {revealed && <div className="sw-flashcard-actions"><span>How well did you recall it?</span><div><button type="button" className="sw-secondary-button" onClick={() => review("again")} disabled={saving || reviewSubmitting}><RotateCcw size={15} />Again</button><button type="button" className="sw-primary-button" onClick={() => review("good")} disabled={saving || reviewSubmitting}><Check size={16} />Got it</button></div></div>}
     </article> : <div className="sw-caught-up"><CheckCircle2 size={24} /><h2>No cards are due in this topic.</h2><p>Choose All cards to practice cards that are not due yet.</p><button type="button" className="sw-secondary-button" onClick={() => changeDueFilter(false)}>Show all cards<ArrowRight size={16} /></button></div>}
+    </section>
   </div>;
 }
 

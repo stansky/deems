@@ -240,9 +240,9 @@ function InterviewDesk() {
     </aside>
     {mobileMenu && <button aria-label="Close navigation" className="sidebar-scrim" onClick={() => setMobileMenu(false)} />}
     <div className="main-shell">
-      <WorkspaceHeader view={view} studyTab={studyTab} authenticated={authenticated} onSignOut={() => void signOut()} onNavigate={navigate} onLibrary={library} onCategory={openCategory} onCareer={() => openCareer()} />
+      <WorkspaceHeader view={view} studyTab={studyTab} category={prepCategory} authenticated={authenticated} onSignOut={() => void signOut()} onNavigate={navigate} onLibrary={library} onCategory={openCategory} onCareer={() => openCareer()} />
       <PageFrame workbench={view === "Algorithms"} className={view === "Study" ? "study-main" : focused ? "prep-main" : ""}>
-        <WorkspaceSections view={view} studyTab={studyTab} category={prepCategory} onNavigate={navigate} onLibrary={library} onCategory={openCategory} onCareer={() => openCareer()} />
+        <WorkspaceSections view={view} studyTab={studyTab} onNavigate={navigate} onLibrary={library} onCareer={() => openCareer()} />
         {error && (view !== "Home" || !workspaceUnavailable) && <div className="notice notice-error" role="alert"><span>{error}</span><Button variant="ghost" onClick={load}>Retry connection</Button></div>}
         <div className={`save-status ${saving || saved ? "is-visible" : ""}`} role="status">{saving ? <><Loader2 size={13} className="spin" />Saving...</> : saved ? <><Check size={13} />{saved}</> : null}</div>
         {view === "Home" && <LearningHome onCareer={openCareer} state={state} loading={loading} onOpenCourse={openCourse} onOpenPath={openPath} onMyLearning={() => library("My learning")} onReview={() => library("Flashcards")} historyUnavailable={workspaceUnavailable} onRetry={() => void load()} onCourses={() => library("Courses")} onArea={area => { if (area === "Coding") openCategory("Coding"); else if (area === "AI & systems") library("Courses"); else if (area === "Frameworks & tools") navigate("Reference"); else if (area === "Team management") openCategory("Management"); else openCategory("Behavioral"); }} />}

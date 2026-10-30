@@ -62,3 +62,18 @@ Hosted follow-through: production and staging deployment workflows passed for b4
 The hosted QA account also revealed an empty-state surface that retained its legacy white paint in dark mode. Shared BrandState surfaces and copy now use the same theme roles as populated panels. Applications distinguish a first-use empty list from filtered no-results and pass the loading state through to the shared component. No learner records are created to disguise an empty state.
 
 Experience now has explicit loading, failed-load with Retry, and empty states instead of a blank hosted page and an unavailable resume link. The empty state offers the existing interview-skills practice route. Role-library empty copy distinguishes an unused library from a filtered result. These are presentation and read-flow changes; personal history is not seeded or inferred.
+
+## October 29 navigation density correction
+
+The owner identified four competing horizontal bands on Review. This supersedes the always-visible Practice section tabs from the earlier navigation slice. Preserve Deems colors, Manrope, saved appearance choice, brand assets, and existing route/draft behavior.
+
+Reference lock: existing Deems controls and the SuperHi style remain the visual foundation. Brilliant screen a0cecb98-bb00-4223-8bfc-3133c89d07d6 contributes one global navigation row; Preply screen 8706c3f5-892f-4832-92d3-50f2a4c84b13 contributes focused question content with minimal surrounding controls. The owner's screenshot controls the density correction, not a new palette or branding direction.
+
+| Decision | Source | Purpose |
+| --- | --- | --- |
+| Practice destinations live in a header dropdown | Owner screenshot; Brilliant global navigation | Remove the second horizontal navigation band while retaining all destinations |
+| Review title and topic/card-set controls share the panel header | Owner screenshot; focused Preply question structure | Attach controls to the content they affect |
+| Appearance lives inside the account menu | Existing Deems ThemeControl | Reduce persistent header controls without changing theme behavior |
+| Quizzes and preparation pages expose one local title | Existing accessible PageHeader | Retain orientation after removing Practice tabs |
+
+Native disclosure navigation keeps keyboard, outside-click, Escape/focus restoration, current-page marking and mutual exclusion with the account menu. The change does not alter review scheduling, save semantics, curriculum or authentication. Desktop visual and navigation checks and release evidence live in private/navigation-review-20261029.
